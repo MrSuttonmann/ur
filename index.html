@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="The Royal Game of Ur, the 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. Play the computer or a friend on one device.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Royal Game of Ur</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap">
+<style>
+/* Layout: one centred manuscript column. A painted board sits between two ink-ruled player trays; dice dock beneath; rules folded at the foot.
+   Look: a single committed visual world (watercolour on laid paper), so it does not switch with the viewer theme. */
+:root {
+  color-scheme: light;
+  --paper: #f3e7c9;
+  --paper-deep: #e6d3a6;
+  --ink: #3b2a1b;
+  --ink-soft: #6e5840;
+  --vermilion: #b6432a;
+  --woad: #3d5d8e;
+  --sage: #879f66;
+  --ochre: #d6a540;
+  --rose: #cf8577;
+  --bone: #f6ecd2;
+  --night: #1c2a52;
+  --sunfire: #e9a52c;
+
+  --f-display: "Uncial Antiqua", "IM Fell English", Georgia, serif;
+  --f-body: "Alegreya", "IM Fell English", Georgia, serif;
+  --f-note: "IM Fell English", Georgia, serif;
+
+  --hand: 255px 14px 225px 16px / 16px 225px 14px 255px;
+  --cell: clamp(34px, calc((100vw - 32px - 28px - 28px) / 8), 68px);
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--paper);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .2 0 0 0 0 .1 0 0 0 .11 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 60% 40% at 8% 6%, rgba(214,165,64,.22), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 95% 30%, rgba(207,133,119,.16), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 105%, rgba(135,159,102,.2), transparent 70%);
+  background-attachment: scroll;
+  color: var(--ink);
+  font-family: var(--f-body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 22px 44px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--f-note); font-style: italic; font-size: 15px; color: var(--ink-soft); margin: 0; }
+h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px, 7vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 .cap { color: var(--vermilion); font-size: 1.35em; line-height: .8; }
+.flourish { width: min(260px, 70%); height: 16px; display: block; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.seg { display: inline-flex; border: 1.5px solid var(--ink); border-radius: var(--hand); overflow: hidden; background: var(--bone); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 5px 13px; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--ink-soft); }
+.seg input:checked + label { background: var(--woad); color: var(--bone); }
+.seg input:focus-visible + label { outline: 2px dashed var(--vermilion); outline-offset: -4px; }
+select, .btn {
+  font: inherit; font-size: 15px; font-weight: 600; color: var(--ink);
+  background: var(--bone); border: 1.5px solid var(--ink); border-radius: var(--hand); padding: 5px 13px; cursor: pointer;
+}
+.btn:hover, select:hover { background: var(--paper-deep); }
+.btn:focus-visible, select:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 3px; }
+.tally { margin-left: auto; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.tally b { color: var(--ink); }
+
+/* trays */
+.game { display: flex; flex-direction: column; gap: 12px; }
+.tray {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
+  background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand); padding: 8px 14px;
+  transition: border-color .25s, box-shadow .25s;
+}
+.tray.active { border-color: var(--ink); box-shadow: 3px 3px 0 -1px var(--ochre); }
+.tray-name { font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tray-name .side { font-family: var(--f-note); font-style: italic; font-weight: 400; color: var(--ink-soft); }
+.chip { font-family: var(--f-note); font-style: italic; font-size: 14px; color: var(--vermilion); }
+.tray-count { font-family: var(--f-note); font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; }
+.pool { display: flex; align-items: center; min-height: calc(var(--cell) * .58); gap: 3px; flex-wrap: wrap; }
+.pool.home { justify-content: flex-end; }
+.pool.home .piece + .piece { margin-left: calc(var(--cell) * -.24); }
+.pool .piece { width: calc(var(--cell) * .55); }
+.pool .piece.movable { width: calc(var(--cell) * .66); }
+.pool.target { outline: 2px dashed var(--vermilion); outline-offset: 3px; border-radius: 10px; }
+
+/* board */
+.slab {
+  position: relative; align-self: center; padding: 12px; border: 2px solid var(--ink); border-radius: 18px 26px 16px 24px / 24px 16px 26px 18px;
+  background:
+    radial-gradient(ellipse 45% 70% at 15% 30%, rgba(135,159,102,.7), transparent 70%),
+    radial-gradient(ellipse 40% 60% at 85% 75%, rgba(135,159,102,.6), transparent 70%),
+    radial-gradient(ellipse 35% 55% at 55% 15%, rgba(214,165,64,.45), transparent 70%),
+    radial-gradient(ellipse 30% 50% at 40% 90%, rgba(61,93,142,.25), transparent 70%),
+    var(--paper-deep);
+  box-shadow: 0 0 0 5px var(--paper), 0 0 0 6.5px var(--ink-soft), 0 14px 30px -18px rgba(59,42,27,.7);
+}
+.slab::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: multiply; opacity: .9;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='w'><feTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='4' seed='9'/><feColorMatrix values='0 0 0 0 .55 0 0 0 0 .45 0 0 0 0 .25 0 0 0 .35 -.05'/></filter><rect width='100%' height='100%' filter='url(%23w)'/></svg>");
+}
+.board { position: relative; display: grid; grid-template-columns: repeat(8, var(--cell)); grid-auto-rows: var(--cell); gap: 4px; }
+.cell { position: relative; }
+.cell svg.tile { position: absolute; inset: -3%; width: 106%; height: 106%; overflow: visible; }
+.cell.gap { display: grid; place-items: center; text-align: center; font-family: var(--f-note); font-style: italic; color: var(--ink); font-size: clamp(11px, calc(var(--cell) * .24), 15px); line-height: 1.1; }
+.cell.gap.g1 { grid-column: span 2; }
+.cell .num { position: absolute; top: 1px; left: 5px; font-family: var(--f-note); font-size: 12px; color: var(--ink); opacity: 0; transition: opacity .2s; font-variant-numeric: tabular-nums; pointer-events: none; }
+.show-route .cell .num { opacity: .9; }
+.slot { position: absolute; inset: 0; display: grid; place-items: center; }
+.cell.lastto::before {
+  content: ""; position: absolute; inset: 2px; border-radius: 40%; pointer-events: none;
+  background: radial-gradient(circle, rgba(214,165,64,.7), rgba(214,165,64,0) 70%);
+}
+.cell.target::after {
+  content: ""; position: absolute; inset: 5px; border-radius: 50% 46% 52% 44%; border: 2.5px dashed var(--ink); pointer-events: none;
+}
+.cell.target.capture::after { border: 3px solid var(--vermilion); }
+
+/* pieces: painted tokens */
+.piece {
+  position: relative; display: block; width: 88%; aspect-ratio: 1; max-width: 100%; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: 50%; cursor: default; font: inherit;
+  filter: drop-shadow(1px 3px 1.5px rgba(40,28,18,.6));
+}
+.cell .tile .art { transition: opacity .25s; }
+.cell.occupied .tile .art { opacity: .28; }
+.piece svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.piece.movable { cursor: pointer; filter: drop-shadow(0 0 4px var(--sunfire)) drop-shadow(0 0 2px var(--sunfire)) drop-shadow(1px 3px 1.5px rgba(40,28,18,.6)); animation: bob 1.3s ease-in-out infinite; }
+.piece:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 3px; }
+@keyframes bob { 50% { transform: translateY(-3px) rotate(-4deg); } }
+.petal {
+  position: absolute; left: 50%; top: 50%; width: 8px; height: 10px; margin: -5px 0 0 -4px; z-index: 30; pointer-events: none;
+  border-radius: 60% 60% 60% 0; background: var(--vermilion); opacity: .85;
+}
+.petal.alt { background: var(--ochre); }
+/* event words ride on a little parchment scroll with rolled ends */
+.float-word {
+  position: absolute; left: 50%; top: -4px; z-index: 40; pointer-events: none; white-space: nowrap;
+  font-family: var(--f-display); font-size: 17px; line-height: 1.2; color: var(--vermilion);
+  padding: 4px 14px 3px;
+  background: linear-gradient(180deg, var(--bone) 0%, #fffaf0 45%, var(--paper-deep) 100%);
+  border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  box-shadow: 0 5px 10px -3px rgba(40,28,18,.45);
+}
+.float-word::before, .float-word::after {
+  content: ""; position: absolute; top: -5px; bottom: -5px; width: 10px;
+  border: 1.5px solid var(--ink); border-radius: 6px;
+  background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
+}
+.float-word::before { left: -7px; }
+.float-word::after { right: -7px; }
+
+/* dock */
+.dock {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+  background: rgba(246,236,210,.7); border: 1.5px solid var(--ink); border-radius: var(--hand); padding: 12px 16px;
+}
+.dice { display: flex; gap: 6px; }
+.die-slot { display: block; transform-origin: 50% 65%; }
+.die { width: 36px; height: 33px; overflow: visible; display: block; }
+.dice.idle .die { opacity: .4; }
+.total { font-family: var(--f-display); font-size: 42px; line-height: 1; min-width: 1.1ch; text-align: center; color: var(--vermilion); font-variant-numeric: tabular-nums; }
+.roll {
+  font-family: var(--f-display); font-size: 19px; padding: 8px 22px; cursor: pointer;
+  background: var(--vermilion); color: var(--bone); border: 2px solid var(--ink); border-radius: var(--hand);
+  box-shadow: 2px 3px 0 var(--ink);
+}
+.roll:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 4px 0 var(--ink); }
+.roll:active:not(:disabled) { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.roll:disabled { opacity: .45; cursor: default; }
+.roll:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
+.status { flex: 1 1 200px; min-width: 0; }
+.status strong { display: block; font-size: 18px; }
+.status span { color: var(--ink-soft); font-family: var(--f-note); font-style: italic; font-size: 15px; }
+.status.win strong { color: var(--vermilion); font-family: var(--f-display); font-size: 26px; font-weight: 400; }
+
+.under { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.log { list-style: none; margin: 0; padding: 0; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.log li:first-child { color: var(--ink); }
+.route-toggle { font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.route-toggle input { accent-color: var(--vermilion); }
+
+/* rules */
+details { border: 1.5px solid var(--ink-soft); border-radius: var(--hand); padding: 12px 18px; background: rgba(246,236,210,.55); }
+summary { cursor: pointer; font-family: var(--f-display); font-size: 21px; }
+summary:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 4px; }
+.rules { max-width: 62ch; }
+.rules li { margin-bottom: 6px; }
+.rules li::marker { color: var(--vermilion); }
+.odds { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 10px; align-items: center; font-variant-numeric: tabular-nums; max-width: 360px; margin-top: 8px; }
+.odds .bar { height: 11px; background: var(--vermilion); opacity: .75; border-radius: 6px 2px 7px 3px; }
+.odds .n { font-family: var(--f-display); font-size: 18px; }
+.odds .p { font-family: var(--f-note); color: var(--ink-soft); }
+
+@media (prefers-reduced-motion: reduce) { .piece.movable { animation: none; } .roll { transition: none; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- cuts the bite out of the Moon counter's crescent -->
+    <mask id="moonmask" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40">
+      <rect width="40" height="40" fill="#fff"/>
+      <circle cx="23" cy="17" r="8.4" fill="#000"/>
+    </mask>
+    <!-- wobbly ink line -->
+    <filter id="ink" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="4" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <!-- watercolour washes: blotchy edge + uneven pigment, four seeds so tiles differ -->
+    <filter id="wash0" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="3" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="11" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
+      <feComposite in="d" in2="ga" operator="in"/>
+    </filter>
+    <filter id="wash1" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="21" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="2" seed="5" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
+      <feComposite in="d" in2="ga" operator="in"/>
+    </filter>
+    <filter id="wash2" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="37" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.14" numOctaves="2" seed="17" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
+      <feComposite in="d" in2="ga" operator="in"/>
+    </filter>
+    <filter id="wash3" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.065" numOctaves="3" seed="52" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="29" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
+      <feComposite in="d" in2="ga" operator="in"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
+    <h1><span class="cap">T</span>he Royal Game of Ur</h1>
+    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round" filter="url(#ink)"/><circle cx="118" cy="8" r="2.4" style="fill:var(--vermilion)"/></svg>
+    <div class="controls">
+      <div class="seg" role="radiogroup" aria-label="Mode">
+        <input type="radio" name="mode" id="mode-ai" value="ai" checked><label for="mode-ai">Vs computer</label>
+        <input type="radio" name="mode" id="mode-local" value="local"><label for="mode-local">Two players</label>
+      </div>
+      <select id="level" aria-label="Computer strength">
+        <option value="easy">Squire (easy)</option>
+        <option value="medium" selected>Knight (medium)</option>
+        <option value="hard">King (hard)</option>
+      </select>
+      <button class="btn" id="newgame" type="button">New game</button>
+      <button class="btn" id="sound" type="button" aria-pressed="true">Sound on</button>
+      <div class="tally" id="tally"></div>
+    </div>
+  </header>
+
+  <section class="game" id="game" aria-label="Game">
+    <div class="tray" id="tray1"></div>
+    <div class="slab"><div class="board" id="board"></div></div>
+    <div class="tray" id="tray0"></div>
+
+    <div class="dock">
+      <div class="dice idle" id="dice" aria-hidden="true"></div>
+      <div class="total" id="total" aria-hidden="true">–</div>
+      <button class="roll" id="roll" type="button">Roll</button>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+
+    <div class="under">
+      <ol class="log" id="log" aria-label="Recent moves"></ol>
+      <label class="route-toggle"><input type="checkbox" id="route"> Show route numbers</label>
+    </div>
+  </section>
+
+  <details>
+    <summary>How to play</summary>
+    <div class="rules">
+      <p>These are the rules reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in 177 BCE.</p>
+      <ul>
+        <li>Each player has seven pieces and a fourteen-square route: four squares in your own row, eight along the shared middle row, then two back in your own row, then off the board through your gate.</li>
+        <li>Roll four tetrahedral dice and count the painted tips. Move one piece exactly that many squares. A piece enters through your gate, so a 1 places it on your first square.</li>
+        <li>You can't land on your own piece. Landing on an opponent in the middle row sends it back to start.</li>
+        <li>Landing on a rose gives you another roll. The central rose is a sanctuary: a piece there can't be captured.</li>
+        <li>Bearing a piece off needs the exact count. The first player to bring all seven home wins.</li>
+      </ul>
+      <p style="margin-bottom:0">Odds of each roll with four tetrahedral dice:</p>
+      <div class="odds" id="odds"></div>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  const N = 7, OFF = 15;
+  const ROSETTES = new Set([4, 8, 14]);
+  const PROB = [1, 4, 6, 4, 1].map(x => x / 16);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SIDE = ['Sun', 'Moon'];
+
+  // ---------- rules ----------
+  // player 0 = Sun (bottom row), player 1 = Moon (top row)
+  function coord(p, pos) {
+    const own = p === 0 ? 2 : 0;
+    if (pos <= 4) return [own, 4 - pos];
+    if (pos <= 12) return [1, pos - 5];
+    return [own, 20 - pos];
+  }
+  function legalMoves(pos, p, roll) {
+    const res = [];
+    if (!roll) return res;
+    const seen = new Set();
+    for (let i = 0; i < N; i++) {
+      const x = pos[p][i];
+      if (x === OFF || seen.has(x)) continue;
+      seen.add(x);
+      const t = x + roll;
+      if (t > OFF) continue;
+      if (t < OFF && pos[p].includes(t)) continue;
+      let cap = -1;
+      if (t >= 5 && t <= 12) {
+        const j = pos[1 - p].indexOf(t);
+        if (j >= 0) { if (t === 8) continue; cap = j; }
+      }
+      res.push({ i, from: x, to: t, cap });
+    }
+    return res;
+  }
+  function applyMove(pos, p, m) {
+    const np = [pos[0].slice(), pos[1].slice()];
+    np[p][m.i] = m.to;
+    if (m.cap >= 0) np[1 - p][m.cap] = 0;
+    return np;
+  }
+  const won = (pos, p) => pos[p].every(x => x === OFF);
+
+  // ---------- AI: expectiminimax over dice rolls ----------
+  function sideScore(pos, me) {
+    const opp = pos[1 - me];
+    let s = 0;
+    for (const x of pos[me]) {
+      if (x === OFF) { s += 22; continue; }
+      if (x === 0) continue;
+      s += x;
+      if (x === 8) s += 4;
+      else if (x === 4 || x === 14) s += 1.5;
+      if (x >= 13) s += 1;
+      if (x >= 5 && x <= 12 && x !== 8) {
+        let danger = 0;
+        for (const y of opp) if (y < x && x - y <= 4) danger += PROB[x - y];
+        s -= Math.min(danger, 1) * (x + 2);
+      }
+    }
+    return s;
+  }
+  const evaluate = (pos, me) => sideScore(pos, me) - sideScore(pos, 1 - me);
+
+  function chanceNode(pos, toMove, depth, me) {
+    let v = 0;
+    for (let r = 0; r <= 4; r++) v += PROB[r] * moveNode(pos, toMove, r, depth, me);
+    return v;
+  }
+  function moveNode(pos, toMove, r, depth, me) {
+    const ms = legalMoves(pos, toMove, r);
+    if (!ms.length) return depth <= 1 ? evaluate(pos, me) : chanceNode(pos, 1 - toMove, depth - 1, me);
+    const maxing = toMove === me;
+    let best = maxing ? -Infinity : Infinity;
+    for (const m of ms) {
+      const v = afterMove(pos, toMove, m, depth, me);
+      if (maxing ? v > best : v < best) best = v;
+    }
+    return best;
+  }
+  function afterMove(pos, p, m, depth, me) {
+    const np = applyMove(pos, p, m);
+    if (won(np, p)) return p === me ? 1e4 + depth : -1e4 - depth;
+    if (depth <= 1) return evaluate(np, me);
+    return chanceNode(np, ROSETTES.has(m.to) ? p : 1 - p, depth - 1, me);
+  }
+  function aiChoose(pos, p, roll, level) {
+    const ms = legalMoves(pos, p, roll);
+    if (ms.length === 1) return ms[0];
+    if (level === 'easy' && Math.random() < 0.4) return ms[Math.floor(Math.random() * ms.length)];
+    const depth = { easy: 1, medium: 2, hard: 4 }[level] || 2;
+    let best = [], bestV = -Infinity;
+    for (const m of ms) {
+      const v = afterMove(pos, p, m, depth, p);
+      if (v > bestV + 1e-9) { bestV = v; best = [m]; } else if (Math.abs(v - bestV) <= 1e-9) best.push(m);
+    }
+    return best[Math.floor(Math.random() * best.length)];
+  }
+
+  // ---------- state ----------
+  let S, gen = 0, timer = null;
+  const $ = id => document.getElementById(id);
+
+  function fresh(mode, level) {
+    return {
+      pos: [Array(N).fill(0), Array(N).fill(0)],
+      turn: Math.random() < 0.5 ? 0 : 1,
+      phase: 'roll', roll: null, dice: null,
+      winner: null, lastTo: null, note: '',
+      mode, level, log: [],
+    };
+  }
+  const isAI = p => S.mode === 'ai' && p === 1;
+  const nameOf = p => S.mode === 'ai' ? (p === 0 ? 'You' : 'Computer') : SIDE[p];
+
+  let tally = { you: 0, computer: 0, sun: 0, moon: 0 };
+  try { const t = JSON.parse(localStorage.getItem('ur-tally-v2')); if (t) tally = { ...tally, ...t }; } catch (e) {}
+  function saveTally() { try { localStorage.setItem('ur-tally-v2', JSON.stringify(tally)); } catch (e) {} }
+
+  function schedule(fn, ms) {
+    const g = gen;
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (g === gen) fn(); }, ms);
+  }
+
+  function advance() {
+    if (S.phase === 'over') return;
+    if (S.phase === 'roll') { if (isAI(S.turn)) schedule(doRoll, 750); return; }
+    if (S.phase === 'move') {
+      const ms = legalMoves(S.pos, S.turn, S.roll);
+      if (!ms.length) schedule(() => endTurn(false), 1400);
+      else if (isAI(S.turn)) schedule(() => doMove(aiChoose(S.pos, S.turn, S.roll, S.level)), 700);
+    }
+  }
+
+  function doRoll() {
+    if (S.phase !== 'roll') return;
+    S.phase = 'rolling';
+    sfxDice();
+    tumbleDice();
+    const g = gen;
+    const final = [0, 1, 2, 3].map(() => (Math.random() < 0.5 ? 1 : 0));
+    let n = 0;
+    const steps = reduced ? 0 : 9;
+    const tick = () => {
+      if (g !== gen) return;
+      if (n++ < steps) {
+        drawDice([0, 1, 2, 3].map(() => (Math.random() < 0.5 ? 1 : 0)), false);
+        setTimeout(tick, 70);
+        return;
+      }
+      S.dice = final;
+      S.roll = final.reduce((a, b) => a + b, 0);
+      S.phase = 'move';
+      const ms = legalMoves(S.pos, S.turn, S.roll);
+      if (!ms.length) {
+        S.note = S.roll === 0 ? 'Rolled 0. Turn passes.' : `No legal move with a ${S.roll}. Turn passes.`;
+        addLog(`${nameOf(S.turn)} rolled ${S.roll}: no move`);
+      } else S.note = '';
+      render();
+      advance();
+    };
+    render();
+    tick();
+  }
+
+  // the counter hops square by square along its route before the move is committed
+  function hopAlong(p, m, done) {
+    const el = document.querySelector(`[data-pid="${p}-${m.i}"]`);
+    if (reduced || !el) { sfxHop(0, 0, true); return done(); }
+    clearTargets();
+    el.classList.remove('movable');
+    el.style.zIndex = 20;
+    const r0 = el.getBoundingClientRect();
+    const cx0 = r0.left + r0.width / 2, cy0 = r0.top + r0.height / 2;
+    const cellW = cells['1,0'].getBoundingClientRect().width;
+    const pts = [];
+    for (let s = m.from + 1; s <= m.to; s++) {
+      let x, y, w;
+      if (s === OFF) {
+        const h = document.querySelector(`#tray${p} .home`).getBoundingClientRect();
+        w = cellW * .55; x = h.right - w / 2; y = h.top + h.height / 2;
+      } else {
+        const c = cells[coord(p, s).join(',')].getBoundingClientRect();
+        w = cellW * .8; x = c.left + c.width / 2; y = c.top + c.height / 2;
+      }
+      pts.push({ dx: x - cx0, dy: y - cy0, s: w / r0.width });
+    }
+    const n = pts.length, lift = cellW * .45;
+    const frames = [{ transform: 'none', offset: 0, easing: 'ease-out' }];
+    let prev = { dx: 0, dy: 0, s: 1 };
+    pts.forEach((pt, k) => {
+      frames.push({
+        transform: `translate(${(prev.dx + pt.dx) / 2}px, ${(prev.dy + pt.dy) / 2 - lift}px) scale(${pt.s * 1.12}) rotate(${k % 2 ? 8 : -8}deg)`,
+        offset: (k + .5) / n, easing: 'ease-in',
+      });
+      frames.push({ transform: `translate(${pt.dx}px, ${pt.dy}px) scale(${pt.s * 1.1}, ${pt.s * .86})`, offset: (k + 1) / n, easing: 'ease-out' });
+      prev = pt;
+    });
+    const dur = n * 190 + (m.from === 0 ? 120 : 0);
+    for (let k = 0; k < n; k++) sfxHop((k + 1) / n * dur / 1000, k, k === n - 1);
+    const a = el.animate(frames, { duration: dur, fill: 'forwards' });
+    a.onfinish = done;
+  }
+
+  // ---------- sound: synthesised with Web Audio, no files ----------
+  let actx = null, master = null, noise = null, muted = false;
+  try { muted = localStorage.getItem('ur-muted') === '1'; } catch (e) {}
+  function audio() {
+    if (muted) return null;
+    try {
+      if (!actx) {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        master = actx.createGain(); master.gain.value = .7; master.connect(actx.destination);
+        noise = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+        const d = noise.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) { return null; }
+    return actx;
+  }
+  // browsers only allow sound after the player interacts, so wake the audio on any tap or key
+  addEventListener('pointerdown', audio);
+  addEventListener('keydown', audio);
+
+  function tap(c, t, freq, gain, dur, q = 5) {
+    const src = c.createBufferSource(); src.buffer = noise;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
+    const g = c.createGain();
+    g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    src.connect(bp).connect(g).connect(master);
+    src.start(t, Math.random() * .5); src.stop(t + dur + .02);
+  }
+  function tone(c, t, type, f0, f1, gain, dur) {
+    const o = c.createOscillator(); o.type = type;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + .012);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g).connect(master); o.start(t); o.stop(t + dur + .02);
+  }
+  function sfxDice() {
+    const c = audio(); if (!c) return;
+    const t0 = c.currentTime;
+    // bone dice rattling in the hand, then four landing on wood
+    for (let i = 0; i < 10; i++) tap(c, t0 + i * .042 + Math.random() * .025, 1800 + Math.random() * 2400, .18 + Math.random() * .15, .035, 8);
+    for (let i = 0; i < 4; i++) {
+      const t = t0 + .44 + i * .04 + Math.random() * .025;
+      tap(c, t, 700 + Math.random() * 600, .5, .09, 4);
+      tone(c, t, 'sine', 320 + Math.random() * 80, 240, .12, .08);
+    }
+  }
+  // a wooden "tok" as a counter lands on each square; pitch climbs a step each hop
+  function sfxHop(delay, step, last) {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime + delay, f = 420 * Math.pow(2, step / 12 * 2);
+    tone(c, t, 'sine', f * 1.5, f, last ? .32 : .2, last ? .14 : .09);
+    tap(c, t, 1400 + step * 120, last ? .3 : .18, .04, 6);
+  }
+  // plucked string, roughly lute-like
+  function pluck(c, t, f, gain, dur) {
+    tone(c, t, 'triangle', f, f * .998, gain, dur);
+    tone(c, t, 'sine', f * 2, f * 2, gain * .35, dur * .6);
+  }
+  // brass: two detuned saws through a lowpass that opens on the attack
+  function brass(c, t, f, dur, gain) {
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 2;
+    lp.frequency.setValueAtTime(500, t); lp.frequency.exponentialRampToValueAtTime(f * 6, t + .05);
+    lp.frequency.exponentialRampToValueAtTime(f * 3, t + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + .03);
+    g.gain.setValueAtTime(gain * .8, t + Math.max(.04, dur - .08)); g.gain.exponentialRampToValueAtTime(.001, t + dur + .06);
+    lp.connect(g).connect(master);
+    for (const d of [-6, 6]) {
+      const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d;
+      o.connect(lp); o.start(t); o.stop(t + dur + .1);
+    }
+  }
+  function sfxHome() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    [523, 659, 784, 1047].forEach((f, i) => pluck(c, t + i * .07, f, .22, .35));
+    tone(c, t + .3, 'sine', 2093, 2090, .12, .9);  // bell
+    tone(c, t + .3, 'sine', 3136, 3130, .05, .6);
+  }
+  // rose: a whoosh of petals and a sparkle of high pentatonic chimes
+  function sfxRose() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    tap(c, t, 3000, .14, .45, .7);
+    [1175, 1319, 1568, 1760, 2093, 2349, 2637].forEach((f, i) => {
+      const at = t + .03 + i * .045 + Math.random() * .015;
+      tone(c, at, 'sine', f, f, .09, .5);
+      tone(c, at, 'sine', f * 3, f * 3, .015, .25);
+    });
+    tone(c, t + .34, 'sine', 3136, 3132, .06, 1);
+  }
+  function sfxFanfare(delay = 0) {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime + delay;
+    const G4 = 392, C5 = 523, E5 = 659, G5 = 784, C6 = 1047;
+    const notes = [[0, G4, .13], [.16, G4, .13], [.32, G4, .13], [.48, C5, .5], [1.02, E5, .16], [1.2, G5, .16]];
+    for (const [at, f, d] of notes) brass(c, t + at, f, d, .16);
+    for (const f of [C5, E5, G5, C6]) brass(c, t + 1.4, f, 1.1, .1);  // final chord
+    tap(c, t + 1.4, 180, .5, .4, 1.5);                                   // drum hit under the chord
+    tone(c, t + 1.4, 'sine', 110, 60, .5, .45);
+  }
+  function sfxCapture() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    tone(c, t, 'sine', 200, 50, .8, .28);             // hollow thump
+    tap(c, t, 2600, .55, .05, 3);                      // crack
+    tap(c, t + .008, 650, .5, .12, 2);
+    tone(c, t + .14, 'triangle', 560, 230, .16, .42);  // comic falling "wah"
+    tone(c, t + .14, 'triangle', 566, 232, .08, .42);
+  }
+
+  let fx = null;
+  function burst(cell) {
+    for (let i = 0; i < 12; i++) {
+      const sp = document.createElement('span');
+      sp.className = 'petal' + (i % 3 === 0 ? ' alt' : '');
+      cell.appendChild(sp);
+      const ang = i / 12 * Math.PI * 2 + Math.random() * .4, dist = cell.offsetWidth * (.6 + Math.random() * .4);
+      sp.animate([
+        { transform: 'translate(0,0) rotate(0) scale(.4)', opacity: 1 },
+        { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist + 14}px) rotate(${200 + Math.random() * 200}deg) scale(1)`, opacity: 0 },
+      ], { duration: 750 + Math.random() * 250, easing: 'cubic-bezier(.2,.8,.4,1)' }).onfinish = () => sp.remove();
+    }
+  }
+  function floatWord(cell, word) {
+    const w = document.createElement('span');
+    w.className = 'float-word';
+    w.textContent = word;
+    cell.appendChild(w);
+    // unfurl sideways, hold, then drift upward and fade
+    w.animate([
+      { transform: 'translate(-50%, 4px) rotate(-3deg) scaleX(.05)', opacity: 0 },
+      { transform: 'translate(-50%, -6px) rotate(-3deg) scaleX(1.06)', opacity: 1, offset: .18 },
+      { transform: 'translate(-50%, -10px) rotate(-2deg) scaleX(1)', opacity: 1, offset: .3 },
+      { transform: 'translate(-50%, -26px) rotate(1deg)', opacity: 1, offset: .7 },
+      { transform: 'translate(-50%, -52px) rotate(2deg)', opacity: 0 },
+    ], { duration: 1700, easing: 'ease-out' }).onfinish = () => w.remove();
+  }
+
+  function doMove(m) {
+    if (S.phase !== 'move') return;
+    S.phase = 'animating';
+    hopAlong(S.turn, m, () => finishMove(m));
+  }
+
+  function finishMove(m) {
+    const p = S.turn, again = ROSETTES.has(m.to);
+    fx = {
+      moved: p + '-' + m.i,
+      cap: m.cap >= 0 ? (1 - p) + '-' + m.cap : null,
+      cell: m.to === OFF ? null : coord(p, m.to).join(','),
+      rose: again,
+    };
+    let desc = m.from === 0 ? `entered a piece${m.to > 1 ? ' to ' + m.to : ''}` : m.to === OFF ? 'brought a piece home' : `moved ${m.from} → ${m.to}`;
+    if (m.cap >= 0) desc += `, captured a ${SIDE[1 - p]} piece`;
+    if (again) desc += ', landed on a rose and rolls again';
+    addLog(`${nameOf(p)} rolled ${S.roll}: ${desc}`);
+    S.pos = applyMove(S.pos, p, m);
+    S.lastTo = m.to === OFF ? null : coord(p, m.to);
+    if (m.to === OFF) sfxHome();
+    if (again) sfxRose();
+    if (won(S.pos, p)) {
+      sfxFanfare(.5);
+      S.phase = 'over'; S.winner = p;
+      if (S.mode === 'ai') tally[p === 0 ? 'you' : 'computer']++; else tally[p === 0 ? 'sun' : 'moon']++;
+      saveTally();
+      render();
+      return;
+    }
+    S.note = again ? 'A rose! Roll again.' : '';
+    endTurn(again);
+  }
+
+  function endTurn(again) {
+    if (!again) { S.turn = 1 - S.turn; S.note = ''; }
+    S.phase = 'roll'; S.roll = null;
+    render();
+    advance();
+  }
+
+  function addLog(s) { S.log.unshift(s); S.log.length = Math.min(S.log.length, 5); }
+
+  // ---------- painting ----------
+  const PATTERN = [
+    ['ros', 'castle', 'five', 'shield', null, null, 'ros', 'crown'],
+    ['five', 'tree', 'shield', 'ros', 'castle', 'five', 'crown', 'tree'],
+    ['ros', 'shield', 'five', 'castle', null, null, 'ros', 'crown'],
+  ];
+  const WASH = { ros: 'ochre', castle: 'rose', five: 'paper-deep', shield: 'woad', crown: 'sage', tree: 'ochre' };
+  const ink = 'fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round';
+  const paint = (c, o = .8) => `fill:var(--${c});fill-opacity:${o}`;
+
+  function tileSVG(kind, k) {
+    const w = `url(#wash${k % 4})`;
+    let d = '';
+    if (kind === 'ros') {
+      for (let a = 0; a < 360; a += 72) {
+        d += `<path d="M20 20 L18.6 6.4 L21.4 6.4 Z" transform="rotate(${a + 36} 20 20)" style="${paint('sage', .9)}"/>`;
+        d += `<circle cx="20" cy="12.2" r="6.4" transform="rotate(${a} 20 20)" style="${paint('vermilion', .85)};stroke:var(--ink);stroke-width:1.1"/>`;
+      }
+      d += `<circle cx="20" cy="20" r="5" style="${paint('ochre', 1)};stroke:var(--ink);stroke-width:1.1"/>`;
+      for (let a = 0; a < 360; a += 60) d += `<circle cx="20" cy="17.6" r=".8" transform="rotate(${a} 20 20)" style="fill:var(--ink)"/>`;
+    } else if (kind === 'castle') {
+      d += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z" style="${paint('bone', .9)}"/>`;
+      d += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z M17 32 V26 Q20 22 23 26 V32 M14 21 v3 M26 21 v3" style="${ink}"/>`;
+      d += `<path d="M20 13.5 V7 M20 7 l5 1.5 -5 1.5" style="${ink}"/><path d="M20 7 l5 1.5 -5 1.5 z" style="${paint('vermilion', .9)}"/>`;
+    } else if (kind === 'shield') {
+      d += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('bone', .9)}"/>`;
+      d += `<path d="M11.5 22 L20 14 L28.5 22 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('vermilion', .75)}"/>`;
+      d += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z M11.5 22 L20 14 L28.5 22" style="${ink}"/>`;
+    } else if (kind === 'crown') {
+      d += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z" style="${paint('ochre', .95)}"/>`;
+      d += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z M10.5 25 H29.5" style="${ink}"/>`;
+      d += [[11, 13], [20, 9], [29, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:.8"/>`).join('');
+    } else if (kind === 'tree') {
+      d += `<path d="M19 33 V22 M21 33 V22" style="${ink}"/><path d="M19 33 V22 H21 V33 Z" style="${paint('ink-soft', .7)}"/>`;
+      d += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${paint('sage', .9)}"/>`;
+      d += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${ink}"/>`;
+      d += [[16, 14], [24, 13], [20, 19], [26, 19]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" style="${paint('vermilion', .9)}"/>`).join('');
+    } else if (kind === 'five') {
+      for (const [x, y] of [[11, 11], [29, 11], [11, 29], [29, 29], [20, 20]])
+        d += `<circle cx="${x}" cy="${y}" r="4" style="${paint('woad', .8)};stroke:var(--ink);stroke-width:1"/><circle cx="${x}" cy="${y}" r="1.3" style="fill:var(--bone)"/>`;
+    }
+    return `<svg class="tile" viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="${paint(WASH[kind], .78)}" filter="${w}"/>
+      <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="fill:none;stroke:var(--${WASH[kind]});stroke-opacity:.6;stroke-width:2.2" filter="${w}"/>
+      <rect x="2" y="2" width="36" height="36" rx="4" style="${ink};stroke-width:1.5" filter="url(#ink)"/>
+      <g class="art" filter="url(#ink)">${d}</g></svg>`;
+  }
+
+  const pieceSVG = (p, k) => {
+    let emblem;
+    if (p === 0) {
+      emblem = '';
+      for (let a = 0; a < 360; a += 45) emblem += `<path d="M20 9.5 V6.5" transform="rotate(${a} 20 20)" style="${ink};stroke-width:1.4"/>`;
+      emblem += `<circle cx="20" cy="20" r="7" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1.2"/>
+        <path d="M17 19 h.1 M23 19 h.1" style="${ink};stroke-width:1.8"/><path d="M17 22.5 Q20 25 23 22.5" style="${ink}"/>`;
+    } else {
+      emblem = `<circle cx="18" cy="20" r="10" style="fill:#fffaf0" mask="url(#moonmask)"/>
+        <circle cx="28.5" cy="13" r="1.3" style="fill:#fffaf0"/><circle cx="29.5" cy="25" r="1" style="fill:#fffaf0"/>`;
+    }
+    // solid disc first so the tile never shows through; the wash on top only adds texture
+    return `<svg viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18.5" style="fill:var(--bone)"/>
+      <circle cx="20" cy="20" r="15.5" style="fill:var(--${p === 0 ? 'sunfire' : 'night'})"/>
+      <circle cx="20" cy="20" r="15" style="${paint(p === 0 ? 'ochre' : 'woad', .55)}" filter="url(#wash${k % 4})"/>
+      <g filter="url(#ink)"><circle cx="20" cy="20" r="18.5" style="${ink};stroke-width:2.2"/>
+      <circle cx="20" cy="20" r="15.5" style="${ink};stroke-width:1"/>${emblem}</g></svg>`;
+  };
+
+  const dieSVG = (v, k) => `<svg class="die" viewBox="0 0 40 36">
+    <polygon points="20,2 38,34 2,34" style="${paint('bone', 1)}" filter="url(#wash${k})"/>
+    <polygon points="20,23 38,34 2,34" style="${paint('paper-deep', .9)}" filter="url(#wash${k})"/>
+    <g filter="url(#ink)"><path d="M20 2 L38 34 L2 34 Z M20 2 L20 23 M2 34 L20 23 M38 34 L20 23" style="${ink};stroke-width:1.4"/>
+    ${v ? `<circle cx="20" cy="23" r="4.2" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:1"/>` : '<circle cx="20" cy="23" r="1.3" style="fill:var(--ink)"/>'}</g></svg>`;
+
+  // route numbers: each private row belongs to one player, so labels are unambiguous
+  const routeNum = {};
+  for (const p of [0, 1]) for (let k = 1; k <= 14; k++) routeNum[coord(p, k).join(',')] = k;
+
+  const cells = {};
+  const board = $('board');
+  let k = 0;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) {
+    const kind = PATTERN[r][c];
+    if (!kind) {
+      if (c === 4) {
+        const g = document.createElement('div');
+        g.className = 'cell gap g1';
+        g.innerHTML = r === 0 ? 'Moon’s<br>gate' : r === 2 ? 'Sun’s<br>gate' : '';
+        board.appendChild(g);
+      }
+      continue;
+    }
+    const el = document.createElement('div');
+    el.className = 'cell';
+    el.innerHTML = tileSVG(kind, k++) + `<span class="num">${routeNum[r + ',' + c]}</span><div class="slot"></div>`;
+    cells[r + ',' + c] = el;
+    board.appendChild(el);
+  }
+
+  // each die lives in a persistent slot so its tumble survives the face changes
+  const dieSlots = [0, 1, 2, 3].map(() => {
+    const s = document.createElement('span');
+    s.className = 'die-slot';
+    $('dice').appendChild(s);
+    return s;
+  });
+  function tumbleDice() {
+    if (reduced) return;
+    const r = (a, b) => a + Math.random() * (b - a);
+    dieSlots.forEach((s, i) => {
+      const spin = (Math.random() < .5 ? -1 : 1) * r(320, 560), x = r(-7, 7);
+      s.animate([
+        { transform: 'translate(0,0) rotate(0)' },
+        { transform: `translate(${x}px,${r(-30, -22)}px) rotate(${spin * .45}deg) scale(1.1)`, offset: .32, easing: 'ease-in' },
+        { transform: `translate(${x * .6}px,0) rotate(${spin * .8}deg) scale(1.15,.8)`, offset: .62, easing: 'ease-out' },
+        { transform: `translate(${x * .3}px,-8px) rotate(${spin * .93}deg)`, offset: .8, easing: 'ease-in' },
+        { transform: `translate(0,0) rotate(${spin}deg) scale(1.06,.92)`, offset: .93 },
+        { transform: `translate(0,0) rotate(${Math.round(spin / 120) * 120}deg)` },
+      ], { duration: 520 + i * 40, easing: 'linear' });
+    });
+  }
+  function drawDice(d, final) {
+    (d || [0, 0, 0, 0]).forEach((v, i) => { dieSlots[i].innerHTML = dieSVG(v, i); });
+    if (final && d && !reduced && $('total').textContent === '·') $('total').animate(
+      [{ transform: 'scale(.3) rotate(-20deg)', opacity: 0 }, { transform: 'scale(1.35) rotate(6deg)', opacity: 1, offset: .6 }, { transform: 'none' }],
+      { duration: 380, easing: 'ease-out' });
+    $('dice').classList.toggle('idle', !d);
+    $('total').textContent = final && d ? d.reduce((a, b) => a + b, 0) : (d ? '·' : '–');
+  }
+
+  function clearTargets() {
+    document.querySelectorAll('.target').forEach(e => e.classList.remove('target', 'capture'));
+  }
+  function showTarget(m) {
+    clearTargets();
+    const el = m.to === OFF ? document.querySelector(`#tray${S.turn} .home`) : cells[coord(S.turn, m.to).join(',')];
+    el.classList.add('target');
+    if (m.cap >= 0) el.classList.add('capture');
+  }
+
+  function makePiece(p, i, m) {
+    const x = S.pos[p][i];
+    const label = `${SIDE[p]} piece ${x === 0 ? 'waiting' : x === OFF ? 'home' : 'on square ' + x}`;
+    const el = document.createElement(m ? 'button' : 'div');
+    el.className = `piece p${p}` + (m ? ' movable' : '');
+    el.dataset.pid = p + '-' + i;
+    el.innerHTML = pieceSVG(p, i + p);
+    if (m) {
+      el.type = 'button';
+      el.setAttribute('aria-label', `${label}: move to ${m.to === OFF ? 'home' : 'square ' + m.to}${m.cap >= 0 ? ', capturing' : ''}`);
+      el.addEventListener('click', () => { clearTargets(); doMove(m); });
+      el.addEventListener('pointerenter', () => showTarget(m));
+      el.addEventListener('focus', () => showTarget(m));
+      el.addEventListener('pointerleave', clearTargets);
+      el.addEventListener('blur', clearTargets);
+    } else {
+      el.setAttribute('role', 'img');
+      el.setAttribute('aria-label', label);
+    }
+    return el;
+  }
+
+  function renderTray(p) {
+    const tray = $('tray' + p);
+    const waiting = S.pos[p].filter(x => x === 0).length;
+    const home = S.pos[p].filter(x => x === OFF).length;
+    const active = S.phase !== 'over' && S.turn === p;
+    tray.classList.toggle('active', active);
+    tray.innerHTML = `
+      <div class="tray-name">${nameOf(p)}${S.mode === 'ai' ? ` <span class="side">play${p === 0 ? '' : 's'} the ${SIDE[p]}</span>` : ''}${active ? ' <span class="chip">to move</span>' : ''}</div>
+      <div class="tray-count">${waiting} waiting · ${home} of 7 home</div>
+      <div class="pool wait"></div><div class="pool home"></div>`;
+    return { wait: tray.querySelector('.wait'), home: tray.querySelector('.home') };
+  }
+
+  function render() {
+    const before = new Map();
+    document.querySelectorAll('[data-pid]').forEach(el => before.set(el.dataset.pid, el.getBoundingClientRect()));
+
+    const moves = S.phase === 'move' && !isAI(S.turn) ? legalMoves(S.pos, S.turn, S.roll) : [];
+    const movable = new Map(moves.map(m => [S.turn + '-' + m.i, m]));
+
+    Object.values(cells).forEach(c => { c.querySelector('.slot').replaceChildren(); c.classList.remove('lastto', 'target', 'capture', 'occupied'); });
+    if (S.lastTo) cells[S.lastTo.join(',')].classList.add('lastto');
+    const trays = [renderTray(0), renderTray(1)];
+    for (const p of [0, 1]) for (let i = 0; i < N; i++) {
+      const x = S.pos[p][i];
+      const el = makePiece(p, i, movable.get(p + '-' + i));
+      if (x === 0) trays[p].wait.appendChild(el);
+      else if (x === OFF) trays[p].home.appendChild(el);
+      else {
+        const cell = cells[coord(p, x).join(',')];
+        cell.classList.add('occupied');
+        cell.querySelector('.slot').appendChild(el);
+      }
+    }
+
+    const f = fx; fx = null;
+    if (!reduced) document.querySelectorAll('[data-pid]').forEach(el => {
+      const pid = el.dataset.pid;
+      if (f && pid === f.moved) {
+        // already hopped into place: land with a squash
+        el.animate([{ transform: 'scale(1.2, .78)' }, { transform: 'scale(.93, 1.1)', offset: .45 }, { transform: 'none' }],
+          { duration: 320, easing: 'ease-out' });
+        return;
+      }
+      const b = before.get(pid);
+      if (!b) return;
+      const a = el.getBoundingClientRect();
+      const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+      if (Math.abs(dx) + Math.abs(dy) < 1) return;
+      const s = b.width / a.width;
+      el.style.zIndex = 5;
+      const frames = f && pid === f.cap
+        ? [ // knocked off the board: a wobble, then a spinning arc back to the tray
+            { transform: `translate(${dx}px,${dy}px) scale(${s})` },
+            { transform: `translate(${dx + 4}px,${dy - 6}px) scale(${s * 1.2}) rotate(-25deg)`, offset: .14 },
+            { transform: `translate(${dx * .5}px,${dy * .5 - 90}px) scale(${s * 1.15}) rotate(380deg)`, offset: .55 },
+            { transform: 'rotate(720deg)' },
+          ]
+        : [{ transform: `translate(${dx}px,${dy}px) scale(${s})` }, { transform: 'translateY(-8px) scale(1.12)', offset: .6 }, { transform: 'none' }];
+      el.animate(frames, { duration: f && pid === f.cap ? 900 : 480, easing: 'cubic-bezier(.2,.7,.2,1)' })
+        .onfinish = () => { el.style.zIndex = ''; };
+    });
+    if (f && f.cap) sfxCapture();
+    if (f && f.cell && !reduced) {
+      const cell = cells[f.cell];
+      if (f.rose) burst(cell);
+      if (f.cap) floatWord(cell, ['Thwack!', 'Begone!', 'Huzzah!'][Math.floor(Math.random() * 3)]);
+      else if (f.rose) floatWord(cell, 'Roll again!');
+    }
+
+    if (S.phase !== 'rolling') drawDice(S.dice, true);
+
+    const st = $('status'), btn = $('roll');
+    st.classList.toggle('win', S.phase === 'over');
+    const who = nameOf(S.turn), you = S.mode === 'ai' && S.turn === 0;
+    let head = '', sub = '';
+    if (S.phase === 'over') {
+      head = S.mode === 'ai' ? (S.winner === 0 ? 'Victory is yours!' : 'The computer triumphs.') : `The ${SIDE[S.winner]} triumphs!`;
+      sub = 'All seven pieces brought home.';
+    } else if (S.phase === 'roll') {
+      head = isAI(S.turn) ? 'The computer rolls…' : you ? 'Your roll' : `${who} to roll`;
+      sub = S.note || (isAI(S.turn) ? '' : 'Press Space or R to roll.');
+    } else if (S.phase === 'rolling') {
+      head = 'The dice tumble…';
+    } else {
+      const has = legalMoves(S.pos, S.turn, S.roll).length;
+      head = `${you ? 'You' : who} rolled ${S.roll}.`;
+      sub = S.note || (isAI(S.turn) ? 'Pondering…' : has ? 'Choose a glowing piece.' : '');
+    }
+    st.innerHTML = `<strong>${head}</strong><span>${sub}</span>`;
+    btn.textContent = S.phase === 'over' ? 'Play again' : 'Roll';
+    btn.disabled = !(S.phase === 'over' || (S.phase === 'roll' && !isAI(S.turn)));
+
+    $('log').innerHTML = S.log.map(l => `<li>${l}</li>`).join('');
+    $('level').hidden = S.mode !== 'ai';
+    $('tally').innerHTML = S.mode === 'ai'
+      ? `Wins: You <b>${tally.you}</b> · Computer <b>${tally.computer}</b>`
+      : `Wins: Sun <b>${tally.sun}</b> · Moon <b>${tally.moon}</b>`;
+  }
+
+  // ---------- controls ----------
+  function newGame() {
+    gen++; clearTimeout(timer);
+    const mode = document.querySelector('input[name=mode]:checked').value;
+    S = fresh(mode, $('level').value);
+    addLog(`${nameOf(S.turn)} ${S.mode === 'ai' && S.turn === 0 ? 'go' : 'goes'} first.`);
+    render();
+    advance();
+  }
+  $('newgame').addEventListener('click', newGame);
+  function drawSound() {
+    $('sound').textContent = muted ? 'Sound off' : 'Sound on';
+    $('sound').setAttribute('aria-pressed', String(!muted));
+  }
+  $('sound').addEventListener('click', () => {
+    muted = !muted;
+    try { localStorage.setItem('ur-muted', muted ? '1' : '0'); } catch (e) {}
+    drawSound();
+    if (!muted) sfxDice();
+  });
+  drawSound();
+  document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', newGame));
+  $('level').addEventListener('change', e => { S.level = e.target.value; });
+  $('roll').addEventListener('click', () => { if (S.phase === 'over') newGame(); else if (!isAI(S.turn)) doRoll(); });
+  $('route').addEventListener('change', e => board.classList.toggle('show-route', e.target.checked));
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = e.target.tagName;
+    if (e.key === 'r' || e.key === 'R' || (e.key === ' ' && !['BUTTON', 'SELECT', 'INPUT', 'SUMMARY'].includes(tag))) {
+      if (S.phase === 'roll' && !isAI(S.turn)) { e.preventDefault(); doRoll(); }
+    }
+  });
+
+  $('odds').innerHTML = PROB.map((p, n) =>
+    `<span class="n">${n}</span><span class="bar" style="width:${p / PROB[2] * 100}%"></span><span class="p">${p * 16} in 16</span>`).join('');
+
+  // ---------- boot (keeps a game in progress across page updates) ----------
+  function start(data) {
+    if (data && data.S && data.S.pos) {
+      S = data.S;
+      if (S.phase === 'rolling') S.phase = 'roll';
+      if (S.phase === 'animating') S.phase = 'move';
+      document.getElementById(S.mode === 'ai' ? 'mode-ai' : 'mode-local').checked = true;
+      $('level').value = S.level;
+      render();
+      advance();
+    } else newGame();
+  }
+  window.claude?.hot?.snapshot?.(() => ({ S }));
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>
