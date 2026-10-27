@@ -28,6 +28,7 @@ img{max-width:100%}
   --night: #1c2a52;
   --green: #4a7a37;
   --sunfire: #e9a52c;
+  --counter-shadow: drop-shadow(1px 3px 1.5px rgba(40,28,18,.6));   /* the shadow every counter casts on the board */
 
   --f-display: "Uncial Antiqua", "IM Fell English", Georgia, serif;
   --f-body: "Alegreya", "IM Fell English", Georgia, serif;

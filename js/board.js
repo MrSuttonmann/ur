@@ -98,6 +98,7 @@ for (let row = 0; row < BOARD_ROWS; row++) for (let column = 0; column < BOARD_C
   boardCells[key] = cell;
   boardElement.appendChild(cell);
 }
+const boardSlots = Object.values(boardCells).map(cell => cell.querySelector('.slot'));   // where counters stand on the board
 function gateLabel(row) {
   const gate = document.createElement('div');
   gate.className = 'cell gap g1';
@@ -266,9 +267,12 @@ function addTouchPeek(el, move) {
 addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !e.target.closest('.piece.movable')) clearMovePreview(); });
 
 // ---------- counters and trays ----------
-function createCounter(side, counter, move) {
+function counterLabel(side, counter) {
   const square = game.positions[side][counter];
-  const label = `${SIDE_NAME[side]} piece ${square === IN_TRAY ? 'waiting' : square === currentRules.home ? 'home' : 'on square ' + square}`;
+  return `${SIDE_NAME[side]} piece ${square === IN_TRAY ? 'waiting' : square === currentRules.home ? 'home' : 'on square ' + square}`;
+}
+function createCounter(side, counter, move) {
+  const label = counterLabel(side, counter);
   const el = document.createElement(move ? 'button' : 'div');
   el.className = `piece p${side}` + (move ? ' movable' : '');
   el.dataset.pid = side + '-' + counter;
@@ -289,6 +293,30 @@ function createCounter(side, counter, move) {
   return el;
 }
 
+// A counter that can't be moved, before or after a redraw, keeps its element, so one still gliding to its place
+// carries on gliding. Counters that can move are built afresh, as they carry their move.
+let counterElements = new Map();   // "side-counter" → its element
+function counterFor(side, counter, move) {
+  const kept = counterElements.get(side + '-' + counter);
+  const keepable = kept && !move && !kept.classList.contains('movable') && !kept.classList.contains('hopping');
+  if (!keepable) return createCounter(side, counter, move);
+  kept.setAttribute('aria-label', counterLabel(side, counter));
+  return kept;
+}
+
+// Put each container's counters in it, in order, leaving any already in their place untouched. A counter
+// changing place moves straight to its new container; only then are those no longer wanted taken away.
+function arrangeCounters(countersIn) {
+  countersIn.forEach((counters, container) => counters.forEach((el, index) => {
+    if (container.children[index] !== el) container.insertBefore(el, container.children[index] || null);
+  }));
+  counterContainers().forEach(container => {
+    const wanted = (countersIn.get(container) || []).length;
+    while (container.children.length > wanted) container.lastElementChild.remove();
+  });
+}
+const counterContainers = () => [...boardSlots, ...document.querySelectorAll('.tray .pool')];
+
 // whose turn it is shows on their tray, the dice box and their portrait, all in their side's colour
 const isInPlay = () => game.phase !== 'over' && game.phase !== 'setup';
 function turnTag(side) {
@@ -307,10 +335,11 @@ function renderTray(side) {
   const plays = game.mode === 'ai' ? ` <span class="side">${side === COMPUTER_SIDE ? 'plays' : 'play'} the ${SIDE_NAME[side]}</span>` : '';
   tray.classList.toggle('active', active);
   tray.classList.toggle('off-turn', isInPlay() && !active);
-  tray.innerHTML = `
-    <div class="tray-name">${playerName(side)}${plays}${active ? ` <span class="chip">${turnTag(side)}</span>` : ''}</div>
-    <div class="tray-count">${waiting} waiting · ${home} of ${squares.length} home</div>
-    <div class="pool wait"></div><div class="pool home"></div>`;
+  // the pools are built once and kept, so the counters in them can be too
+  if (!tray.querySelector('.pool')) tray.innerHTML = `
+    <div class="tray-name"></div><div class="tray-count"></div><div class="pool wait"></div><div class="pool home"></div>`;
+  tray.querySelector('.tray-name').innerHTML = `${playerName(side)}${plays}${active ? ` <span class="chip">${turnTag(side)}</span>` : ''}`;
+  tray.querySelector('.tray-count').textContent = `${waiting} waiting · ${home} of ${squares.length} home`;
   return { waiting: tray.querySelector('.wait'), home: tray.querySelector('.home') };
 }
 
@@ -347,13 +376,17 @@ function placeCounters() {
   // keyboard numbers: the counter furthest along the route is 1
   const keyboardOrder = moves.slice().sort((a, b) => b.from - a.from).map(move => move.counter);
 
-  Object.values(boardCells).forEach(cell => { cell.querySelector('.slot').replaceChildren(); cell.classList.remove('lastto', 'target', 'capture', 'occupied'); });
+  Object.values(boardCells).forEach(cell => cell.classList.remove('lastto', 'target', 'capture', 'occupied'));
   clearMovePreview();  // the counters are rebuilt, so any preview ring or arrow belongs to the old ones
   if (game.lastLanding) boardCells[cellKey(game.lastLanding)].classList.add('lastto');
   const trays = SIDES.map(renderTray);
+  const countersIn = new Map();   // each tray pool or board slot → the counters it holds, in order
+  const place = (container, el) => { if (!countersIn.has(container)) countersIn.set(container, []); countersIn.get(container).push(el); };
+  const elements = new Map();
   for (const side of SIDES) game.positions[side].forEach((square, counter) => {
     const move = side === game.turn ? moveFor.get(counter) : undefined;
-    const el = createCounter(side, counter, move);
+    const el = counterFor(side, counter, move);
+    elements.set(el.dataset.pid, el);
     if (move && game.advice && game.phase === 'move' && counter === game.advice.counter) el.classList.add('advised');
     const keyNumber = move ? keyboardOrder.indexOf(counter) + 1 : 0;
     if (keyNumber) {
@@ -361,14 +394,16 @@ function placeCounters() {
       el.setAttribute('aria-keyshortcuts', String(keyNumber));
       el.setAttribute('aria-label', el.getAttribute('aria-label') + `. Key ${keyNumber}`);
     }
-    if (square === IN_TRAY) trays[side].waiting.appendChild(el);
-    else if (square === currentRules.home) trays[side].home.appendChild(el);
+    if (square === IN_TRAY) place(trays[side].waiting, el);
+    else if (square === currentRules.home) place(trays[side].home, el);
     else {
       const cell = squareElement(side, square);
       cell.classList.add('occupied');
-      cell.querySelector('.slot').appendChild(el);
+      place(cell.querySelector('.slot'), el);
     }
   });
+  counterElements = elements;
+  arrangeCounters(countersIn);
 }
 
 // glide counters that changed place; the one that just hopped lands with a squash, a captured one spins home
@@ -387,7 +422,10 @@ function animateCounterChanges(previousPlaces, effects) {
     const dx = was.left + was.width / 2 - (now.left + now.width / 2), dy = was.top + was.height / 2 - (now.top + now.height / 2);
     if (Math.abs(dx) + Math.abs(dy) < 1) return;
     const scale = was.width / now.width, captured = effects && pid === effects.captured;
+    // a counter sent somewhere new mid-glide sets off from where it is now, so the old glide stops here
+    el.glide?.cancel();
     el.classList.add('gliding');   // above the other counters on its way
+    el.classList.toggle('knocked-off', !!captured);
     const frames = captured
       ? [ // knocked off the board: a wobble, then a spinning arc back to the tray
           { transform: `translate(${dx}px,${dy}px) scale(${scale})` },
@@ -396,8 +434,8 @@ function animateCounterChanges(previousPlaces, effects) {
           { transform: 'rotate(720deg)' },
         ]
       : [{ transform: `translate(${dx}px,${dy}px) scale(${scale})` }, { transform: 'translateY(-8px) scale(1.12)', offset: .6 }, { transform: 'none' }];
-    el.animate(frames, { duration: captured ? 900 : 480, easing: 'cubic-bezier(.2,.7,.2,1)' })
-      .onfinish = () => el.classList.remove('gliding');
+    el.glide = el.animate(frames, { duration: captured ? 900 : 480, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    el.glide.onfinish = () => el.classList.remove('gliding', 'knocked-off');
   });
 }
 

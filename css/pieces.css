@@ -15,8 +15,13 @@
 /* whose turn it is: their tray takes a wash and a heavy border in their side's colour, and the other tray fades back */
 .tray-sun { --side: var(--c-sun); --side-wash: rgba(233,165,44,.2); }
 .tray-moon { --side: var(--c-moon); --side-wash: rgba(58,98,168,.1); }
-.tray.active { background-color: var(--side-wash); border: 2.5px solid var(--side); box-shadow: 3px 3px 0 -1px var(--ink); }
-.tray.off-turn > * { opacity: .6; filter: saturate(.6); transition: opacity .25s, filter .25s; }
+/* the heavier border is a ring of shadow, so the counters inside don't shift and twitch when the turn changes */
+.tray.active { background-color: var(--side-wash); border-color: var(--side); box-shadow: 0 0 0 1px var(--side), 3px 3px 0 -1px var(--ink); }
+/* the fade goes on the words and on each counter, never on the pools: a faded pool would hold its counters
+   in a layer of its own, hiding one flying in under the board and repainting the lot on every redraw */
+.tray.off-turn .tray-name, .tray.off-turn .tray-count { opacity: .6; filter: saturate(.6); transition: opacity .25s, filter .25s; }
+.tray.off-turn .piece { opacity: .6; filter: saturate(.6) var(--counter-shadow); }
+.tray .piece { transition: opacity .25s, filter .25s; }
 .tray-name { font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .tray-name .side { font-family: var(--f-note); font-style: italic; font-weight: 400; color: var(--ink-soft); }
 /* "your turn" is a tag in the side's colour pinned to the tray's top edge, so it never reflows the tray */
@@ -39,11 +44,11 @@
 .piece {
   position: relative; display: block; width: 88%; aspect-ratio: 1; max-width: 100%; padding: 0; margin: 0;
   background: none; border: 0; border-radius: 50%; cursor: default; font: inherit;
-  filter: drop-shadow(1px 3px 1.5px rgba(40,28,18,.6));
+  filter: var(--counter-shadow);
 }
 
 .piece svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.piece.movable { cursor: pointer; filter: drop-shadow(0 0 4px var(--sunfire)) drop-shadow(0 0 2px var(--sunfire)) drop-shadow(1px 3px 1.5px rgba(40,28,18,.6)); animation: bob 1.3s ease-in-out infinite; }
+.piece.movable { cursor: pointer; filter: drop-shadow(0 0 4px var(--sunfire)) drop-shadow(0 0 2px var(--sunfire)) var(--counter-shadow); animation: bob 1.3s ease-in-out infinite; }
 .piece:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 3px; }
 /* keyboard players see a number on each counter that can move */
 .kbd .piece.movable[data-key]::after {
@@ -53,6 +58,8 @@
 @keyframes bob { 50% { transform: translateY(-3px) rotate(-4deg); } }
 /* a moving counter passes over the others: hopping along its route, or gliding to its new place after a redraw */
 .piece.gliding { z-index: 5; }
+/* a captured counter flies back over its tray-mates, which shuffle along to make room for it */
+.piece.knocked-off { z-index: 6; }
 .piece.hopping { z-index: 20; }
 .petal {
   position: absolute; left: 50%; top: 50%; width: 8px; height: 10px; margin: -5px 0 0 -4px; z-index: 30; pointer-events: none;
