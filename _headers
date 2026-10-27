@@ -1,0 +1,13 @@
+# Cloudflare Pages response headers.
+# The page, its scripts and styles, and the service worker must always be checked with the server: a browser
+# holding old scripts for hours while the page is new breaks the game after every update.
+/
+  Cache-Control: no-cache
+/js/*
+  Cache-Control: no-cache
+/css/*
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
