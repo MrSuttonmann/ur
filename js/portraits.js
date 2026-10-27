@@ -1,10 +1,14 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// ---------- portraits: hand-drawn players beside the trays (wide screens only) ----------
-// Sun is always the hero; the Moon side is the chosen computer opponent, or a stargazer in two-player games
+// ---------- portraits: hand-drawn players beside the trays (tablets and wider) ----------
+// The Sun is always the hero; the Moon is the chosen computer opponent, or a stargazer in two-player games.
+// Adding a character means adding entries to CHARACTER_NAMES, LINES, SKIN and OUTFIT.
 const CHARACTER_NAMES = { hero: 'You', heroLocal: 'Sun player', squire: 'The Squire', knight: 'Sir Knight', king: 'The King', stargazer: 'Moon player' };
-const characterOf = side => side === 0 ? 'hero'
-  : S.mode === 'ai' ? ({ easy: 'squire', medium: 'knight', hard: 'king' }[S.level] || 'knight') : 'stargazer';
+const CHARACTER_FOR_LEVEL = { easy: 'squire', medium: 'knight', hard: 'king' };
+function characterFor(side) {
+  if (side === SUN) return game.mode === 'ai' ? 'hero' : 'heroLocal';
+  return game.mode === 'ai' ? CHARACTER_FOR_LEVEL[game.level] || 'knight' : 'stargazer';
+}
 
 const LINES = {
   hero: {
@@ -67,33 +71,44 @@ LINES.heroLocal = LINES.hero;
 const EVENT_FACE = { start: 'smile', rose: 'happy', capture: 'smug', captured: 'angry', pass: 'sad', home: 'happy', centre: 'smug', win: 'happy', lose: 'sad' };
 const FACE_OVERRIDE = { squire: { captured: 'sad' }, knight: { pass: 'neutral', captured: 'surprised' }, king: { pass: 'angry', lose: 'angry' } };
 
-const mood = [{ face: null, until: 0 }, { face: null, until: 0 }];
-let speechTimers = [];
+const FACE_MS = 3200, BUBBLE_MS = 3300;   // how long a reaction shows
+const mood = SIDES.map(() => ({ face: null, until: 0 }));   // a reaction's face, shown until the time given
+let speechTimers = [];                            // reactions waiting to happen
+const bubbleTimers = SIDES.map(() => null);        // each side's "hide the bubble" timer; a new line replaces it
+// the face when nothing has just happened
 function baseFace(side) {
-  if (S.phase === 'over') return S.winner === side ? 'happy' : characterOf(side) === 'king' ? 'angry' : 'sad';
-  if (S.phase !== 'setup' && isAI(side) && S.turn === side && S.phase !== 'roll') return 'thinking';
+  if (game.phase === 'over') return game.winner === side ? 'happy' : characterFor(side) === 'king' ? 'angry' : 'sad';
+  if (game.phase !== 'setup' && isComputer(side) && game.turn === side && game.phase !== 'roll') return 'thinking';
   return 'neutral';
 }
 function clearSpeech() {
   speechTimers.forEach(clearTimeout); speechTimers = [];
-  mood.forEach(m => { m.face = null; m.until = 0; });
-  document.querySelectorAll('.speech').forEach(b => { b.hidden = true; });
+  bubbleTimers.forEach(clearTimeout);
+  document.querySelectorAll('.portrait').forEach(portrait => portrait.classList.remove('speaking'));
+  mood.forEach(reaction => { reaction.face = null; reaction.until = 0; });
+  document.querySelectorAll('.speech').forEach(bubble => { bubble.hidden = true; });
 }
 // a reaction: a face for a few seconds and, usually, a line in a speech bubble
 function speak(side, event, delay = 0, chance = 1) {
   if (Math.random() > chance) return;
-  const g = gen;
+  const thisGame = gameId;
   speechTimers.push(setTimeout(() => {
-    if (g !== gen) return;
-    const who = characterOf(side) === 'hero' && S.mode !== 'ai' ? 'heroLocal' : characterOf(side);
-    const lines = LINES[who][event];
-    mood[side] = { face: (FACE_OVERRIDE[who] || {})[event] || EVENT_FACE[event], until: Date.now() + 3200 };
-    const bubble = $('speech' + side);
+    if (thisGame !== gameId) return;
+    const who = characterFor(side), lines = LINES[who][event];
+    mood[side] = { face: (FACE_OVERRIDE[who] || {})[event] || EVENT_FACE[event], until: Date.now() + FACE_MS };
+    const bubble = $('speech' + side), portrait = $('portrait' + side);
     bubble.textContent = lines[Math.floor(Math.random() * lines.length)];
     bubble.hidden = false;
     bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop');
+    portrait.classList.add('speaking');   // on phones, this slides the character in from the edge
     drawPortraits();
-    speechTimers.push(setTimeout(() => { if (g === gen) { bubble.hidden = true; drawPortraits(); } }, 3300));
+    clearTimeout(bubbleTimers[side]);     // an earlier line's timer mustn't hide this one early
+    bubbleTimers[side] = setTimeout(() => {
+      if (thisGame !== gameId) return;
+      bubble.hidden = true;
+      portrait.classList.remove('speaking');
+      drawPortraits();
+    }, BUBBLE_MS);
   }, delay));
 }
 
@@ -194,32 +209,33 @@ const OUTFIT = {
   },
 };
 OUTFIT.heroLocal = OUTFIT.hero;
+// each side's medallion: its background, the clip that keeps the bust inside it, and its rim
+const MEDALLION = { [SUN]: { background: sunBack, clip: 'sun', rimRadius: 46 }, [MOON]: { background: moonBack, clip: 'moon', rimRadius: 54 } };
 function portraitSVG(side, who, face) {
-  const o = OUTFIT[who], skin = SKIN[who];
+  const outfit = OUTFIT[who], skin = SKIN[who], medallion = MEDALLION[side];
   return `<svg viewBox="0 0 120 120">
-    ${side === 0 ? sunBack() : moonBack()}
-    <g clip-path="url(#portrait-clip-${side === 0 ? 'sun' : 'moon'})"><g filter="url(#ink)">
-      ${o.behind || ''}${o.body}
+    ${medallion.background()}
+    <g clip-path="url(#portrait-clip-${medallion.clip})"><g filter="url(#ink)">
+      ${outfit.behind || ''}${outfit.body}
       <path d="M54 78 L54 88 L66 88 L66 78 Z" style="fill:${skin};stroke:var(--ink);stroke-width:1.3"/>
       <circle cx="39" cy="58" r="4.5" style="fill:${skin};stroke:var(--ink);stroke-width:1.3"/><circle cx="81" cy="58" r="4.5" style="fill:${skin};stroke:var(--ink);stroke-width:1.3"/>
       <ellipse cx="60" cy="58" rx="21.5" ry="23" style="fill:${skin};stroke:var(--ink);stroke-width:1.6"/>
-      ${o.beard || ''}${blush(face)}
+      ${outfit.beard || ''}${blush(face)}
       <path d="M60 58.5 Q62.5 62 59.5 63" style="${ink};stroke-width:1.3"/>
-      ${eyes(face)}${mouth(face)}${o.over || ''}
+      ${eyes(face)}${mouth(face)}${outfit.over || ''}
     </g></g>
-    <circle cx="60" cy="60" r="${side === 0 ? 46 : 54}" style="${ink};stroke-width:2" filter="url(#ink)"/>
+    <circle cx="60" cy="60" r="${medallion.rimRadius}" style="${ink};stroke-width:2" filter="url(#ink)"/>
   </svg>`;
 }
-const drawn = ['', ''];
+const drawnPortrait = SIDES.map(() => '');   // which character and face each medallion shows, to skip redrawing
 function drawPortraits() {
-  if (!S) return;
-  for (const side of [0, 1]) {
-    const who = characterOf(side) === 'hero' && S.mode !== 'ai' ? 'heroLocal' : characterOf(side);
+  if (!game) return;
+  for (const side of SIDES) {
+    const who = characterFor(side);
     const face = mood[side].until > Date.now() ? mood[side].face : baseFace(side);
-    const key = who + face;
-    if (drawn[side] !== key) {
+    if (drawnPortrait[side] !== who + face) {
       $('medal' + side).innerHTML = portraitSVG(side, who, face);
-      drawn[side] = key;
+      drawnPortrait[side] = who + face;
     }
     $('pname' + side).textContent = CHARACTER_NAMES[who];
   }
@@ -227,9 +243,9 @@ function drawPortraits() {
 }
 // line each portrait up with its own tray
 function placePortraits() {
-  for (const side of [0, 1]) {
-    const pr = $('portrait' + side), tray = $('tray' + side);
-    pr.style.top = Math.round(tray.offsetTop + tray.offsetHeight / 2 - 75) + 'px';
+  for (const side of SIDES) {
+    const portrait = $('portrait' + side), tray = $('tray' + side);
+    portrait.style.top = Math.round(tray.offsetTop + tray.offsetHeight / 2 - portrait.querySelector('.medal').offsetHeight / 2) + 'px';
   }
 }
 addEventListener('resize', placePortraits);

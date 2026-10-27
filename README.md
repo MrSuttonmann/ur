@@ -25,13 +25,23 @@ python3 -m http.server 8000
 |---|---|
 | `index.html` | The page markup, dialogs and SVG definitions |
 | `css/style.css` | All styles |
-| `js/rules.js` | Rule variants, board rules and the computer opponent |
+| `js/rules.js` | The board, the rules, rule variants and the computer opponent (no page code) |
 | `js/sound.js` | Synthesised sound effects |
-| `js/game.js` | Game state, turns, moves and their animations |
+| `js/game.js` | Game state, the turn sequence, and making moves |
 | `js/stats.js` | Stats recording and the Stats window |
 | `js/board.js` | Drawing the board, counters, dice and move arrows; `render()` |
 | `js/portraits.js` | Player portraits, expressions and speech |
-| `js/ui.js` | Preferences, advice, the guided game, new game, options, modals, keyboard play, install |
+| `js/prefs.js` | Saved preferences |
+| `js/icons.js` | Hand-drawn toolbar icons |
+| `js/bubbles.js` | Pinning a note beside something (guide tips, advice) |
+| `js/advice.js` | Advise me |
+| `js/guide.js` | The guided first game |
+| `js/newgame.js` | Starting games, the set-up board, confirming before a game is lost |
+| `js/options.js` | The Options window and which rules are in play |
+| `js/controls.js` | Roll, Sound, Route, and the mode and opponent choices |
+| `js/modals.js` | The Rules, Strategy, Options and Stats windows |
+| `js/keyboard.js` | Keyboard play |
+| `js/install.js` | Installing the app and offline support |
 | `js/music.js` | Background music |
 | `js/main.js` | Start-up |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Offline support and installing |

@@ -1,58 +1,66 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
+// Drawing the board: tiles, counters, dice, move previews, and render(), which redraws the game from its state.
+
 // ---------- painting ----------
-const PATTERN = [
+// the picture on each board cell (null = the gap where the gates are)
+const BOARD_PICTURES = [
   ['ros', 'castle', 'five', 'shield', null, null, 'ros', 'crown'],
   ['five', 'tree', 'shield', 'ros', 'castle', 'five', 'crown', 'tree'],
   ['ros', 'shield', 'five', 'castle', null, null, 'ros', 'crown'],
 ];
-const WASH = { ros: 'ochre', castle: 'rose', five: 'paper-deep', shield: 'woad', crown: 'sage', tree: 'ochre' };
+const GATE_COLUMN = 4;                     // first column of the gap; the gate label spans it and the next
+const PICTURE_WASH = { ros: 'ochre', castle: 'rose', five: 'paper-deep', shield: 'woad', crown: 'sage', tree: 'ochre' };
+const WASH_FILTERS = 4;                    // #wash0 to #wash3 vary the watercolour texture
 const ink = 'fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round';
-const paint = (c, o = .8) => `fill:var(--${c});fill-opacity:${o}`;
+const paint = (colour, opacity = .8) => `fill:var(--${colour});fill-opacity:${opacity}`;
+const CENTRE_CELL = cellKey(routeCell(SUN, CENTRE));
+const isCentreCell = (row, column) => cellKey([row, column]) === CENTRE_CELL;
 
-function tileSVG(kind, k) {
-  const w = `url(#wash${k % 4})`;
-  let d = '';
+function tileSVG(kind, seed) {
+  const wash = `url(#wash${seed % WASH_FILTERS})`;
+  let art = '';
   if (kind === 'ros') {
-    for (let a = 0; a < 360; a += 72) {
-      d += `<path d="M20 20 L18.6 6.4 L21.4 6.4 Z" transform="rotate(${a + 36} 20 20)" style="${paint('sage', .9)}"/>`;
-      d += `<circle cx="20" cy="12.2" r="6.4" transform="rotate(${a} 20 20)" style="${paint('vermilion', .85)};stroke:var(--ink);stroke-width:1.1"/>`;
+    for (let angle = 0; angle < 360; angle += 72) {
+      art += `<path d="M20 20 L18.6 6.4 L21.4 6.4 Z" transform="rotate(${angle + 36} 20 20)" style="${paint('sage', .9)}"/>`;
+      art += `<circle cx="20" cy="12.2" r="6.4" transform="rotate(${angle} 20 20)" style="${paint('vermilion', .85)};stroke:var(--ink);stroke-width:1.1"/>`;
     }
-    d += `<circle cx="20" cy="20" r="5" style="${paint('ochre', 1)};stroke:var(--ink);stroke-width:1.1"/>`;
-    for (let a = 0; a < 360; a += 60) d += `<circle cx="20" cy="17.6" r=".8" transform="rotate(${a} 20 20)" style="fill:var(--ink)"/>`;
+    art += `<circle cx="20" cy="20" r="5" style="${paint('ochre', 1)};stroke:var(--ink);stroke-width:1.1"/>`;
+    for (let angle = 0; angle < 360; angle += 60) art += `<circle cx="20" cy="17.6" r=".8" transform="rotate(${angle} 20 20)" style="fill:var(--ink)"/>`;
   } else if (kind === 'castle') {
-    d += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z" style="${paint('bone', .9)}"/>`;
-    d += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z M17 32 V26 Q20 22 23 26 V32 M14 21 v3 M26 21 v3" style="${ink}"/>`;
-    d += `<path d="M20 13.5 V7 M20 7 l5 1.5 -5 1.5" style="${ink}"/><path d="M20 7 l5 1.5 -5 1.5 z" style="${paint('vermilion', .9)}"/>`;
+    art += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z" style="${paint('bone', .9)}"/>`;
+    art += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z M17 32 V26 Q20 22 23 26 V32 M14 21 v3 M26 21 v3" style="${ink}"/>`;
+    art += `<path d="M20 13.5 V7 M20 7 l5 1.5 -5 1.5" style="${ink}"/><path d="M20 7 l5 1.5 -5 1.5 z" style="${paint('vermilion', .9)}"/>`;
   } else if (kind === 'shield') {
-    d += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('bone', .9)}"/>`;
-    d += `<path d="M11.5 22 L20 14 L28.5 22 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('vermilion', .75)}"/>`;
-    d += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z M11.5 22 L20 14 L28.5 22" style="${ink}"/>`;
+    art += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('bone', .9)}"/>`;
+    art += `<path d="M11.5 22 L20 14 L28.5 22 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('vermilion', .75)}"/>`;
+    art += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z M11.5 22 L20 14 L28.5 22" style="${ink}"/>`;
   } else if (kind === 'crown') {
-    d += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z" style="${paint('ochre', .95)}"/>`;
-    d += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z M10.5 25 H29.5" style="${ink}"/>`;
-    d += [[11, 13], [20, 9], [29, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:.8"/>`).join('');
+    art += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z" style="${paint('ochre', .95)}"/>`;
+    art += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z M10.5 25 H29.5" style="${ink}"/>`;
+    art += [[11, 13], [20, 9], [29, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:.8"/>`).join('');
   } else if (kind === 'tree') {
-    d += `<path d="M19 33 V22 M21 33 V22" style="${ink}"/><path d="M19 33 V22 H21 V33 Z" style="${paint('ink-soft', .7)}"/>`;
-    d += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${paint('sage', .9)}"/>`;
-    d += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${ink}"/>`;
-    d += [[16, 14], [24, 13], [20, 19], [26, 19]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" style="${paint('vermilion', .9)}"/>`).join('');
+    art += `<path d="M19 33 V22 M21 33 V22" style="${ink}"/><path d="M19 33 V22 H21 V33 Z" style="${paint('ink-soft', .7)}"/>`;
+    art += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${paint('sage', .9)}"/>`;
+    art += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${ink}"/>`;
+    art += [[16, 14], [24, 13], [20, 19], [26, 19]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" style="${paint('vermilion', .9)}"/>`).join('');
   } else if (kind === 'five') {
     for (const [x, y] of [[11, 11], [29, 11], [11, 29], [29, 29], [20, 20]])
-      d += `<circle cx="${x}" cy="${y}" r="4" style="${paint('woad', .8)};stroke:var(--ink);stroke-width:1"/><circle cx="${x}" cy="${y}" r="1.3" style="fill:var(--bone)"/>`;
+      art += `<circle cx="${x}" cy="${y}" r="4" style="${paint('woad', .8)};stroke:var(--ink);stroke-width:1"/><circle cx="${x}" cy="${y}" r="1.3" style="fill:var(--bone)"/>`;
   }
   return `<svg class="tile" viewBox="0 0 40 40" aria-hidden="true">
-    <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="${paint(WASH[kind], .78)}" filter="${w}"/>
-    <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="fill:none;stroke:var(--${WASH[kind]});stroke-opacity:.6;stroke-width:2.2" filter="${w}"/>
+    <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="${paint(PICTURE_WASH[kind], .78)}" filter="${wash}"/>
+    <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="fill:none;stroke:var(--${PICTURE_WASH[kind]});stroke-opacity:.6;stroke-width:2.2" filter="${wash}"/>
     <rect x="2" y="2" width="36" height="36" rx="4" style="${ink};stroke-width:1.5" filter="url(#ink)"/>
-    <g class="art" filter="url(#ink)">${d}</g></svg>`;
+    <g class="art" filter="url(#ink)">${art}</g></svg>`;
 }
 
-const pieceSVG = (p, k) => {
+// a Sun counter shows a smiling sun, a Moon counter a crescent
+function counterSVG(side, seed) {
   let emblem;
-  if (p === 0) {
+  if (side === SUN) {
     emblem = '';
-    for (let a = 0; a < 360; a += 45) emblem += `<path d="M20 9.5 V6.5" transform="rotate(${a} 20 20)" style="${ink};stroke-width:1.4"/>`;
+    for (let angle = 0; angle < 360; angle += 45) emblem += `<path d="M20 9.5 V6.5" transform="rotate(${angle} 20 20)" style="${ink};stroke-width:1.4"/>`;
     emblem += `<circle cx="20" cy="20" r="7" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1.2"/>
       <path d="M17 19 h.1 M23 19 h.1" style="${ink};stroke-width:1.8"/><path d="M17 22.5 Q20 25 23 22.5" style="${ink}"/>`;
   } else {
@@ -62,44 +70,47 @@ const pieceSVG = (p, k) => {
   // solid disc first so the tile never shows through; the wash on top only adds texture
   return `<svg viewBox="0 0 40 40" aria-hidden="true">
     <circle cx="20" cy="20" r="18.5" style="fill:var(--bone)"/>
-    <circle cx="20" cy="20" r="15.5" style="fill:var(--${p === 0 ? 'sunfire' : 'night'})"/>
-    <circle cx="20" cy="20" r="15" style="${paint(p === 0 ? 'ochre' : 'woad', .55)}" filter="url(#wash${k % 4})"/>
+    <circle cx="20" cy="20" r="15.5" style="fill:var(--${side === SUN ? 'sunfire' : 'night'})"/>
+    <circle cx="20" cy="20" r="15" style="${paint(side === SUN ? 'ochre' : 'woad', .55)}" filter="url(#wash${seed % WASH_FILTERS})"/>
     <g filter="url(#ink)"><circle cx="20" cy="20" r="18.5" style="${ink};stroke-width:2.2"/>
     <circle cx="20" cy="20" r="15.5" style="${ink};stroke-width:1"/>${emblem}</g></svg>`;
-};
+}
 
-const dieSVG = (v, k) => `<svg class="die" viewBox="0 0 40 36">
-  <polygon points="20,2 38,34 2,34" style="${paint('bone', 1)}" filter="url(#wash${k})"/>
-  <polygon points="20,23 38,34 2,34" style="${paint('paper-deep', .9)}" filter="url(#wash${k})"/>
+// a die seen from above; a marked tip is painted red
+const dieSVG = (marked, seed) => `<svg class="die" viewBox="0 0 40 36">
+  <polygon points="20,2 38,34 2,34" style="${paint('bone', 1)}" filter="url(#wash${seed})"/>
+  <polygon points="20,23 38,34 2,34" style="${paint('paper-deep', .9)}" filter="url(#wash${seed})"/>
   <g filter="url(#ink)"><path d="M20 2 L38 34 L2 34 Z M20 2 L20 23 M2 34 L20 23 M38 34 L20 23" style="${ink};stroke-width:1.4"/>
-  ${v ? `<circle cx="20" cy="23" r="4.2" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:1"/>` : '<circle cx="20" cy="23" r="1.3" style="fill:var(--ink)"/>'}</g></svg>`;
+  ${marked ? `<circle cx="20" cy="23" r="4.2" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:1"/>` : '<circle cx="20" cy="23" r="1.3" style="fill:var(--ink)"/>'}</g></svg>`;
 
-// route numbers: each private row belongs to one player, so labels are unambiguous
-const routeNum = {};
-for (const p of [0, 1]) for (let k = 1; k <= 14; k++) routeNum[coord(p, k).join(',')] = k;
+// ---------- building the board ----------
+// route numbers: each private row belongs to one side, so every cell has one unambiguous number
+const routeNumberByCell = {};
+for (const side of SIDES) for (let square = 1; square <= LAST_SQUARE; square++) routeNumberByCell[cellKey(routeCell(side, square))] = square;
 
-const cells = {};
-const board = $('board');
-let k = 0;
-for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) {
-  const kind = PATTERN[r][c];
+const boardCells = {};
+const boardElement = $('board');
+let tileSeed = 0;
+for (let row = 0; row < BOARD_ROWS; row++) for (let column = 0; column < BOARD_COLUMNS; column++) {
+  const kind = BOARD_PICTURES[row][column];
   if (!kind) {
-    if (c === 4) {
-      const g = document.createElement('div');
-      g.className = 'cell gap g1';
-      g.innerHTML = r === 0 ? 'Moon’s<br>gate' : r === 2 ? 'Sun’s<br>gate' : '';
-      board.appendChild(g);
-    }
+    if (column === GATE_COLUMN) boardElement.appendChild(gateLabel(row));
     continue;
   }
-  const el = document.createElement('div');
-  const safe = r === 1 && c === 3;
-  el.className = 'cell' + (safe ? ' safe-sq' : '');
-  el.title = (kind === 'ros' ? (safe ? 'Centre rose: roll again, and safe from capture' : 'Rose: roll again')
-    : 'Ordinary square (the picture is decoration only)') + ` · square ${routeNum[r + ',' + c]}`;
-  el.innerHTML = tileSVG(kind, k++) + `<span class="num">${routeNum[r + ',' + c]}</span><div class="slot"></div>`;
-  cells[r + ',' + c] = el;
-  board.appendChild(el);
+  const key = cellKey([row, column]), centre = isCentreCell(row, column);
+  const cell = document.createElement('div');
+  cell.className = 'cell' + (centre ? ' safe-sq' : '');
+  cell.title = (kind === 'ros' ? (centre ? 'Centre rose: roll again, and safe from capture' : 'Rose: roll again')
+    : 'Ordinary square (the picture is decoration only)') + ` · square ${routeNumberByCell[key]}`;
+  cell.innerHTML = tileSVG(kind, tileSeed++) + `<span class="num">${routeNumberByCell[key]}</span><div class="slot"></div>`;
+  boardCells[key] = cell;
+  boardElement.appendChild(cell);
+}
+function gateLabel(row) {
+  const gate = document.createElement('div');
+  gate.className = 'cell gap g1';
+  gate.innerHTML = row === ROW.MOON ? 'Moon’s<br>gate' : row === ROW.SUN ? 'Sun’s<br>gate' : '';
+  return gate;
 }
 
 // board key: the same painted tiles, small, with what each one does
@@ -108,99 +119,112 @@ $('key').innerHTML = `
   <span class="key-title">Board key</span>
   <span class="key-item"><span class="key-icons">${keyTile('ros', 0)}</span><span><b>Rose</b><small>Land here to roll again</small></span></span>
   <span class="key-item"><span class="key-icons" id="key-centre-tile">${keyTile('ros', 1, true)}</span><span><b>Centre rose</b><small id="key-centre">Roll again, and safe from capture</small></span></span>
-  <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((t, i) => keyTile(t, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>`;
+  <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((kind, i) => keyTile(kind, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>`;
 
-// squares for the route diagram in the rules
-$('route-cells').innerHTML = PATTERN.flatMap((row, r) => row.map((kind, c) => {
-  const x = 4 + c * 30, y = 4 + r * 30;
-  if (!kind) return c === 4 && r !== 1 ? `<text x="152" y="${y + 16}" text-anchor="middle" style="font:italic 9px var(--f-note);fill:var(--ink-soft)">gate</text>` : '';
-  const rose = kind === 'ros', safe = r === 1 && c === 3;
-  return `<rect x="${x}" y="${y}" width="26" height="26" rx="4" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .55 : 1};stroke:${safe ? 'var(--ochre)' : 'var(--ink-soft)'};stroke-width:${safe ? 2.5 : 1}"/>`
-    + (rose ? `<circle cx="${x + 13}" cy="${y + 13}" r="5" style="fill:var(--vermilion);fill-opacity:.8"/>` : '');
+// squares for the route diagram in the rules (a 30-unit grid with 26-unit squares)
+const DIAGRAM_PITCH = 30, DIAGRAM_SQUARE = 26, DIAGRAM_MARGIN = 4, DIAGRAM_GATE_X = 152;
+$('route-cells').innerHTML = BOARD_PICTURES.flatMap((pictures, row) => pictures.map((kind, column) => {
+  const x = DIAGRAM_MARGIN + column * DIAGRAM_PITCH, y = DIAGRAM_MARGIN + row * DIAGRAM_PITCH;
+  if (!kind) return column === GATE_COLUMN && row !== ROW.SHARED
+    ? `<text x="${DIAGRAM_GATE_X}" y="${y + 16}" text-anchor="middle" style="font:italic 9px var(--f-note);fill:var(--ink-soft)">gate</text>` : '';
+  const rose = kind === 'ros', centre = isCentreCell(row, column), middle = DIAGRAM_SQUARE / 2;
+  return `<rect x="${x}" y="${y}" width="${DIAGRAM_SQUARE}" height="${DIAGRAM_SQUARE}" rx="4" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .55 : 1};stroke:${centre ? 'var(--ochre)' : 'var(--ink-soft)'};stroke-width:${centre ? 2.5 : 1}"/>`
+    + (rose ? `<circle cx="${x + middle}" cy="${y + middle}" r="5" style="fill:var(--vermilion);fill-opacity:.8"/>` : '');
 })).join('');
 
+// ---------- dice ----------
 // each die lives in a persistent slot so its tumble survives the face changes
-const dieSlots = [0, 1, 2, 3].map(() => {
-  const s = document.createElement('span');
-  s.className = 'die-slot';
-  $('dice').appendChild(s);
-  return s;
+const dieSlots = Array.from({ length: DICE_COUNT }, () => {
+  const slot = document.createElement('span');
+  slot.className = 'die-slot';
+  $('dice').appendChild(slot);
+  return slot;
 });
 function tumbleDice() {
-  if (reduced) return;
-  const r = (a, b) => a + Math.random() * (b - a);
-  dieSlots.forEach((s, i) => {
-    const spin = (Math.random() < .5 ? -1 : 1) * r(320, 560), x = r(-7, 7);
-    s.animate([
+  if (prefersReducedMotion) return;
+  const between = (low, high) => low + Math.random() * (high - low);
+  dieSlots.forEach((slot, i) => {
+    const spin = (Math.random() < .5 ? -1 : 1) * between(320, 560), drift = between(-7, 7);
+    slot.animate([
       { transform: 'translate(0,0) rotate(0)' },
-      { transform: `translate(${x}px,${r(-30, -22)}px) rotate(${spin * .45}deg) scale(1.1)`, offset: .32, easing: 'ease-in' },
-      { transform: `translate(${x * .6}px,0) rotate(${spin * .8}deg) scale(1.15,.8)`, offset: .62, easing: 'ease-out' },
-      { transform: `translate(${x * .3}px,-8px) rotate(${spin * .93}deg)`, offset: .8, easing: 'ease-in' },
+      { transform: `translate(${drift}px,${between(-30, -22)}px) rotate(${spin * .45}deg) scale(1.1)`, offset: .32, easing: 'ease-in' },
+      { transform: `translate(${drift * .6}px,0) rotate(${spin * .8}deg) scale(1.15,.8)`, offset: .62, easing: 'ease-out' },
+      { transform: `translate(${drift * .3}px,-8px) rotate(${spin * .93}deg)`, offset: .8, easing: 'ease-in' },
       { transform: `translate(0,0) rotate(${spin}deg) scale(1.06,.92)`, offset: .93 },
-      { transform: `translate(0,0) rotate(${Math.round(spin / 120) * 120}deg)` },
+      { transform: `translate(0,0) rotate(${Math.round(spin / 120) * 120}deg)` },   // a triangle looks the same every 120°
     ], { duration: 520 + i * 40, easing: 'linear' });
   });
 }
-function drawDice(d, final) {
-  (d || [0, 0, 0, 0]).forEach((v, i) => { dieSlots[i].innerHTML = dieSVG(v, i); });
-  if (final && d && !reduced && $('total').textContent === '·') $('total').animate(
+// draw the dice; once they've landed (isFinal) the total pops in
+function drawDice(dice, isFinal) {
+  (dice || Array(DICE_COUNT).fill(0)).forEach((marked, i) => { dieSlots[i].innerHTML = dieSVG(marked, i); });
+  if (isFinal && dice && !prefersReducedMotion && $('total').textContent === '·') $('total').animate(
     [{ transform: 'scale(.3) rotate(-20deg)', opacity: 0 }, { transform: 'scale(1.35) rotate(6deg)', opacity: 1, offset: .6 }, { transform: 'none' }],
     { duration: 380, easing: 'ease-out' });
-  $('dice').classList.toggle('idle', !d);
-  $('total').textContent = final && d ? d.reduce((a, b) => a + b, 0) : (d ? '·' : '–');
+  $('dice').classList.toggle('idle', !dice);
+  $('total').textContent = isFinal && dice ? dice.reduce((sum, die) => sum + die, 0) : (dice ? '·' : '–');
 }
 
-function clearTargets() {
-  document.querySelectorAll('.target').forEach(e => e.classList.remove('target', 'capture'));
+// ---------- move preview: a ring on the landing square and an arrow to it ----------
+const landingElement = (side, move) => move.to === HOME ? homeTrayElement(side) : squareElement(side, move.to);
+function clearMovePreview() {
+  document.querySelectorAll('.target').forEach(el => el.classList.remove('target', 'capture'));
   $('arrow-preview').setAttribute('hidden', '');
 }
-function showTarget(m) {
-  clearTargets();
-  if (S.phase !== 'move') return;  // e.g. pointing at a counter while another is still hopping
-  const el = m.to === OFF ? document.querySelector(`#tray${S.turn} .home`) : cells[coord(S.turn, m.to).join(',')];
-  el.classList.add('target');
-  if (m.cap >= 0) el.classList.add('capture');
-  const piece = document.querySelector(`[data-pid="${S.turn}-${m.i}"]`);
-  if (piece) drawArrow($('arrow-preview'), piece, el);
+function showMovePreview(move) {
+  clearMovePreview();
+  if (game.phase !== 'move') return;  // e.g. pointing at a counter while another is still hopping
+  const landing = landingElement(game.turn, move);
+  landing.classList.add('target');
+  if (move.captures >= 0) landing.classList.add('capture');
+  const counter = counterElement(game.turn, move.counter);
+  if (counter) drawArrow($('arrow-preview'), counter, landing);
 }
 
-// a curved dotted arrow from a counter to where it would land; it bows upwards, leaves from the
+// a curved dashed arrow from a counter to where it would land; it bows upwards, leaves from the
 // counter's edge and stops at the target ring. Coordinates are page coordinates, so it scrolls with the board.
+const ARROW_BOW = .32, ARROW_MAX_BOW = 80;
 function drawArrow(path, fromEl, toEl) {
-  const centre = el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2 + scrollX, y: r.top + r.height / 2 + scrollY, r: Math.min(r.width, r.height) / 2 }; };
-  const a = centre(fromEl), b = centre(toEl);
-  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-  let nx = -dy / len, ny = dx / len;
-  if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
-  const bow = Math.min(len * .32, 80);
-  const c = { x: (a.x + b.x) / 2 + nx * bow, y: (a.y + b.y) / 2 + ny * bow };
+  const centreOf = el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2 + scrollX, y: r.top + r.height / 2 + scrollY, radius: Math.min(r.width, r.height) / 2 }; };
+  const from = centreOf(fromEl), to = centreOf(toEl);
+  const dx = to.x - from.x, dy = to.y - from.y, length = Math.hypot(dx, dy) || 1;
+  // perpendicular to the line, pointing upwards, so the arrow always arcs over the board
+  let normalX = -dy / length, normalY = dx / length;
+  if (normalY > 0 || (normalY === 0 && normalX < 0)) { normalX = -normalX; normalY = -normalY; }
+  const bow = Math.min(length * ARROW_BOW, ARROW_MAX_BOW);
+  const control = { x: (from.x + to.x) / 2 + normalX * bow, y: (from.y + to.y) / 2 + normalY * bow };
   // on short hops, shrink the gaps so the arrow never turns inside out
-  const room = Math.min(1, len / ((a.r + b.r) * 1.6));
-  const along = (p, d) => { const l = Math.hypot(c.x - p.x, c.y - p.y) || 1; return { x: p.x + (c.x - p.x) * d / l, y: p.y + (c.y - p.y) * d / l }; };
-  const s = along(a, a.r * .9 * room), e = along(b, (b.r * .72 + 6) * room);
+  const room = Math.min(1, length / ((from.radius + to.radius) * 1.6));
+  const towardControl = (point, distance) => {
+    const l = Math.hypot(control.x - point.x, control.y - point.y) || 1;
+    return { x: point.x + (control.x - point.x) * distance / l, y: point.y + (control.y - point.y) * distance / l };
+  };
+  const start = towardControl(from, from.radius * .9 * room), end = towardControl(to, (to.radius * .72 + 6) * room);
   // the layer covers the whole page so nothing it draws is clipped
   const layer = $('arrow-layer');
   layer.setAttribute('width', document.documentElement.scrollWidth);
   layer.setAttribute('height', document.documentElement.scrollHeight);
-  path.setAttribute('d', `M${s.x.toFixed(1)} ${s.y.toFixed(1)} Q${c.x.toFixed(1)} ${c.y.toFixed(1)} ${e.x.toFixed(1)} ${e.y.toFixed(1)}`);
+  const point = p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  path.setAttribute('d', `M${point(start)} Q${point(control)} ${point(end)}`);
   path.removeAttribute('hidden');
 }
 
-function makePiece(p, i, m) {
-  const x = S.pos[p][i];
-  const label = `${SIDE[p]} piece ${x === 0 ? 'waiting' : x === OFF ? 'home' : 'on square ' + x}`;
-  const el = document.createElement(m ? 'button' : 'div');
-  el.className = `piece p${p}` + (m ? ' movable' : '');
-  el.dataset.pid = p + '-' + i;
-  el.innerHTML = pieceSVG(p, i + p);
-  if (m) {
+// ---------- counters and trays ----------
+function createCounter(side, counter, move) {
+  const square = game.positions[side][counter];
+  const label = `${SIDE_NAME[side]} piece ${square === IN_TRAY ? 'waiting' : square === HOME ? 'home' : 'on square ' + square}`;
+  const el = document.createElement(move ? 'button' : 'div');
+  el.className = `piece p${side}` + (move ? ' movable' : '');
+  el.dataset.pid = side + '-' + counter;
+  el.innerHTML = counterSVG(side, counter + side);
+  if (move) {
     el.type = 'button';
-    el.setAttribute('aria-label', `${label}: move to ${m.to === OFF ? 'home' : 'square ' + m.to}${m.cap >= 0 ? ', capturing' : ''}`);
-    el.addEventListener('click', () => { clearTargets(); doMove(m); });
-    el.addEventListener('pointerenter', () => showTarget(m));
-    el.addEventListener('focus', () => showTarget(m));
-    el.addEventListener('pointerleave', clearTargets);
-    el.addEventListener('blur', clearTargets);
+    el.setAttribute('aria-label', `${label}: move to ${move.to === HOME ? 'home' : 'square ' + move.to}${move.captures >= 0 ? ', capturing' : ''}`);
+    el.addEventListener('click', () => { clearMovePreview(); makeMove(move); });
+    el.addEventListener('pointerenter', () => showMovePreview(move));
+    el.addEventListener('focus', () => showMovePreview(move));
+    el.addEventListener('pointerleave', clearMovePreview);
+    el.addEventListener('blur', clearMovePreview);
   } else {
     el.setAttribute('role', 'img');
     el.setAttribute('aria-label', label);
@@ -208,145 +232,193 @@ function makePiece(p, i, m) {
   return el;
 }
 
-function renderTray(p) {
-  const tray = $('tray' + p);
-  const waiting = S.pos[p].filter(x => x === 0).length;
-  const home = S.pos[p].filter(x => x === OFF).length;
-  const active = S.phase !== 'over' && S.phase !== 'setup' && S.turn === p;
+function renderTray(side) {
+  const tray = $('tray' + side), squares = game.positions[side];
+  const waiting = squares.filter(square => square === IN_TRAY).length;
+  const home = squares.filter(square => square === HOME).length;
+  const active = game.phase !== 'over' && game.phase !== 'setup' && game.turn === side;
+  const plays = game.mode === 'ai' ? ` <span class="side">${side === COMPUTER_SIDE ? 'plays' : 'play'} the ${SIDE_NAME[side]}</span>` : '';
   tray.classList.toggle('active', active);
   tray.innerHTML = `
-    <div class="tray-name">${nameOf(p)}${S.mode === 'ai' ? ` <span class="side">play${p === 0 ? '' : 's'} the ${SIDE[p]}</span>` : ''}${active ? ' <span class="chip">to move</span>' : ''}</div>
-    <div class="tray-count">${waiting} waiting · ${home} of ${S.pos[p].length} home</div>
+    <div class="tray-name">${playerName(side)}${plays}${active ? ' <span class="chip">to move</span>' : ''}</div>
+    <div class="tray-count">${waiting} waiting · ${home} of ${squares.length} home</div>
     <div class="pool wait"></div><div class="pool home"></div>`;
-  return { wait: tray.querySelector('.wait'), home: tray.querySelector('.home') };
+  return { waiting: tray.querySelector('.wait'), home: tray.querySelector('.home') };
 }
 
+// ---------- render: redraw everything from the game state ----------
 function render() {
-  const before = new Map();
-  document.querySelectorAll('[data-pid]').forEach(el => before.set(el.dataset.pid, el.getBoundingClientRect()));
+  const previousPlaces = counterPlaces();
+  placeCounters();
+  const effects = pendingEffects; pendingEffects = null;
+  animateCounterChanges(previousPlaces, effects);
+  playLandingEffects(effects);
+  if (game.phase !== 'rolling') drawDice(game.dice, true);
+  renderStatus();
+  renderRollOrAdvise();
+  renderLedger();
+  renderSetupControls();
+  renderTally();
+  showNextGuideTip();
+  drawPortraits();
+  focusFirstMovable();
+}
 
-  const moves = S.phase === 'move' && !isAI(S.turn) ? legalMoves(S.pos, S.turn, S.roll) : [];
-  const movable = new Map(moves.map(m => [S.turn + '-' + m.i, m]));
+// where every counter is on screen right now, so moved ones can glide from there
+function counterPlaces() {
+  const places = new Map();
+  document.querySelectorAll('[data-pid]').forEach(el => places.set(el.dataset.pid, el.getBoundingClientRect()));
+  return places;
+}
+
+// rebuild every counter in its tray or on its square
+function placeCounters() {
+  const moves = game.phase === 'move' && !isComputer(game.turn) ? legalMoves(game.positions, game.turn, game.roll) : [];
+  const moveFor = new Map(moves.map(move => [move.counter, move]));
   // keyboard numbers: the counter furthest along the route is 1
-  const keyOrder = moves.slice().sort((a, b) => b.from - a.from).map(m => m.i);
+  const keyboardOrder = moves.slice().sort((a, b) => b.from - a.from).map(move => move.counter);
 
-  Object.values(cells).forEach(c => { c.querySelector('.slot').replaceChildren(); c.classList.remove('lastto', 'target', 'capture', 'occupied'); });
-  clearTargets();  // the counters are rebuilt, so any preview ring or arrow belongs to the old ones
-  if (S.lastTo) cells[S.lastTo.join(',')].classList.add('lastto');
-  const trays = [renderTray(0), renderTray(1)];
-  for (const p of [0, 1]) for (let i = 0; i < S.pos[p].length; i++) {
-    const x = S.pos[p][i];
-    const el = makePiece(p, i, movable.get(p + '-' + i));
-    if (S.advice && S.phase === 'move' && p === S.turn && i === S.advice.i) el.classList.add('advised');
-    const key = keyOrder.indexOf(i);
-    if (movable.has(p + '-' + i) && key >= 0) {
-      el.dataset.key = key + 1;
-      el.setAttribute('aria-keyshortcuts', String(key + 1));
-      el.setAttribute('aria-label', el.getAttribute('aria-label') + `. Key ${key + 1}`);
+  Object.values(boardCells).forEach(cell => { cell.querySelector('.slot').replaceChildren(); cell.classList.remove('lastto', 'target', 'capture', 'occupied'); });
+  clearMovePreview();  // the counters are rebuilt, so any preview ring or arrow belongs to the old ones
+  if (game.lastLanding) boardCells[cellKey(game.lastLanding)].classList.add('lastto');
+  const trays = SIDES.map(renderTray);
+  for (const side of SIDES) game.positions[side].forEach((square, counter) => {
+    const move = side === game.turn ? moveFor.get(counter) : undefined;
+    const el = createCounter(side, counter, move);
+    if (move && game.advice && game.phase === 'move' && counter === game.advice.counter) el.classList.add('advised');
+    const keyNumber = move ? keyboardOrder.indexOf(counter) + 1 : 0;
+    if (keyNumber) {
+      el.dataset.key = keyNumber;
+      el.setAttribute('aria-keyshortcuts', String(keyNumber));
+      el.setAttribute('aria-label', el.getAttribute('aria-label') + `. Key ${keyNumber}`);
     }
-    if (x === 0) trays[p].wait.appendChild(el);
-    else if (x === OFF) trays[p].home.appendChild(el);
+    if (square === IN_TRAY) trays[side].waiting.appendChild(el);
+    else if (square === HOME) trays[side].home.appendChild(el);
     else {
-      const cell = cells[coord(p, x).join(',')];
+      const cell = squareElement(side, square);
       cell.classList.add('occupied');
       cell.querySelector('.slot').appendChild(el);
     }
-  }
+  });
+}
 
-  const f = fx; fx = null;
-  if (!reduced) document.querySelectorAll('[data-pid]').forEach(el => {
+// glide counters that changed place; the one that just hopped lands with a squash, a captured one spins home
+function animateCounterChanges(previousPlaces, effects) {
+  if (prefersReducedMotion) return;
+  document.querySelectorAll('[data-pid]').forEach(el => {
     const pid = el.dataset.pid;
-    if (f && pid === f.moved) {
-      // already hopped into place: land with a squash
+    if (effects && pid === effects.moved) {
       el.animate([{ transform: 'scale(1.2, .78)' }, { transform: 'scale(.93, 1.1)', offset: .45 }, { transform: 'none' }],
         { duration: 320, easing: 'ease-out' });
       return;
     }
-    const b = before.get(pid);
-    if (!b) return;
-    const a = el.getBoundingClientRect();
-    const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+    const was = previousPlaces.get(pid);
+    if (!was) return;
+    const now = el.getBoundingClientRect();
+    const dx = was.left + was.width / 2 - (now.left + now.width / 2), dy = was.top + was.height / 2 - (now.top + now.height / 2);
     if (Math.abs(dx) + Math.abs(dy) < 1) return;
-    const s = b.width / a.width;
+    const scale = was.width / now.width, captured = effects && pid === effects.captured;
     el.style.zIndex = 5;
-    const frames = f && pid === f.cap
+    const frames = captured
       ? [ // knocked off the board: a wobble, then a spinning arc back to the tray
-          { transform: `translate(${dx}px,${dy}px) scale(${s})` },
-          { transform: `translate(${dx + 4}px,${dy - 6}px) scale(${s * 1.2}) rotate(-25deg)`, offset: .14 },
-          { transform: `translate(${dx * .5}px,${dy * .5 - 90}px) scale(${s * 1.15}) rotate(380deg)`, offset: .55 },
+          { transform: `translate(${dx}px,${dy}px) scale(${scale})` },
+          { transform: `translate(${dx + 4}px,${dy - 6}px) scale(${scale * 1.2}) rotate(-25deg)`, offset: .14 },
+          { transform: `translate(${dx * .5}px,${dy * .5 - 90}px) scale(${scale * 1.15}) rotate(380deg)`, offset: .55 },
           { transform: 'rotate(720deg)' },
         ]
-      : [{ transform: `translate(${dx}px,${dy}px) scale(${s})` }, { transform: 'translateY(-8px) scale(1.12)', offset: .6 }, { transform: 'none' }];
-    el.animate(frames, { duration: f && pid === f.cap ? 900 : 480, easing: 'cubic-bezier(.2,.7,.2,1)' })
+      : [{ transform: `translate(${dx}px,${dy}px) scale(${scale})` }, { transform: 'translateY(-8px) scale(1.12)', offset: .6 }, { transform: 'none' }];
+    el.animate(frames, { duration: captured ? 900 : 480, easing: 'cubic-bezier(.2,.7,.2,1)' })
       .onfinish = () => { el.style.zIndex = ''; };
   });
-  if (f && f.cap) sfxCapture();
-  if (f && f.cell && !reduced) {
-    const cell = cells[f.cell];
-    if (f.rose) burst(cell);
-    if (f.cap) floatWord(cell, ['Thwack!', 'Begone!', 'Huzzah!'][Math.floor(Math.random() * 3)]);
-    else if (f.rose) floatWord(cell, 'Roll again!');
-  }
+}
 
-  if (S.phase !== 'rolling') drawDice(S.dice, true);
+// the capture sound, rose petals and the event scroll over the landing square
+const CAPTURE_WORDS = ['Thwack!', 'Begone!', 'Huzzah!'];
+function playLandingEffects(effects) {
+  if (!effects) return;
+  if (effects.captured) sfxCapture();
+  if (!effects.cell || prefersReducedMotion) return;
+  const cell = boardCells[effects.cell];
+  if (effects.rose) burstPetals(cell);
+  if (effects.captured) showEventScroll(cell, CAPTURE_WORDS[Math.floor(Math.random() * CAPTURE_WORDS.length)]);
+  else if (effects.rose) showEventScroll(cell, 'Roll again!');
+}
 
-  const st = $('status'), btn = $('roll');
-  st.classList.toggle('win', S.phase === 'over');
-  const who = nameOf(S.turn), you = S.mode === 'ai' && S.turn === 0;
-  let head = '', sub = '';
-  if (S.phase === 'setup') {
-    head = 'Ready when you are';
-    sub = S.mode === 'ai' ? 'Choose your opponent, then press Start game.' : 'Press Start game when you’re both ready.';
-  } else if (S.phase === 'over') {
-    head = S.mode === 'ai' ? (S.winner === 0 ? 'Victory is yours!' : 'The computer triumphs.') : `The ${SIDE[S.winner]} triumphs!`;
-    sub = `All ${COUNT_WORD[S.pos[S.winner].length]} counters brought home.`;
-  } else if (S.phase === 'roll') {
-    head = isAI(S.turn) ? 'The computer rolls…' : you ? 'Your roll' : `${who} to roll`;
-    sub = S.note || (isAI(S.turn) ? '' : 'Press Space or R to roll.');
-  } else if (S.phase === 'rolling') {
-    head = 'The dice tumble…';
-  } else {
-    const has = legalMoves(S.pos, S.turn, S.roll).length;
-    head = `${you ? 'You' : who} rolled ${S.roll}.`;
-    const auto = has === 1 && prefs.autoMove && !S.guided && !isAI(S.turn);
-    sub = S.note || (isAI(S.turn) ? 'Pondering…' : auto ? 'Only one move: playing it for you.'
-      : has ? (kbdMode ? `Press ${has > 1 ? '1 to ' + has : '1'}, or use the arrows and Enter.` : 'Choose a glowing piece.') : '');
-    if (S.advice) sub = 'Advice is marked on the board.';
+// the headline and hint beside the dice
+function renderStatus() {
+  const status = $('status');
+  status.classList.toggle('win', game.phase === 'over');
+  const [headline, hint] = statusText();
+  status.innerHTML = `<strong>${headline}</strong><span>${hint}</span>`;
+}
+function statusText() {
+  const who = playerName(game.turn), yourTurn = game.mode === 'ai' && game.turn !== COMPUTER_SIDE;
+  switch (game.phase) {
+    case 'setup':
+      return ['Ready when you are', game.mode === 'ai' ? 'Choose your opponent, then press Start game.' : 'Press Start game when you’re both ready.'];
+    case 'over': {
+      const headline = game.mode !== 'ai' ? `The ${SIDE_NAME[game.winner]} triumphs!`
+        : game.winner === COMPUTER_SIDE ? `${opponentName()} triumphs.` : 'Victory is yours!';
+      return [headline, `All ${COUNT_WORD[game.positions[game.winner].length]} counters brought home.`];
+    }
+    case 'roll':
+      return [isComputer(game.turn) ? `${who} rolls…` : yourTurn ? 'Your roll' : `${who} to roll`,
+        game.note || (isComputer(game.turn) ? '' : 'Press Space or R to roll.')];
+    case 'rolling':
+      return ['The dice tumble…', ''];
+    default: {
+      const choices = legalMoves(game.positions, game.turn, game.roll).length;
+      const autoMoving = choices === 1 && prefs.autoMove && !game.guided && !isComputer(game.turn);
+      let hint = game.note || (isComputer(game.turn) ? 'Pondering…' : autoMoving ? 'Only one move: playing it for you.'
+        : choices ? (keyboardMode ? `Press ${choices > 1 ? '1 to ' + choices : '1'}, or use the arrows and Enter.` : 'Choose a glowing piece.') : '');
+      if (game.advice) hint = 'Advice is marked on the board.';
+      return [`${yourTurn ? 'You' : who} rolled ${game.roll}.`, hint];
+    }
   }
-  st.innerHTML = `<strong>${head}</strong><span>${sub}</span>`;
-  btn.textContent = S.phase === 'over' ? 'Play again' : 'Roll';
-  btn.disabled = !(S.phase === 'over' || (S.phase === 'roll' && !isAI(S.turn)));
-  // Advise me takes the Roll button's place while the player is choosing, so the dice box keeps its size
-  // Advise me takes the slot whenever advice is on offer; on Knight a badge counts what's left and it greys out at 0
-  const offered = adviceOffered(), left = adviceLeft(), adv = $('advise');
-  btn.classList.toggle('swapped', offered);
-  adv.classList.toggle('swapped', !offered);
-  adv.disabled = !offered || left <= 0;
-  $('advice-left').hidden = left === Infinity || !(S.level in ADVICE_LIMIT);
-  $('advice-left').textContent = left === Infinity ? '' : left;
-  adv.title = left <= 0 ? 'No advice left this game' : left === Infinity ? '' : `${left} piece${left === 1 ? '' : 's'} of advice left this game`;
-  adv.setAttribute('aria-label', left <= 0 ? 'Advise me: no advice left this game' : left === Infinity ? 'Advise me' : `Advise me, ${left} left`);
+}
+
+// Roll and Advise me share one slot: Advise takes it while advice is on offer, so the dice box keeps its size.
+// On the Knight a badge counts the advice left, and the button greys out at 0.
+function renderRollOrAdvise() {
+  const roll = $('roll'), advise = $('advise');
+  roll.textContent = game.phase === 'over' ? 'Play again' : 'Roll';
+  roll.disabled = !(game.phase === 'over' || (game.phase === 'roll' && !isComputer(game.turn)));
+  const offered = adviceOffered(), left = adviceLeft(), unlimited = left === Infinity;
+  roll.classList.toggle('swapped', offered);
+  advise.classList.toggle('swapped', !offered);
+  advise.disabled = !offered || left <= 0;
+  $('advice-left').hidden = unlimited || !(game.level in ADVICE_LIMIT);
+  $('advice-left').textContent = unlimited ? '' : left;
+  advise.title = left <= 0 ? 'No advice left this game' : unlimited ? '' : `${left} piece${left === 1 ? '' : 's'} of advice left this game`;
+  advise.setAttribute('aria-label', left <= 0 ? 'Advise me: no advice left this game' : unlimited ? 'Advise me' : `Advise me, ${left} left`);
   drawAdvice();
+}
 
-  // newest first; if the reader has scrolled back through older moves, keep their place as new lines arrive
-  const log = $('log'), top = log.scrollTop, h = log.scrollHeight;
-  log.innerHTML = S.log.length ? S.log.map((l, i) => `<li><span class="n">${S.log.length - i}.</span>${l}</li>`).join('')
+// newest first; if the reader has scrolled back through older moves, keep their place as new lines arrive
+function renderLedger() {
+  const log = $('log'), scrolledTo = log.scrollTop, heightBefore = log.scrollHeight;
+  log.innerHTML = game.log.length ? game.log.map((line, i) => `<li><span class="n">${game.log.length - i}.</span>${line}</li>`).join('')
     : '<li class="waiting">The scribe awaits the first move.</li>';
-  if (top > 2) log.scrollTop = top + log.scrollHeight - h;
-  $('level-field').hidden = S.mode !== 'ai';
-  // mode and opponent can only change between games; the button invites a start, or offers a new game mid-game
-  const locked = !gameIdle(), why = locked ? 'Start a new game to change this' : '';
-  document.querySelectorAll('input[name=mode]').forEach(r => { r.disabled = locked; });
+  if (scrolledTo > 2) log.scrollTop = scrolledTo + log.scrollHeight - heightBefore;
+}
+
+// mode and opponent can only change between games; the button invites a start, or offers a new game mid-game
+function renderSetupControls() {
+  $('level-field').hidden = game.mode !== 'ai';
+  const locked = !isBetweenGames(), why = locked ? 'Start a new game to change this' : '';
+  document.querySelectorAll('input[name=mode]').forEach(radio => { radio.disabled = locked; });
   $('level').disabled = locked;
   document.querySelector('.seg').title = why;
   $('level-field').title = why;
   $('newgame').classList.toggle('start', !locked);
   $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : 'Start game';
-  $('tally').innerHTML = S.mode === 'ai'
-    ? `Wins: You <b>${tally.you}</b> · Computer <b>${tally.computer}</b>`
+}
+
+// your record against the chosen opponent, or the Sun and Moon tally in two-player games
+function renderTally() {
+  const record = lifetime.level[game.level] || { w: 0, l: 0 };
+  $('tally').innerHTML = game.mode === 'ai'
+    ? `Wins: You <b>${record.w}</b> · ${opponentName()} <b>${record.l}</b>`
     : `Wins: Sun <b>${tally.sun}</b> · Moon <b>${tally.moon}</b>`;
-  if (S.variant !== 'classic') $('tally').innerHTML += ` · <i>${RULES.name} rules</i>`;
-  guideCheck();
-  drawPortraits();
-  focusFirstMovable();
+  if (game.variant !== 'classic') $('tally').innerHTML += ` · <i>${currentRules.name} rules</i>`;
 }

@@ -175,6 +175,40 @@ dialog.confirm { width: min(440px, calc(100vw - 24px)); }
   #portrait1 { right: calc(100% + 30px); }
   #portrait0 { left: calc(100% + 30px); }
 }
+/* tablets: no room in the margins, so each medallion sits at the left end of its own tray and its
+   speech bubble pops out over the board edge (the Moon's below, the Sun's above); clicks pass through */
+@media (min-width: 700px) and (max-width: 1159px) {
+  .portrait { display: block; position: absolute; left: 12px; width: 84px; z-index: 3; }
+  .portrait .medal { width: 84px; height: 84px; }
+  .portrait .pname { display: none; }
+  .tray { padding-left: 110px; min-height: 104px; }
+  .portrait .speech { position: absolute; left: -4px; width: max-content; max-width: 220px; margin: 0; pointer-events: none; z-index: 4; text-align: left; }
+  .portrait .speech::before { left: 36px; }
+  #portrait1 .speech { top: calc(100% + 12px); }
+  #portrait0 .speech { bottom: calc(100% + 12px); }
+  #portrait0 .speech::before { top: auto; bottom: -9px; transform: rotate(225deg); }
+}
+/* phones: each character peeks in from the screen edge beside its tray, tilted, with a sliver showing,
+   and slides in to say its line (the .speaking class) before tucking back out; clicks pass through */
+@media (max-width: 699px) {
+  html, body { overflow-x: hidden; overflow-x: clip; }
+  .portrait {
+    display: block; position: absolute; width: 72px; z-index: 6; pointer-events: none;
+    transition: transform .45s cubic-bezier(.3, 1.4, .5, 1);
+  }
+  .portrait .medal { width: 72px; height: 72px; }
+  .portrait .pname { display: none; }
+  #portrait1 { left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)) - 50px); transform: rotate(20deg); }
+  #portrait0 { right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)) - 50px); transform: rotate(-20deg); }
+  #portrait1.speaking { transform: translateX(62px); }
+  #portrait0.speaking { transform: translateX(-62px); }
+  .portrait .speech { position: absolute; top: 8px; width: max-content; max-width: min(220px, 62vw); margin: 0; text-align: left; }
+  #portrait1 .speech { left: calc(100% + 12px); }
+  #portrait0 .speech { right: calc(100% + 12px); }
+  #portrait1 .speech::before { left: -9px; top: 12px; transform: rotate(-45deg); }
+  #portrait0 .speech::before { left: auto; right: -9px; top: 12px; transform: rotate(135deg); }
+}
+@media (max-width: 699px) and (prefers-reduced-motion: reduce) { .portrait { transition: none; } }
 .medal { width: 150px; height: 150px; filter: drop-shadow(1px 4px 3px rgba(40,28,18,.35)); }
 .medal svg { width: 100%; height: 100%; overflow: visible; }
 .pname { font-family: var(--f-display); font-size: 17px; }

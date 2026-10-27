@@ -1,81 +1,99 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// ---------- background music ----------
-// browsers only allow audio after the player interacts, so it fades in on the first click or key press
-const bgm = $('bgm');
-let fadeTimer = null, musicStarted = false, replayTimer = null;
-// the two tracks alternate, starting from a random one
+// Background music: two tracks taking turns, with the Music button and volume setting.
+// Browsers only allow audio after the player interacts, so it fades in on the first click or key press.
+
+const musicPlayer = $('bgm');
 const PLAYLIST = [
   { src: 'music/village-consort.mp3', title: 'Village Consort' },
   { src: 'music/folk-round.mp3', title: 'Folk Round' },
 ];
-let track = Math.floor(Math.random() * PLAYLIST.length);
-const loadTrack = () => { bgm.src = PLAYLIST[track].src; drawNowPlaying(); };
+const FADE_MS = { in: 1500, out: 500, toNewVolume: 400, handOver: 400 };
+const FADE_STEP_MS = 50;
+const REST_BETWEEN_TRACKS_MS = 2000;   // each piece has a proper ending, so pause before the next
+const chosenVolume = () => prefs.musicVol / 100;
+
+let fadeTimer = null, restTimer = null;
+let musicStarted = false;              // the browser has let it play at least once
+let track = Math.floor(Math.random() * PLAYLIST.length);   // start from a random track, then alternate
+
+function loadTrack() { musicPlayer.src = PLAYLIST[track].src; drawNowPlaying(); }
 function drawNowPlaying() {
   $('now-playing').textContent = prefs.music ? `Now playing: “${PLAYLIST[track].title}” by Kevin MacLeod` : '';
 }
-// only one open copy of the game plays music: whichever tab starts it tells the others to fade out
-const tabId = Math.random().toString(36).slice(2);
-let musicChannel = null;
-try { musicChannel = new BroadcastChannel('ur-music'); } catch (e) {}
-if (musicChannel) musicChannel.onmessage = e => {
-  if (e.data && e.data.type === 'playing' && e.data.tab !== tabId) { clearTimeout(replayTimer); if (!bgm.paused) fadeTo(0, 400, () => bgm.pause()); }
-};
-function fadeTo(target, ms, done) {
+
+function fadeTo(volume, ms, done) {
   clearInterval(fadeTimer);
-  const from = bgm.volume, steps = Math.max(1, Math.round(ms / 50));
-  let i = 0;
+  const from = musicPlayer.volume, steps = Math.max(1, Math.round(ms / FADE_STEP_MS));
+  let step = 0;
   fadeTimer = setInterval(() => {
-    i++;
-    bgm.volume = Math.min(1, Math.max(0, from + (target - from) * i / steps));
-    if (i >= steps) { clearInterval(fadeTimer); if (done) done(); }
-  }, 50);
+    step++;
+    musicPlayer.volume = Math.min(1, Math.max(0, from + (volume - from) * step / steps));
+    if (step >= steps) { clearInterval(fadeTimer); if (done) done(); }
+  }, FADE_STEP_MS);
 }
 function startMusic() {
   if (!prefs.music || document.hidden) return;
-  if (!bgm.paused) { fadeTo(prefs.musicVol / 100, 400); return; }
-  bgm.volume = 0;
-  const played = bgm.play();
-  if (played) played.then(() => {
+  if (!musicPlayer.paused) { fadeTo(chosenVolume(), FADE_MS.toNewVolume); return; }
+  musicPlayer.volume = 0;
+  const playing = musicPlayer.play();
+  if (playing) playing.then(() => {
     musicStarted = true;
-    if (musicChannel) musicChannel.postMessage({ type: 'playing', tab: tabId });
-    fadeTo(prefs.musicVol / 100, 1500);
+    announcePlaying();
+    fadeTo(chosenVolume(), FADE_MS.in);
   }).catch(() => {});
 }
-function stopMusic() { clearTimeout(replayTimer); fadeTo(0, 500, () => bgm.pause()); }
-// each piece has a proper ending, so let it finish, rest for two seconds, then fade in the other track
-bgm.addEventListener('ended', () => {
-  clearTimeout(replayTimer);
-  replayTimer = setTimeout(() => { track = (track + 1) % PLAYLIST.length; loadTrack(); startMusic(); }, 2000);
+function stopMusic() { clearTimeout(restTimer); fadeTo(0, FADE_MS.out, () => musicPlayer.pause()); }
+
+// after a track ends, rest, then play the other one
+musicPlayer.addEventListener('ended', () => {
+  clearTimeout(restTimer);
+  restTimer = setTimeout(() => { track = (track + 1) % PLAYLIST.length; loadTrack(); startMusic(); }, REST_BETWEEN_TRACKS_MS);
 });
-const kickMusic = e => { if (!musicStarted && !(e.target.closest && e.target.closest('#music'))) startMusic(); };
-addEventListener('pointerdown', kickMusic);
-addEventListener('keydown', kickMusic);
+
+// only one open copy of the game plays music: whichever tab starts it tells the others to fade out
+const thisTab = Math.random().toString(36).slice(2);
+let otherTabs = null;
+try { otherTabs = new BroadcastChannel('ur-music'); } catch (e) {}
+function announcePlaying() { if (otherTabs) otherTabs.postMessage({ type: 'playing', tab: thisTab }); }
+if (otherTabs) otherTabs.onmessage = e => {
+  if (e.data && e.data.type === 'playing' && e.data.tab !== thisTab) {
+    clearTimeout(restTimer);
+    if (!musicPlayer.paused) fadeTo(0, FADE_MS.handOver, () => musicPlayer.pause());
+  }
+};
+
+// the first click or key press anywhere (other than on the Music button itself) starts it
+const startOnFirstInteraction = e => { if (!musicStarted && !(e.target.closest && e.target.closest('#music'))) startMusic(); };
+addEventListener('pointerdown', startOnFirstInteraction);
+addEventListener('keydown', startOnFirstInteraction);
 // pause while the tab is hidden, pick up again on return
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { clearInterval(fadeTimer); clearTimeout(replayTimer); bgm.pause(); }
+  if (document.hidden) { clearInterval(fadeTimer); clearTimeout(restTimer); musicPlayer.pause(); }
   else if (musicStarted) startMusic();
 });
 // two windows can both be visible, so returning focus to one also takes the music back
-addEventListener('focus', () => { if (musicStarted && bgm.paused) startMusic(); });
-function drawMusic() {
-  const b = $('music');
-  b.querySelector('[data-icon]').innerHTML = iconSVG(prefs.music ? 'music' : 'musicOff');
-  b.querySelector('.lbl').textContent = prefs.music ? 'Music' : 'No music';
-  b.setAttribute('aria-pressed', String(prefs.music));
-  b.setAttribute('aria-label', prefs.music ? 'Music on, turn off' : 'Music off, turn on');
+addEventListener('focus', () => { if (musicStarted && musicPlayer.paused) startMusic(); });
+
+// the Music button and the volume slider in Options
+function drawMusicButton() {
+  const button = $('music');
+  button.querySelector('[data-icon]').innerHTML = iconSVG(prefs.music ? 'music' : 'musicOff');
+  button.querySelector('.lbl').textContent = prefs.music ? 'Music' : 'No music';
+  button.setAttribute('aria-pressed', String(prefs.music));
+  button.setAttribute('aria-label', prefs.music ? 'Music on, turn off' : 'Music off, turn on');
 }
 $('music').addEventListener('click', () => {
   prefs.music = !prefs.music; savePrefs();
   if (prefs.music) startMusic(); else stopMusic();
-  drawMusic();
+  drawMusicButton();
   drawNowPlaying();
 });
-loadTrack();
 $('opt-vol').value = prefs.musicVol;
 $('opt-vol').addEventListener('input', e => {
   prefs.musicVol = +e.target.value; savePrefs();
   clearInterval(fadeTimer);
-  if (!bgm.paused) bgm.volume = prefs.musicVol / 100;
+  if (!musicPlayer.paused) musicPlayer.volume = chosenVolume();
 });
-drawMusic();
+loadTrack();
+drawMusicButton();

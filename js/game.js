@@ -1,207 +1,254 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// ---------- state ----------
-let S, gen = 0, timer = null;
-const $ = id => document.getElementById(id);
+// The game in progress: its state, the turn sequence, and making moves (with their animation).
 
-function fresh(mode, level, variant, guided, phase = 'roll') {
-  const n = VARIANTS[variant].counters;
+// ---------- state ----------
+let game;                  // the game in progress (see createGameState)
+let gameId = 0;            // changes with every new game, so timers from an old game can tell they're stale
+let pendingStep = null;    // the one scheduled next step (a computer roll or move, a pass, an auto-move)
+const $ = id => document.getElementById(id);
+const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// phases of a game: 'setup' (waiting for Start) → 'roll' → 'rolling' → 'move' → 'animating' → … → 'over'
+function createGameState(mode, level, variant, guided, phase = 'roll') {
+  const counters = VARIANTS[variant].counters;
   return {
-    pos: [Array(n).fill(0), Array(n).fill(0)],
-    turn: guided ? 0 : Math.random() < 0.5 ? 0 : 1,
+    positions: SIDES.map(() => Array(counters).fill(IN_TRAY)),   // positions[side][counter] = route square
+    turn: guided ? SUN : Math.random() < 0.5 ? SUN : MOON,
     phase, roll: null, dice: null,
-    winner: null, lastTo: null, note: '', advice: null,
-    mode, level, variant, guided, tips: {}, log: [], stats: freshStats(),
+    winner: null, lastLanding: null, note: '', advice: null,
+    mode, level, variant, guided, tips: {}, log: [], stats: createGameStats(),
   };
 }
-const isAI = p => S.mode === 'ai' && p === 1;
-const nameOf = p => S.mode === 'ai' ? (p === 0 ? 'You' : 'Computer') : SIDE[p];
+const isComputer = side => game.mode === 'ai' && side === COMPUTER_SIDE;
+
+// against the computer, the Moon side goes by the opponent's name
+const OPPONENT_NAME = { easy: 'The Squire', medium: 'Sir Knight', hard: 'The King' };
+const playerName = side => game.mode !== 'ai' ? SIDE_NAME[side]
+  : side === COMPUTER_SIDE ? OPPONENT_NAME[game.level] || 'Computer' : 'You';
+// the same name mid-sentence: "the Squire" rather than "The Squire"
+const playerNameMidSentence = side => playerName(side).replace(/^The /, 'the ');
+const opponentName = () => playerName(COMPUTER_SIDE);
+const opponentNameMidSentence = () => playerNameMidSentence(COMPUTER_SIDE);
 
 let tally = { you: 0, computer: 0, sun: 0, moon: 0 };
-try { const t = JSON.parse(localStorage.getItem('ur-tally-v2')); if (t) tally = { ...tally, ...t }; } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem('ur-tally-v2')); if (saved) tally = { ...tally, ...saved }; } catch (e) {}
 function saveTally() { try { localStorage.setItem('ur-tally-v2', JSON.stringify(tally)); } catch (e) {} }
 
-function schedule(fn, ms) {
-  const g = gen;
-  clearTimeout(timer);
-  timer = setTimeout(() => { if (g === gen) fn(); }, ms);
+// ---------- pacing ----------
+const DELAY = {
+  computerRoll: 750,       // before the computer rolls
+  computerMove: 700,       // before it moves, so the roll can be read
+  pass: 1400,              // showing "turn passes" before play moves on
+  autoMove: 750,           // before a forced move plays itself
+};
+const DICE_COUNT = 4;
+const DICE_TUMBLE_FRAMES = 9, DICE_TUMBLE_FRAME_MS = 70;
+const HOP_MS = 190, ENTRY_HOP_EXTRA_MS = 120;
+
+// run fn after ms, unless a new game has started in the meantime; only one step is ever pending
+function scheduleStep(fn, ms) {
+  const thisGame = gameId;
+  clearTimeout(pendingStep);
+  pendingStep = setTimeout(() => { if (thisGame === gameId) fn(); }, ms);
 }
 
-function advance() {
-  if (S.phase === 'over' || S.phase === 'setup') return;
-  // while a guide tip is open the game waits; dismissing it calls advance() again
-  if (coachOpen) { advancePending = true; return; }
-  if (S.phase === 'roll') { if (isAI(S.turn)) schedule(doRoll, 750); return; }
-  if (S.phase === 'move') {
-    const ms = legalMoves(S.pos, S.turn, S.roll);
-    if (!ms.length) schedule(() => endTurn(false), 1400);
-    else if (isAI(S.turn)) schedule(() => doMove(aiChoose(S.pos, S.turn, S.roll, S.level)), 700);
-    // the forced move is worked out again when the timer fires, in case the player already moved
-    else if (ms.length === 1 && prefs.autoMove && !S.guided) schedule(() => {
-      const now = S.phase === 'move' && !isAI(S.turn) ? legalMoves(S.pos, S.turn, S.roll) : [];
-      if (now.length === 1) doMove(now[0]);
-    }, 750);
+// decide what happens next on its own: the computer's roll or move, a pass, or a forced move
+function continueGame() {
+  if (game.phase === 'over' || game.phase === 'setup') return;
+  // while a guide tip is open the game waits; dismissing it calls continueGame() again
+  if (guideTipOpen) { resumeAfterTip = true; return; }
+  if (game.phase === 'roll') { if (isComputer(game.turn)) scheduleStep(rollDice, DELAY.computerRoll); return; }
+  if (game.phase === 'move') {
+    const moves = legalMoves(game.positions, game.turn, game.roll);
+    if (!moves.length) scheduleStep(() => endTurn(false), DELAY.pass);
+    else if (isComputer(game.turn)) scheduleStep(() => makeMove(chooseComputerMove(game.positions, game.turn, game.roll, game.level)), DELAY.computerMove);
+    else if (moves.length === 1 && prefs.autoMove && !game.guided) scheduleStep(playForcedMove, DELAY.autoMove);
   }
 }
+// the forced move is worked out again when the timer fires, in case the player already moved
+function playForcedMove() {
+  const moves = game.phase === 'move' && !isComputer(game.turn) ? legalMoves(game.positions, game.turn, game.roll) : [];
+  if (moves.length === 1) makeMove(moves[0]);
+}
 
-function doRoll() {
-  if (S.phase !== 'roll') return;
-  S.phase = 'rolling';
-  S.advice = null;
-  dismissCoach(false);
+// ---------- rolling ----------
+const throwDie = () => (Math.random() < 0.5 ? 1 : 0);   // each die shows a marked tip or not
+const throwDice = () => Array.from({ length: DICE_COUNT }, throwDie);
+
+function rollDice() {
+  if (game.phase !== 'roll') return;
+  game.phase = 'rolling';
+  game.advice = null;
+  closeGuideTip(false);
   sfxDice();
   tumbleDice();
-  const g = gen;
-  const final = [0, 1, 2, 3].map(() => (Math.random() < 0.5 ? 1 : 0));
-  let n = 0;
-  const steps = reduced ? 0 : 9;
+  const thisGame = gameId, result = throwDice();
+  let frame = 0;
+  const frames = prefersReducedMotion ? 0 : DICE_TUMBLE_FRAMES;
   const tick = () => {
-    if (g !== gen) return;
-    if (n++ < steps) {
-      drawDice([0, 1, 2, 3].map(() => (Math.random() < 0.5 ? 1 : 0)), false);
-      setTimeout(tick, 70);
-      return;
-    }
-    S.dice = final;
-    S.roll = final.reduce((a, b) => a + b, 0);
-    S.phase = 'move';
-    const ms = legalMoves(S.pos, S.turn, S.roll);
-    const st = S.stats.p[S.turn];
-    st.rolls++; st.dist[S.roll]++;
-    if (!ms.length) {
-      st.passes++;
-      speak(S.turn, 'pass', 0, .5);
-      S.note = S.roll === 0 ? 'Rolled 0. Turn passes.' : `No legal move with a ${S.roll}. Turn passes.`;
-      addLog(`${nameOf(S.turn)} rolled ${S.roll}: no move`);
-    } else S.note = '';
-    render();
-    advance();
+    if (thisGame !== gameId) return;
+    if (frame++ < frames) { drawDice(throwDice(), false); setTimeout(tick, DICE_TUMBLE_FRAME_MS); return; }
+    landDice(result);
   };
   render();
   tick();
 }
+function landDice(result) {
+  game.dice = result;
+  game.roll = result.reduce((sum, die) => sum + die, 0);
+  game.phase = 'move';
+  const sideStats = game.stats.bySide[game.turn];
+  sideStats.rolls++; sideStats.rollCounts[game.roll]++;
+  if (!legalMoves(game.positions, game.turn, game.roll).length) {
+    sideStats.passes++;
+    speak(game.turn, 'pass', 0, .5);
+    game.note = game.roll === 0 ? 'Rolled 0. Turn passes.' : `No legal move with a ${game.roll}. Turn passes.`;
+    writeToLedger(`${playerName(game.turn)} rolled ${game.roll}: no move`);
+  } else game.note = '';
+  render();
+  continueGame();
+}
+
+// ---------- moving ----------
+const counterElement = (side, counter) => document.querySelector(`[data-pid="${side}-${counter}"]`);
+const squareElement = (side, square) => boardCells[cellKey(routeCell(side, square))];
+const homeTrayElement = side => document.querySelector(`#tray${side} .home`);
 
 // the counter hops square by square along its route before the move is committed
-function hopAlong(p, m, done) {
-  const el = document.querySelector(`[data-pid="${p}-${m.i}"]`);
-  if (reduced || !el) { sfxHop(0, 0, true); return done(); }
-  clearTargets();
+function animateHops(side, move, done) {
+  const el = counterElement(side, move.counter);
+  if (prefersReducedMotion || !el) { sfxHop(0, 0, true); return done(); }
+  clearMovePreview();
   el.classList.remove('movable');
   el.style.zIndex = 20;
-  const r0 = el.getBoundingClientRect();
-  const cx0 = r0.left + r0.width / 2, cy0 = r0.top + r0.height / 2;
-  const cellW = cells['1,0'].getBoundingClientRect().width;
-  const pts = [];
-  for (let s = m.from + 1; s <= m.to; s++) {
-    let x, y, w;
-    if (s === OFF) {
-      const h = document.querySelector(`#tray${p} .home`).getBoundingClientRect();
-      w = cellW * .55; x = h.right - w / 2; y = h.top + h.height / 2;
+  const start = el.getBoundingClientRect();
+  const startX = start.left + start.width / 2, startY = start.top + start.height / 2;
+  const cellWidth = boardCells[cellKey([ROW.SHARED, 0])].getBoundingClientRect().width;
+  const stops = [];
+  for (let square = move.from + 1; square <= move.to; square++) {
+    let x, y, width;
+    if (square === HOME) {
+      const tray = homeTrayElement(side).getBoundingClientRect();
+      width = cellWidth * .55; x = tray.right - width / 2; y = tray.top + tray.height / 2;
     } else {
-      const c = cells[coord(p, s).join(',')].getBoundingClientRect();
-      w = cellW * .8; x = c.left + c.width / 2; y = c.top + c.height / 2;
+      const cell = squareElement(side, square).getBoundingClientRect();
+      width = cellWidth * .8; x = cell.left + cell.width / 2; y = cell.top + cell.height / 2;
     }
-    pts.push({ dx: x - cx0, dy: y - cy0, s: w / r0.width });
+    stops.push({ dx: x - startX, dy: y - startY, scale: width / start.width });
   }
-  const n = pts.length, lift = cellW * .45;
+  const hops = stops.length, lift = cellWidth * .45;
   const frames = [{ transform: 'none', offset: 0, easing: 'ease-out' }];
-  let prev = { dx: 0, dy: 0, s: 1 };
-  pts.forEach((pt, k) => {
-    frames.push({
-      transform: `translate(${(prev.dx + pt.dx) / 2}px, ${(prev.dy + pt.dy) / 2 - lift}px) scale(${pt.s * 1.12}) rotate(${k % 2 ? 8 : -8}deg)`,
-      offset: (k + .5) / n, easing: 'ease-in',
+  let previous = { dx: 0, dy: 0, scale: 1 };
+  stops.forEach((stop, hop) => {
+    frames.push({   // the top of the hop, tilting alternately
+      transform: `translate(${(previous.dx + stop.dx) / 2}px, ${(previous.dy + stop.dy) / 2 - lift}px) scale(${stop.scale * 1.12}) rotate(${hop % 2 ? 8 : -8}deg)`,
+      offset: (hop + .5) / hops, easing: 'ease-in',
     });
-    frames.push({ transform: `translate(${pt.dx}px, ${pt.dy}px) scale(${pt.s * 1.1}, ${pt.s * .86})`, offset: (k + 1) / n, easing: 'ease-out' });
-    prev = pt;
+    frames.push({   // landing, with a squash
+      transform: `translate(${stop.dx}px, ${stop.dy}px) scale(${stop.scale * 1.1}, ${stop.scale * .86})`, offset: (hop + 1) / hops, easing: 'ease-out' });
+    previous = stop;
   });
-  const dur = n * 190 + (m.from === 0 ? 120 : 0);
-  for (let k = 0; k < n; k++) sfxHop((k + 1) / n * dur / 1000, k, k === n - 1);
-  const a = el.animate(frames, { duration: dur, fill: 'forwards' });
-  a.onfinish = done;
+  const duration = hops * HOP_MS + (move.from === IN_TRAY ? ENTRY_HOP_EXTRA_MS : 0);
+  for (let hop = 0; hop < hops; hop++) sfxHop((hop + 1) / hops * duration / 1000, hop, hop === hops - 1);
+  el.animate(frames, { duration, fill: 'forwards' }).onfinish = done;
 }
 
-let fx = null;
-function burst(cell) {
-  for (let i = 0; i < 12; i++) {
-    const sp = document.createElement('span');
-    sp.className = 'petal' + (i % 3 === 0 ? ' alt' : '');
-    cell.appendChild(sp);
-    const ang = i / 12 * Math.PI * 2 + Math.random() * .4, dist = cell.offsetWidth * (.6 + Math.random() * .4);
-    sp.animate([
+let pendingEffects = null;   // what the next render should animate: the landing, a capture, rose petals
+function burstPetals(cell) {
+  const PETALS = 12;
+  for (let i = 0; i < PETALS; i++) {
+    const petal = document.createElement('span');
+    petal.className = 'petal' + (i % 3 === 0 ? ' alt' : '');
+    cell.appendChild(petal);
+    const angle = i / PETALS * Math.PI * 2 + Math.random() * .4, distance = cell.offsetWidth * (.6 + Math.random() * .4);
+    petal.animate([
       { transform: 'translate(0,0) rotate(0) scale(.4)', opacity: 1 },
-      { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist + 14}px) rotate(${200 + Math.random() * 200}deg) scale(1)`, opacity: 0 },
-    ], { duration: 750 + Math.random() * 250, easing: 'cubic-bezier(.2,.8,.4,1)' }).onfinish = () => sp.remove();
+      { transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance + 14}px) rotate(${200 + Math.random() * 200}deg) scale(1)`, opacity: 0 },
+    ], { duration: 750 + Math.random() * 250, easing: 'cubic-bezier(.2,.8,.4,1)' }).onfinish = () => petal.remove();
   }
 }
-function floatWord(cell, word) {
-  const w = document.createElement('span');
-  w.className = 'float-word';
-  w.textContent = word;
-  cell.appendChild(w);
+function showEventScroll(cell, word) {
+  const scroll = document.createElement('span');
+  scroll.className = 'float-word';
+  scroll.textContent = word;
+  cell.appendChild(scroll);
   // unfurl sideways, hold, then drift upward and fade
-  w.animate([
+  scroll.animate([
     { transform: 'translate(-50%, 4px) rotate(-3deg) scaleX(.05)', opacity: 0 },
     { transform: 'translate(-50%, -6px) rotate(-3deg) scaleX(1.06)', opacity: 1, offset: .18 },
     { transform: 'translate(-50%, -10px) rotate(-2deg) scaleX(1)', opacity: 1, offset: .3 },
     { transform: 'translate(-50%, -26px) rotate(1deg)', opacity: 1, offset: .7 },
     { transform: 'translate(-50%, -52px) rotate(2deg)', opacity: 0 },
-  ], { duration: 1700, easing: 'ease-out' }).onfinish = () => w.remove();
+  ], { duration: 1700, easing: 'ease-out' }).onfinish = () => scroll.remove();
 }
 
-function doMove(m) {
-  if (S.phase !== 'move') return;
-  clearTimeout(timer);  // a pending auto-move must not fire into a later turn
-  S.phase = 'animating';
-  S.advice = null;
+function makeMove(move) {
+  if (game.phase !== 'move') return;
+  clearTimeout(pendingStep);  // a pending auto-move must not fire into a later turn
+  game.phase = 'animating';
+  game.advice = null;
   clearAdvice();
-  dismissCoach(false);
-  hopAlong(S.turn, m, () => finishMove(m));
+  closeGuideTip(false);
+  animateHops(game.turn, move, () => completeMove(move));
 }
 
-function finishMove(m) {
-  const p = S.turn, rose = ROSETTES.has(m.to), again = rollsAgain(m);
-  fx = {
-    moved: p + '-' + m.i,
-    cap: m.cap >= 0 ? (1 - p) + '-' + m.cap : null,
-    cell: m.to === OFF ? null : coord(p, m.to).join(','),
-    rose,
-  };
-  if (m.cap >= 0) lastCaptureOf = 1 - p;
-  let desc = m.from === 0 ? `entered a piece${m.to > 1 ? ' to ' + m.to : ''}` : m.to === OFF ? 'brought a piece home' : `moved ${m.from} → ${m.to}`;
-  if (m.cap >= 0) desc += `, captured a ${SIDE[1 - p]} piece`;
-  if (rose) desc += ', landed on a rose and rolls again';
-  else if (again) desc += ' and rolls again';
-  addLog(`${nameOf(p)} rolled ${S.roll}: ${desc}`);
-  S.pos = applyMove(S.pos, p, m);
-  S.lastTo = m.to === OFF ? null : coord(p, m.to);
-  recordMove(p, m, rose);
-  const over = won(S.pos, p);
-  if (!over) {
-    if (m.cap >= 0) { speak(p, 'capture'); speak(1 - p, 'captured', 900); }
-    else if (m.to === CENTRE && RULES.safeCentre) speak(p, 'centre', 0, .8);
-    else if (m.to === OFF) speak(p, 'home', 0, .6);
-    else if (rose) speak(p, 'rose', 0, .5);
-  } else { speak(p, 'win', 300); speak(1 - p, 'lose', 1500); }
-  if (m.to === OFF) sfxHome();
-  if (rose) sfxRose();
-  if (won(S.pos, p)) {
-    sfxFanfare(.5);
-    S.phase = 'over'; S.winner = p;
-    if (S.mode === 'ai') tally[p === 0 ? 'you' : 'computer']++; else tally[p === 0 ? 'sun' : 'moon']++;
-    saveTally();
-    recordGame(p);
-    render();
-    return;
-  }
-  S.note = rose ? 'A rose! Roll again.' : again ? 'A capture! Roll again.' : '';
+// once the hops have played: record the move, apply it, react to it, then end the turn or the game
+function completeMove(move) {
+  const side = game.turn, landsOnRose = ROSETTES.has(move.to), again = rollsAgain(move);
+  writeToLedger(`${playerName(side)} rolled ${game.roll}: ${describeMove(side, move, landsOnRose, again)}`);
+  applyMoveToGame(side, move, landsOnRose);
+  const finished = allHome(game.positions, side);
+  reactToMove(side, move, landsOnRose, finished);
+  if (finished) { finishGame(side); return; }
+  game.note = landsOnRose ? 'A rose! Roll again.' : again ? 'A capture! Roll again.' : '';
   endTurn(again);
+}
+function describeMove(side, move, landsOnRose, again) {
+  let text = move.from === IN_TRAY ? `entered a piece${move.to > 1 ? ' to ' + move.to : ''}`
+    : move.to === HOME ? 'brought a piece home' : `moved ${move.from} → ${move.to}`;
+  if (move.captures >= 0) text += `, captured a ${SIDE_NAME[opponentOf(side)]} piece`;
+  if (landsOnRose) text += ', landed on a rose and rolls again';
+  else if (again) text += ' and rolls again';
+  return text;
+}
+function applyMoveToGame(side, move, landsOnRose) {
+  pendingEffects = {
+    moved: side + '-' + move.counter,
+    captured: move.captures >= 0 ? opponentOf(side) + '-' + move.captures : null,
+    cell: move.to === HOME ? null : cellKey(routeCell(side, move.to)),
+    rose: landsOnRose,
+  };
+  if (move.captures >= 0) lastCapturedSide = opponentOf(side);
+  game.positions = applyMove(game.positions, side, move);
+  game.lastLanding = move.to === HOME ? null : routeCell(side, move.to);
+  recordMove(side, move, landsOnRose);
+}
+// sounds and the players' reactions
+function reactToMove(side, move, landsOnRose, finished) {
+  if (finished) { speak(side, 'win', 300); speak(opponentOf(side), 'lose', 1500); }
+  else if (move.captures >= 0) { speak(side, 'capture'); speak(opponentOf(side), 'captured', 900); }
+  else if (isSafeSquare(move.to, currentRules)) speak(side, 'centre', 0, .8);
+  else if (move.to === HOME) speak(side, 'home', 0, .6);
+  else if (landsOnRose) speak(side, 'rose', 0, .5);
+  if (move.to === HOME) sfxHome();
+  if (landsOnRose) sfxRose();
+  if (finished) sfxFanfare(.5);
+}
+function finishGame(winner) {
+  game.phase = 'over'; game.winner = winner;
+  if (game.mode === 'ai') tally[winner === COMPUTER_SIDE ? 'computer' : 'you']++;
+  else tally[winner === SUN ? 'sun' : 'moon']++;
+  saveTally();
+  recordGame(winner);
+  render();
 }
 
 function endTurn(again) {
-  if (!again) { S.stats.p[S.turn].chain = 0; S.turn = 1 - S.turn; S.note = ''; }
-  S.phase = 'roll'; S.roll = null;
+  if (!again) { game.stats.bySide[game.turn].roseChain = 0; game.turn = opponentOf(game.turn); game.note = ''; }
+  game.phase = 'roll'; game.roll = null;
   render();
-  advance();
+  continueGame();
 }
 
-function addLog(s) { S.log.unshift(s); }
+function writeToLedger(line) { game.log.unshift(line); }

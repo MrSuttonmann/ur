@@ -1,114 +1,139 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// ---------- sound: synthesised with Web Audio, no files ----------
-let actx = null, master = null, noise = null, muted = false;
+// Sound effects, synthesised with Web Audio (no audio files).
+
+let audioContext = null, masterVolume = null, whiteNoise = null;
+let muted = false;
 try { muted = localStorage.getItem('ur-muted') === '1'; } catch (e) {}
-function audio() {
+
+const MASTER_VOLUME = .7;
+const SILENT = .0001, NEARLY_SILENT = .001;    // exponential ramps can't reach zero
+const ATTACK_SECONDS = .012, TAIL_SECONDS = .02;
+
+// the audio context, created on first use; null when muted or unavailable
+function readyAudio() {
   if (muted) return null;
   try {
-    if (!actx) {
-      actx = new (window.AudioContext || window.webkitAudioContext)();
-      master = actx.createGain(); master.gain.value = .7; master.connect(actx.destination);
-      noise = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
-      const d = noise.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      masterVolume = audioContext.createGain();
+      masterVolume.gain.value = MASTER_VOLUME;
+      masterVolume.connect(audioContext.destination);
+      whiteNoise = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);   // one second
+      const samples = whiteNoise.getChannelData(0);
+      for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
     }
-    if (actx.state === 'suspended') actx.resume();
+    if (audioContext.state === 'suspended') audioContext.resume();
   } catch (e) { return null; }
-  return actx;
+  return audioContext;
 }
 // browsers only allow sound after the player interacts, so wake the audio on any tap or key
-addEventListener('pointerdown', audio);
-addEventListener('keydown', audio);
+addEventListener('pointerdown', readyAudio);
+addEventListener('keydown', readyAudio);
 
-function tap(c, t, freq, gain, dur, q = 5) {
-  const src = c.createBufferSource(); src.buffer = noise;
-  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
-  const g = c.createGain();
-  g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
-  src.connect(bp).connect(g).connect(master);
-  src.start(t, Math.random() * .5); src.stop(t + dur + .02);
+// ---------- building blocks ----------
+// a short burst of filtered noise: clicks, cracks, rattles, whooshes (higher sharpness = narrower band)
+function noiseBurst({ at, centreHz, volume, seconds, sharpness = 5 }) {
+  const source = audioContext.createBufferSource(); source.buffer = whiteNoise;
+  const band = audioContext.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = centreHz; band.Q.value = sharpness;
+  const envelope = audioContext.createGain();
+  envelope.gain.setValueAtTime(volume, at); envelope.gain.exponentialRampToValueAtTime(NEARLY_SILENT, at + seconds);
+  source.connect(band).connect(envelope).connect(masterVolume);
+  source.start(at, Math.random() * .5); source.stop(at + seconds + TAIL_SECONDS);
 }
-function tone(c, t, type, f0, f1, gain, dur) {
-  const o = c.createOscillator(); o.type = type;
-  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
-  const g = c.createGain();
-  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + .012);
-  g.gain.exponentialRampToValueAtTime(.001, t + dur);
-  o.connect(g).connect(master); o.start(t); o.stop(t + dur + .02);
+// a tone that glides from one pitch to another and fades out
+function tone({ at, wave = 'sine', fromHz, toHz = fromHz, volume, seconds }) {
+  const oscillator = audioContext.createOscillator(); oscillator.type = wave;
+  oscillator.frequency.setValueAtTime(fromHz, at); oscillator.frequency.exponentialRampToValueAtTime(toHz, at + seconds);
+  const envelope = audioContext.createGain();
+  envelope.gain.setValueAtTime(SILENT, at); envelope.gain.exponentialRampToValueAtTime(volume, at + ATTACK_SECONDS);
+  envelope.gain.exponentialRampToValueAtTime(NEARLY_SILENT, at + seconds);
+  oscillator.connect(envelope).connect(masterVolume); oscillator.start(at); oscillator.stop(at + seconds + TAIL_SECONDS);
 }
+// a plucked string, roughly lute-like: the note plus a quieter octave
+function pluck({ at, hz, volume, seconds }) {
+  tone({ at, wave: 'triangle', fromHz: hz, toHz: hz * .998, volume, seconds });
+  tone({ at, fromHz: hz * 2, volume: volume * .35, seconds: seconds * .6 });
+}
+// a brass note: two slightly detuned saws through a filter that opens on the attack
+const BRASS_DETUNE_CENTS = [-6, 6];
+function brass({ at, hz, seconds, volume }) {
+  const filter = audioContext.createBiquadFilter(); filter.type = 'lowpass'; filter.Q.value = 2;
+  filter.frequency.setValueAtTime(500, at); filter.frequency.exponentialRampToValueAtTime(hz * 6, at + .05);
+  filter.frequency.exponentialRampToValueAtTime(hz * 3, at + seconds);
+  const envelope = audioContext.createGain();
+  envelope.gain.setValueAtTime(SILENT, at); envelope.gain.exponentialRampToValueAtTime(volume, at + .03);
+  envelope.gain.setValueAtTime(volume * .8, at + Math.max(.04, seconds - .08));
+  envelope.gain.exponentialRampToValueAtTime(NEARLY_SILENT, at + seconds + .06);
+  filter.connect(envelope).connect(masterVolume);
+  for (const cents of BRASS_DETUNE_CENTS) {
+    const oscillator = audioContext.createOscillator(); oscillator.type = 'sawtooth'; oscillator.frequency.value = hz; oscillator.detune.value = cents;
+    oscillator.connect(filter); oscillator.start(at); oscillator.stop(at + seconds + .1);
+  }
+}
+const vary = (base, range) => base + Math.random() * range;   // a little randomness so repeats don't sound mechanical
+
+// note frequencies (Hz)
+const NOTE = { G4: 392, C5: 523, E5: 659, G5: 784, C6: 1047, C7: 2093, G7: 3136 };
+const PENTATONIC_CHIMES = [1175, 1319, 1568, 1760, 2093, 2349, 2637];   // D6 E6 G6 A6 C7 D7 E7
+
+// ---------- the effects ----------
+// bone dice rattling in the hand, then four landing on wood
 function sfxDice() {
-  const c = audio(); if (!c) return;
-  const t0 = c.currentTime;
-  // bone dice rattling in the hand, then four landing on wood
-  for (let i = 0; i < 10; i++) tap(c, t0 + i * .042 + Math.random() * .025, 1800 + Math.random() * 2400, .18 + Math.random() * .15, .035, 8);
-  for (let i = 0; i < 4; i++) {
-    const t = t0 + .44 + i * .04 + Math.random() * .025;
-    tap(c, t, 700 + Math.random() * 600, .5, .09, 4);
-    tone(c, t, 'sine', 320 + Math.random() * 80, 240, .12, .08);
+  if (!readyAudio()) return;
+  const now = audioContext.currentTime;
+  for (let i = 0; i < 10; i++)
+    noiseBurst({ at: vary(now + i * .042, .025), centreHz: vary(1800, 2400), volume: vary(.18, .15), seconds: .035, sharpness: 8 });
+  for (let die = 0; die < DICE_COUNT; die++) {
+    const lands = vary(now + .44 + die * .04, .025);
+    noiseBurst({ at: lands, centreHz: vary(700, 600), volume: .5, seconds: .09, sharpness: 4 });
+    tone({ at: lands, fromHz: vary(320, 80), toHz: 240, volume: .12, seconds: .08 });
   }
 }
-// a wooden "tok" as a counter lands on each square; pitch climbs a step each hop
-function sfxHop(delay, step, last) {
-  const c = audio(); if (!c) return;
-  const t = c.currentTime + delay, f = 420 * Math.pow(2, step / 12 * 2);
-  tone(c, t, 'sine', f * 1.5, f, last ? .32 : .2, last ? .14 : .09);
-  tap(c, t, 1400 + step * 120, last ? .3 : .18, .04, 6);
+// a wooden "tok" as a counter lands on each square; the pitch climbs a whole tone each hop
+function sfxHop(delaySeconds, hop, isLastHop) {
+  if (!readyAudio()) return;
+  const at = audioContext.currentTime + delaySeconds, hz = 420 * Math.pow(2, hop * 2 / 12);
+  tone({ at, fromHz: hz * 1.5, toHz: hz, volume: isLastHop ? .32 : .2, seconds: isLastHop ? .14 : .09 });
+  noiseBurst({ at, centreHz: 1400 + hop * 120, volume: isLastHop ? .3 : .18, seconds: .04, sharpness: 6 });
 }
-// plucked string, roughly lute-like
-function pluck(c, t, f, gain, dur) {
-  tone(c, t, 'triangle', f, f * .998, gain, dur);
-  tone(c, t, 'sine', f * 2, f * 2, gain * .35, dur * .6);
-}
-// brass: two detuned saws through a lowpass that opens on the attack
-function brass(c, t, f, dur, gain) {
-  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 2;
-  lp.frequency.setValueAtTime(500, t); lp.frequency.exponentialRampToValueAtTime(f * 6, t + .05);
-  lp.frequency.exponentialRampToValueAtTime(f * 3, t + dur);
-  const g = c.createGain();
-  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + .03);
-  g.gain.setValueAtTime(gain * .8, t + Math.max(.04, dur - .08)); g.gain.exponentialRampToValueAtTime(.001, t + dur + .06);
-  lp.connect(g).connect(master);
-  for (const d of [-6, 6]) {
-    const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d;
-    o.connect(lp); o.start(t); o.stop(t + dur + .1);
-  }
-}
+// a counter brought home: a rising lute run and a bell
 function sfxHome() {
-  const c = audio(); if (!c) return;
-  const t = c.currentTime;
-  [523, 659, 784, 1047].forEach((f, i) => pluck(c, t + i * .07, f, .22, .35));
-  tone(c, t + .3, 'sine', 2093, 2090, .12, .9);  // bell
-  tone(c, t + .3, 'sine', 3136, 3130, .05, .6);
+  if (!readyAudio()) return;
+  const now = audioContext.currentTime;
+  [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach((hz, i) => pluck({ at: now + i * .07, hz, volume: .22, seconds: .35 }));
+  tone({ at: now + .3, fromHz: NOTE.C7, toHz: 2090, volume: .12, seconds: .9 });
+  tone({ at: now + .3, fromHz: NOTE.G7, toHz: 3130, volume: .05, seconds: .6 });
 }
-// rose: a whoosh of petals and a sparkle of high pentatonic chimes
+// a rose: a whoosh of petals and a sparkle of high chimes
 function sfxRose() {
-  const c = audio(); if (!c) return;
-  const t = c.currentTime;
-  tap(c, t, 3000, .14, .45, .7);
-  [1175, 1319, 1568, 1760, 2093, 2349, 2637].forEach((f, i) => {
-    const at = t + .03 + i * .045 + Math.random() * .015;
-    tone(c, at, 'sine', f, f, .09, .5);
-    tone(c, at, 'sine', f * 3, f * 3, .015, .25);
+  if (!readyAudio()) return;
+  const now = audioContext.currentTime;
+  noiseBurst({ at: now, centreHz: 3000, volume: .14, seconds: .45, sharpness: .7 });
+  PENTATONIC_CHIMES.forEach((hz, i) => {
+    const at = vary(now + .03 + i * .045, .015);
+    tone({ at, fromHz: hz, volume: .09, seconds: .5 });
+    tone({ at, fromHz: hz * 3, volume: .015, seconds: .25 });
   });
-  tone(c, t + .34, 'sine', 3136, 3132, .06, 1);
+  tone({ at: now + .34, fromHz: NOTE.G7, toHz: 3132, volume: .06, seconds: 1 });
 }
-function sfxFanfare(delay = 0) {
-  const c = audio(); if (!c) return;
-  const t = c.currentTime + delay;
-  const G4 = 392, C5 = 523, E5 = 659, G5 = 784, C6 = 1047;
-  const notes = [[0, G4, .13], [.16, G4, .13], [.32, G4, .13], [.48, C5, .5], [1.02, E5, .16], [1.2, G5, .16]];
-  for (const [at, f, d] of notes) brass(c, t + at, f, d, .16);
-  for (const f of [C5, E5, G5, C6]) brass(c, t + 1.4, f, 1.1, .1);  // final chord
-  tap(c, t + 1.4, 180, .5, .4, 1.5);                                   // drum hit under the chord
-  tone(c, t + 1.4, 'sine', 110, 60, .5, .45);
+// victory: three trumpet calls, a rising run, then a held chord over a drum
+function sfxFanfare(delaySeconds = 0) {
+  if (!readyAudio()) return;
+  const start = audioContext.currentTime + delaySeconds, chordAt = start + 1.4;
+  const calls = [[0, NOTE.G4, .13], [.16, NOTE.G4, .13], [.32, NOTE.G4, .13], [.48, NOTE.C5, .5], [1.02, NOTE.E5, .16], [1.2, NOTE.G5, .16]];
+  for (const [offset, hz, seconds] of calls) brass({ at: start + offset, hz, seconds, volume: .16 });
+  for (const hz of [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6]) brass({ at: chordAt, hz, seconds: 1.1, volume: .1 });
+  noiseBurst({ at: chordAt, centreHz: 180, volume: .5, seconds: .4, sharpness: 1.5 });
+  tone({ at: chordAt, fromHz: 110, toHz: 60, volume: .5, seconds: .45 });
 }
+// a capture: a hollow thump, a crack, and a comic falling "wah"
 function sfxCapture() {
-  const c = audio(); if (!c) return;
-  const t = c.currentTime;
-  tone(c, t, 'sine', 200, 50, .8, .28);             // hollow thump
-  tap(c, t, 2600, .55, .05, 3);                      // crack
-  tap(c, t + .008, 650, .5, .12, 2);
-  tone(c, t + .14, 'triangle', 560, 230, .16, .42);  // comic falling "wah"
-  tone(c, t + .14, 'triangle', 566, 232, .08, .42);
+  if (!readyAudio()) return;
+  const now = audioContext.currentTime;
+  tone({ at: now, fromHz: 200, toHz: 50, volume: .8, seconds: .28 });
+  noiseBurst({ at: now, centreHz: 2600, volume: .55, seconds: .05, sharpness: 3 });
+  noiseBurst({ at: now + .008, centreHz: 650, volume: .5, seconds: .12, sharpness: 2 });
+  tone({ at: now + .14, wave: 'triangle', fromHz: 560, toHz: 230, volume: .16, seconds: .42 });
+  tone({ at: now + .14, wave: 'triangle', fromHz: 566, toHz: 232, volume: .08, seconds: .42 });
 }
