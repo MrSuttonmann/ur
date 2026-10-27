@@ -10,47 +10,46 @@ const BOARD_PICTURES = [
   ['ros', 'shield', 'five', 'castle', null, null, 'ros', 'crown'],
 ];
 const GATE_COLUMN = 4;                     // first column of the gap; the gate label spans it and the next
-const PICTURE_WASH = { ros: 'ochre', castle: 'rose', five: 'paper-deep', shield: 'woad', crown: 'sage', tree: 'ochre' };
 const WASH_FILTERS = 4;                    // #wash0 to #wash3 vary the watercolour texture
-const ink = 'fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round';
-const paint = (colour, opacity = .8) => `fill:var(--${colour});fill-opacity:${opacity}`;
 const isCentreCell = (row, column) => cellKey([row, column]) === CENTRE_CELL;
+// The drawings' colours and line weights are in css/drawings.css, by class: ink-line is the hand-inked outline,
+// and each painted part is named for what it is. A tile's watercolour wash follows its picture (tile-castle etc.).
 
 function tileSVG(kind, seed) {
   const wash = `url(#wash${seed % WASH_FILTERS})`;
   let art = '';
   if (kind === 'ros') {
     for (let angle = 0; angle < 360; angle += 72) {
-      art += `<path d="M20 20 L18.6 6.4 L21.4 6.4 Z" transform="rotate(${angle + 36} 20 20)" style="${paint('sage', .9)}"/>`;
-      art += `<circle cx="20" cy="12.2" r="6.4" transform="rotate(${angle} 20 20)" style="${paint('vermilion', .85)};stroke:var(--ink);stroke-width:1.1"/>`;
+      art += `<path d="M20 20 L18.6 6.4 L21.4 6.4 Z" transform="rotate(${angle + 36} 20 20)" class="rose-leaf"/>`;
+      art += `<circle cx="20" cy="12.2" r="6.4" transform="rotate(${angle} 20 20)" class="rose-petal"/>`;
     }
-    art += `<circle cx="20" cy="20" r="5" style="${paint('ochre', 1)};stroke:var(--ink);stroke-width:1.1"/>`;
-    for (let angle = 0; angle < 360; angle += 60) art += `<circle cx="20" cy="17.6" r=".8" transform="rotate(${angle} 20 20)" style="fill:var(--ink)"/>`;
+    art += `<circle cx="20" cy="20" r="5" class="rose-heart"/>`;
+    for (let angle = 0; angle < 360; angle += 60) art += `<circle cx="20" cy="17.6" r=".8" transform="rotate(${angle} 20 20)" class="rose-stamen"/>`;
   } else if (kind === 'castle') {
-    art += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z" style="${paint('bone', .9)}"/>`;
-    art += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z M17 32 V26 Q20 22 23 26 V32 M14 21 v3 M26 21 v3" style="${ink}"/>`;
-    art += `<path d="M20 13.5 V7 M20 7 l5 1.5 -5 1.5" style="${ink}"/><path d="M20 7 l5 1.5 -5 1.5 z" style="${paint('vermilion', .9)}"/>`;
+    art += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z" class="castle-wall"/>`;
+    art += `<path d="M10 32 V17 H13 V13.5 H16 V17 H18.5 V13.5 H21.5 V17 H24 V13.5 H27 V17 H30 V32 Z M17 32 V26 Q20 22 23 26 V32 M14 21 v3 M26 21 v3" class="ink-line"/>`;
+    art += `<path d="M20 13.5 V7 M20 7 l5 1.5 -5 1.5" class="ink-line"/><path d="M20 7 l5 1.5 -5 1.5 z" class="castle-flag"/>`;
   } else if (kind === 'shield') {
-    art += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('bone', .9)}"/>`;
-    art += `<path d="M11.5 22 L20 14 L28.5 22 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" style="${paint('vermilion', .75)}"/>`;
-    art += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z M11.5 22 L20 14 L28.5 22" style="${ink}"/>`;
+    art += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" class="shield-field"/>`;
+    art += `<path d="M11.5 22 L20 14 L28.5 22 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z" class="shield-chevron"/>`;
+    art += `<path d="M11.5 9 H28.5 V19 Q28.5 28 20 33 Q11.5 28 11.5 19 Z M11.5 22 L20 14 L28.5 22" class="ink-line"/>`;
   } else if (kind === 'crown') {
-    art += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z" style="${paint('ochre', .95)}"/>`;
-    art += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z M10.5 25 H29.5" style="${ink}"/>`;
-    art += [[11, 13], [20, 9], [29, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:.8"/>`).join('');
+    art += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z" class="crown-gold"/>`;
+    art += `<path d="M10 29 L11 14 L16 21 L20 10 L24 21 L29 14 L30 29 Z M10.5 25 H29.5" class="ink-line"/>`;
+    art += [[11, 13], [20, 9], [29, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" class="crown-jewel"/>`).join('');
   } else if (kind === 'tree') {
-    art += `<path d="M19 33 V22 M21 33 V22" style="${ink}"/><path d="M19 33 V22 H21 V33 Z" style="${paint('ink-soft', .7)}"/>`;
-    art += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${paint('sage', .9)}"/>`;
-    art += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" style="${ink}"/>`;
-    art += [[16, 14], [24, 13], [20, 19], [26, 19]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" style="${paint('vermilion', .9)}"/>`).join('');
+    art += `<path d="M19 33 V22 M21 33 V22" class="ink-line"/><path d="M19 33 V22 H21 V33 Z" class="tree-trunk"/>`;
+    art += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" class="tree-leaves"/>`;
+    art += `<path d="M20 7 C27 7 31 12 30 17 C31 22 26 25 20 24 C14 25 9 22 10 17 C9 12 13 7 20 7 Z" class="ink-line"/>`;
+    art += [[16, 14], [24, 13], [20, 19], [26, 19]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" class="tree-fruit"/>`).join('');
   } else if (kind === 'five') {
     for (const [x, y] of [[11, 11], [29, 11], [11, 29], [29, 29], [20, 20]])
-      art += `<circle cx="${x}" cy="${y}" r="4" style="${paint('woad', .8)};stroke:var(--ink);stroke-width:1"/><circle cx="${x}" cy="${y}" r="1.3" style="fill:var(--bone)"/>`;
+      art += `<circle cx="${x}" cy="${y}" r="4" class="five-spot"/><circle cx="${x}" cy="${y}" r="1.3" class="five-spot-centre"/>`;
   }
-  return `<svg class="tile" viewBox="0 0 40 40" aria-hidden="true">
-    <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="${paint(PICTURE_WASH[kind], .78)}" filter="${wash}"/>
-    <rect x="1.5" y="1.5" width="37" height="37" rx="4" style="fill:none;stroke:var(--${PICTURE_WASH[kind]});stroke-opacity:.6;stroke-width:2.2" filter="${wash}"/>
-    <rect x="2" y="2" width="36" height="36" rx="4" style="${ink};stroke-width:1.5" filter="url(#ink)"/>
+  return `<svg class="tile tile-${kind}" viewBox="0 0 40 40" aria-hidden="true">
+    <rect x="1.5" y="1.5" width="37" height="37" rx="4" class="tile-wash" filter="${wash}"/>
+    <rect x="1.5" y="1.5" width="37" height="37" rx="4" class="tile-wash-edge" filter="${wash}"/>
+    <rect x="2" y="2" width="36" height="36" rx="4" class="ink-line tile-border" filter="url(#ink)"/>
     <g class="art" filter="url(#ink)">${art}</g></svg>`;
 }
 
@@ -59,28 +58,28 @@ function counterSVG(side, seed) {
   let emblem;
   if (side === SUN) {
     emblem = '';
-    for (let angle = 0; angle < 360; angle += 45) emblem += `<path d="M20 9.5 V6.5" transform="rotate(${angle} 20 20)" style="${ink};stroke-width:1.4"/>`;
-    emblem += `<circle cx="20" cy="20" r="7" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1.2"/>
-      <path d="M17 19 h.1 M23 19 h.1" style="${ink};stroke-width:1.8"/><path d="M17 22.5 Q20 25 23 22.5" style="${ink}"/>`;
+    for (let angle = 0; angle < 360; angle += 45) emblem += `<path d="M20 9.5 V6.5" transform="rotate(${angle} 20 20)" class="ink-line sun-ray"/>`;
+    emblem += `<circle cx="20" cy="20" r="7" class="sun-face"/>
+      <path d="M17 19 h.1 M23 19 h.1" class="ink-line sun-eyes"/><path d="M17 22.5 Q20 25 23 22.5" class="ink-line"/>`;
   } else {
-    emblem = `<circle cx="18" cy="20" r="10" style="fill:#fffaf0" mask="url(#moonmask)"/>
-      <circle cx="28.5" cy="13" r="1.3" style="fill:#fffaf0"/><circle cx="29.5" cy="25" r="1" style="fill:#fffaf0"/>`;
+    emblem = `<circle cx="18" cy="20" r="10" class="moon-crescent" mask="url(#moonmask)"/>
+      <circle cx="28.5" cy="13" r="1.3" class="moon-star"/><circle cx="29.5" cy="25" r="1" class="moon-star"/>`;
   }
   // solid disc first so the tile never shows through; the wash on top only adds texture
-  return `<svg viewBox="0 0 40 40" aria-hidden="true">
-    <circle cx="20" cy="20" r="18.5" style="fill:var(--bone)"/>
-    <circle cx="20" cy="20" r="15.5" style="fill:var(--${side === SUN ? 'sunfire' : 'night'})"/>
-    <circle cx="20" cy="20" r="15" style="${paint(side === SUN ? 'ochre' : 'woad', .55)}" filter="url(#wash${seed % WASH_FILTERS})"/>
-    <g filter="url(#ink)"><circle cx="20" cy="20" r="18.5" style="${ink};stroke-width:2.2"/>
-    <circle cx="20" cy="20" r="15.5" style="${ink};stroke-width:1"/>${emblem}</g></svg>`;
+  return `<svg class="counter-${side === SUN ? 'sun' : 'moon'}" viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="20" cy="20" r="18.5" class="counter-rim"/>
+    <circle cx="20" cy="20" r="15.5" class="counter-face"/>
+    <circle cx="20" cy="20" r="15" class="counter-wash" filter="url(#wash${seed % WASH_FILTERS})"/>
+    <g filter="url(#ink)"><circle cx="20" cy="20" r="18.5" class="ink-line counter-edge"/>
+    <circle cx="20" cy="20" r="15.5" class="ink-line counter-inner-edge"/>${emblem}</g></svg>`;
 }
 
 // a die seen from above; a marked tip is painted red
 const dieSVG = (marked, seed) => `<svg class="die" viewBox="0 0 40 36">
-  <polygon points="20,2 38,34 2,34" style="${paint('bone', 1)}" filter="url(#wash${seed})"/>
-  <polygon points="20,23 38,34 2,34" style="${paint('paper-deep', .9)}" filter="url(#wash${seed})"/>
-  <g filter="url(#ink)"><path d="M20 2 L38 34 L2 34 Z M20 2 L20 23 M2 34 L20 23 M38 34 L20 23" style="${ink};stroke-width:1.4"/>
-  ${marked ? `<circle cx="20" cy="23" r="4.2" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:1"/>` : '<circle cx="20" cy="23" r="1.3" style="fill:var(--ink)"/>'}</g></svg>`;
+  <polygon points="20,2 38,34 2,34" class="die-face" filter="url(#wash${seed})"/>
+  <polygon points="20,23 38,34 2,34" class="die-shade" filter="url(#wash${seed})"/>
+  <g filter="url(#ink)"><path d="M20 2 L38 34 L2 34 Z M20 2 L20 23 M2 34 L20 23 M38 34 L20 23" class="ink-line die-edges"/>
+  ${marked ? '<circle cx="20" cy="23" r="4.2" class="die-mark"/>' : '<circle cx="20" cy="23" r="1.3" class="die-tip"/>'}</g></svg>`;
 
 // ---------- building the board ----------
 const boardCells = {};
@@ -115,12 +114,14 @@ $('key').innerHTML = `
   <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((kind, i) => keyTile(kind, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>`;
 
 // ---------- labelling the board for the current rules ----------
-// Each cell's square number on each side's route; where the two differ (Masters' route), both are shown.
-const routeNumbersAt = key => ({ sun: currentRules.squareAt[SUN][key], moon: currentRules.squareAt[MOON][key] });
+// Each cell's square numbers on each side's route, written like "5/17" where a route doubles back;
+// where the two sides' numbers differ (Masters' and Murray's routes), both are shown.
+const routeNumbersAt = key => ({ sun: (currentRules.squaresAt[SUN][key] || []).join('/'), moon: (currentRules.squaresAt[MOON][key] || []).join('/') });
+const anySquareAt = (key, rules = currentRules) => (rules.squaresAt[SUN][key] || rules.squaresAt[MOON][key])[0];
 function squareLabel(key) {
-  const { sun, moon } = routeNumbersAt(key);
-  if (sun && moon && sun !== moon) return `square ${sun} for the Sun, ${moon} for the Moon`;
-  return `square ${sun || moon}`;
+  const { sun, moon } = routeNumbersAt(key), noun = (sun || moon).includes('/') ? 'squares' : 'square';
+  if (sun && moon && sun !== moon) return `${noun} ${sun} for the Sun, ${moon} for the Moon`;
+  return `${noun} ${sun || moon}`;
 }
 // route numbers, hover text and the gold ring on safe roses
 function labelBoardSquares() {
@@ -131,7 +132,7 @@ function labelBoardSquares() {
     sunTag.classList.toggle('num-sun', !!differ);
     moonTag.textContent = differ ? moon : '';
     moonTag.hidden = !differ;
-    const square = sun || moon, rose = ROSE_CELLS.has(key), safe = rose && isSafeSquare(square);
+    const square = anySquareAt(key), rose = ROSE_CELLS.has(key), safe = rose && isSafeSquare(square);
     cell.classList.toggle('safe-sq', safe);
     cell.title = (rose ? (safe ? 'Rose: roll again, and safe from capture' : 'Rose: roll again')
       : 'Ordinary square (the picture is decoration only)') + ` · ${squareLabel(key)}`;
@@ -143,28 +144,29 @@ const DIAGRAM_PITCH = 30, DIAGRAM_SQUARE = 26, DIAGRAM_MARGIN = 4, DIAGRAM_GATE_
 $('route-cells').innerHTML = BOARD_PICTURES.flatMap((pictures, row) => pictures.map((kind, column) => {
   const x = DIAGRAM_MARGIN + column * DIAGRAM_PITCH, y = DIAGRAM_MARGIN + row * DIAGRAM_PITCH;
   if (!kind) return column === GATE_COLUMN && row !== ROW.SHARED
-    ? `<text x="${DIAGRAM_GATE_X}" y="${y + 16}" text-anchor="middle" style="font:italic 9px var(--f-note);fill:var(--ink-soft)">gate</text>` : '';
+    ? `<text x="${DIAGRAM_GATE_X}" y="${y + 16}" text-anchor="middle" class="diagram-gate">gate</text>` : '';
   const rose = kind === 'ros', middle = DIAGRAM_SQUARE / 2;
-  return `<rect class="${rose ? 'diagram-rose' : ''}" data-cell="${cellKey([row, column])}" x="${x}" y="${y}" width="${DIAGRAM_SQUARE}" height="${DIAGRAM_SQUARE}" rx="4" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .55 : 1};stroke:var(--ink-soft);stroke-width:1"/>`
-    + (rose ? `<circle cx="${x + middle}" cy="${y + middle}" r="5" style="fill:var(--vermilion);fill-opacity:.8"/>` : '');
+  return `<rect class="diagram-square${rose ? ' diagram-rose' : ''}" data-cell="${cellKey([row, column])}" x="${x}" y="${y}" width="${DIAGRAM_SQUARE}" height="${DIAGRAM_SQUARE}" rx="4"/>`
+    + (rose ? `<circle cx="${x + middle}" cy="${y + middle}" r="5" class="diagram-rose-dot"/>` : '');
 })).join('');
 // draw each side's route through the diagram, from its gate and back out; the two lines sit a little apart
 const DIAGRAM_LANE = { [SUN]: { dx: 3, dy: 4 }, [MOON]: { dx: -3, dy: -4 } };
+// a route's cells with a short lead-in before the first square and a lead-out after the last, in its direction of travel
+const ROUTE_LEAD_IN = .75, ROUTE_LEAD_OUT = .9;
+function routeWithLeads(cells) {
+  const [first, second] = cells, [beforeLast, last] = cells.slice(-2);
+  const beyond = (from, towards, distance) => from.map((n, i) => n + (from[i] - towards[i]) * distance);
+  return [beyond(first, second, ROUTE_LEAD_IN), ...cells, beyond(last, beforeLast, ROUTE_LEAD_OUT)];
+}
 function drawRouteDiagram() {
   const centreOf = ([row, column], side) => [DIAGRAM_MARGIN + column * DIAGRAM_PITCH + DIAGRAM_SQUARE / 2 + DIAGRAM_LANE[side].dx,
     DIAGRAM_MARGIN + row * DIAGRAM_PITCH + DIAGRAM_SQUARE / 2 + DIAGRAM_LANE[side].dy];
   for (const side of SIDES) {
-    const cells = currentRules.cells[side], first = cells[0], last = cells[cells.length - 1];
-    const points = [[first[0], first[1] + .75], ...cells, [last[0], last[1] - .9]].map(cell => centreOf(cell, side));
+    const points = routeWithLeads(currentRules.cells[side]).map(cell => centreOf(cell, side));
     $('route-' + (side === SUN ? 'sun' : 'moon')).setAttribute('points', points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '));
   }
   // the safe roses get the gold ring in the diagram too
-  document.querySelectorAll('#route-cells .diagram-rose').forEach(rect => {
-    const key = rect.dataset.cell, square = currentRules.squareAt[SUN][key] || currentRules.squareAt[MOON][key];
-    const safe = isSafeSquare(square);
-    rect.style.stroke = safe ? 'var(--ochre)' : 'var(--ink-soft)';
-    rect.style.strokeWidth = safe ? 2.5 : 1;
-  });
+  document.querySelectorAll('#route-cells .diagram-rose').forEach(rect => rect.classList.toggle('safe-sq', isSafeSquare(anySquareAt(rect.dataset.cell))));
 }
 
 // ---------- dice ----------
@@ -244,6 +246,25 @@ function drawArrow(path, fromEl, toEl) {
   path.removeAttribute('hidden');
 }
 
+// A touchscreen can't hover, so pressing and holding a counter shows where it would go, and the preview stays
+// after lifting; a quick tap moves it, as does tapping it again. Touching anywhere else clears the preview.
+const PEEK_HOLD_MS = 350;
+function addTouchPeek(el, move) {
+  let holdTimer = null, peeked = false;
+  el.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    peeked = false;
+    holdTimer = setTimeout(() => { peeked = true; showMovePreview(move); }, PEEK_HOLD_MS);
+  });
+  const endPress = () => clearTimeout(holdTimer);
+  el.addEventListener('pointerup', endPress);
+  el.addEventListener('pointercancel', endPress);
+  // runs before the move's own click handler: lifting the finger after a peek doesn't move
+  el.addEventListener('click', e => { if (peeked) { peeked = false; e.stopImmediatePropagation(); } }, { capture: true });
+  el.addEventListener('contextmenu', e => e.preventDefault());   // a long press would otherwise open the browser's menu
+}
+addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !e.target.closest('.piece.movable')) clearMovePreview(); });
+
 // ---------- counters and trays ----------
 function createCounter(side, counter, move) {
   const square = game.positions[side][counter];
@@ -255,10 +276,11 @@ function createCounter(side, counter, move) {
   if (move) {
     el.type = 'button';
     el.setAttribute('aria-label', `${label}: move to ${move.to === currentRules.home ? 'home' : 'square ' + move.to}${move.captures >= 0 ? ', capturing' : ''}`);
+    addTouchPeek(el, move);
     el.addEventListener('click', () => { clearMovePreview(); makeMove(move); });
-    el.addEventListener('pointerenter', () => showMovePreview(move));
+    el.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') showMovePreview(move); });
     el.addEventListener('focus', () => showMovePreview(move));
-    el.addEventListener('pointerleave', clearMovePreview);
+    el.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') clearMovePreview(); });
     el.addEventListener('blur', clearMovePreview);
   } else {
     el.setAttribute('role', 'img');
@@ -353,7 +375,7 @@ function animateCounterChanges(previousPlaces, effects) {
     const dx = was.left + was.width / 2 - (now.left + now.width / 2), dy = was.top + was.height / 2 - (now.top + now.height / 2);
     if (Math.abs(dx) + Math.abs(dy) < 1) return;
     const scale = was.width / now.width, captured = effects && pid === effects.captured;
-    el.style.zIndex = 5;
+    el.classList.add('gliding');   // above the other counters on its way
     const frames = captured
       ? [ // knocked off the board: a wobble, then a spinning arc back to the tray
           { transform: `translate(${dx}px,${dy}px) scale(${scale})` },
@@ -363,7 +385,7 @@ function animateCounterChanges(previousPlaces, effects) {
         ]
       : [{ transform: `translate(${dx}px,${dy}px) scale(${scale})` }, { transform: 'translateY(-8px) scale(1.12)', offset: .6 }, { transform: 'none' }];
     el.animate(frames, { duration: captured ? 900 : 480, easing: 'cubic-bezier(.2,.7,.2,1)' })
-      .onfinish = () => { el.style.zIndex = ''; };
+      .onfinish = () => el.classList.remove('gliding');
   });
 }
 

@@ -1,0 +1,61 @@
+/* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
+
+/* The dice box: dice, total, Roll and Advise me, and the turn status. */
+
+/* dock */
+.dock {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+  background: rgba(246,236,210,.7); border: 1.5px solid var(--ink); border-radius: var(--hand); padding: 12px 16px;
+}
+.dice { display: flex; gap: 6px; }
+.die-slot { display: block; transform-origin: 50% 65%; }
+.die { width: 36px; height: 33px; overflow: visible; display: block; }
+.dice.idle .die { opacity: .4; }
+.total { font-family: var(--f-display); font-size: 42px; line-height: 1; min-width: 1.1ch; text-align: center; color: var(--vermilion); font-variant-numeric: tabular-nums; }
+.roll {
+  font-family: var(--f-display); font-size: 19px; padding: 8px 22px; cursor: pointer;
+  background: var(--vermilion); color: var(--bone); border: 2px solid var(--ink); border-radius: var(--hand);
+  box-shadow: 2px 3px 0 var(--ink);
+}
+.roll:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 4px 0 var(--ink); }
+.roll:active:not(:disabled) { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.roll:disabled { opacity: .45; cursor: default; }
+.roll:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
+.status { flex: 1 1 150px; min-width: 0; }
+.status strong { display: block; font-size: 18px; }
+/* Roll and Advise me share one slot: the inactive one is hidden but keeps its size */
+.act { display: grid; }
+.act > * { grid-area: 1 / 1; }
+.act > .swapped { visibility: hidden; }
+.advise {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  font-family: var(--f-display); font-size: 17px; padding: 6px 14px; color: var(--ink);
+  background: var(--bone); border: 2px solid var(--ink); border-radius: var(--hand); box-shadow: 2px 3px 0 var(--ink);
+}
+.advise svg { width: 24px; height: 24px; }
+/* the count sits on the corner so it never changes the button's width (Roll shares this slot) */
+.advise { position: relative; }
+.advise .left {
+  position: absolute; top: -10px; right: -10px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; border: 1.5px solid var(--bone);
+  font: 600 12px/20px var(--f-body); color: var(--bone); background: var(--vermilion);
+}
+.advise:disabled { opacity: .55; cursor: default; box-shadow: 1px 1px 0 var(--ink); }
+.advise:disabled .left { background: var(--ink-soft); }
+.advise:hover:not(:disabled) { background: var(--paper-deep); }
+.advise:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
+
+/* the hint line always holds its space, even when empty, so the dice box never changes height mid-turn */
+.status span { display: block; min-height: 1.5em; color: var(--ink-soft); font-family: var(--f-note); font-style: italic; font-size: 15px; }
+.status.win strong { color: var(--vermilion); font-family: var(--f-display); font-size: 26px; font-weight: 400; }
+
+/* phones: the dice box keeps dice, total and button on one line */
+@media (max-width: 480px) {
+  .die { width: 30px; height: 28px; }
+  .dice { gap: 4px; }
+  .roll { padding: 8px 18px; }
+  .advise { padding: 6px 10px; font-size: 16px; gap: 4px; }
+  .advise svg { width: 20px; height: 20px; }
+  .advise .me { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) { .roll { transition: none; } }

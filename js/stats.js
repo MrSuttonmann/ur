@@ -74,7 +74,7 @@ const formatClock = ms => {
 const formatDuration = ms => { const minutes = Math.round(ms / 60000); return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h ${minutes % 60} min`; };
 const averageRoll = sideStats => sideStats.rolls
   ? (sideStats.rollCounts.reduce((total, count, roll) => total + count * roll, 0) / sideStats.rolls).toFixed(2) : '–';
-const SIDE_COLOUR = { [SUN]: 'var(--c-sun)', [MOON]: 'var(--c-moon)' };
+const SIDE_SWATCH = { [SUN]: 'swatch-sun', [MOON]: 'swatch-moon' };   // each side's chart colour, as a class
 const total = counts => counts.reduce((sum, n) => sum + n, 0);
 const ROLLS = Array.from({ length: MAX_ROLL + 1 }, (_, roll) => roll);   // 0 to 4
 
@@ -86,12 +86,12 @@ function rollChart(series) {
   const top = Math.max(40, ...percents.flat());
   const step = top > 60 ? 20 : 10, max = Math.ceil(top / step) * step;
   const along = value => (value / max * 100).toFixed(2) + '%';
-  let html = `<div class="legend">${series.map(s => `<span><i style="background:${s.colour}"></i>${s.name}</span>`).join('')}<span><i class="exp-key"></i>True odds</span></div><div class="rc">`;
+  let html = `<div class="legend">${series.map(s => `<span><i class="${s.swatch}"></i>${s.name}</span>`).join('')}<span><i class="exp-key"></i>True odds</span></div><div class="rc">`;
   for (const roll of ROLLS) {
     const chance = ROLL_CHANCE[roll];
     html += `<div class="rc-v">${roll}</div><div class="rc-track" style="background-size:${(step / max * 100).toFixed(2)}% 100%"><span class="rc-exp" style="left:${along(chance * 100)}" data-tip="True odds of a ${roll}: ${chance * 16} in 16 (${(chance * 100).toFixed(1)}%)"></span>`;
     series.forEach((s, i) => {
-      html += `<span class="rc-bar" style="width:${along(percents[i][roll])};background:${s.colour}" data-tip="${s.name} rolled ${roll}: ${s.counts[roll]} of ${total(s.counts)} rolls (${percents[i][roll].toFixed(1)}%)"></span>`;
+      html += `<span class="rc-bar ${s.swatch}" style="width:${along(percents[i][roll])}" data-tip="${s.name} rolled ${roll}: ${s.counts[roll]} of ${total(s.counts)} rolls (${percents[i][roll].toFixed(1)}%)"></span>`;
     });
     html += '</div>';
   }
@@ -113,7 +113,7 @@ function heatmap(landings) {
     const picture = BOARD_PICTURES[row][column];
     if (!picture) { html += '<span class="hg"></span>'; continue; }
     const key = cellKey([row, column]), count = landings[key] || 0, share = count / most, rose = picture === 'ros';
-    html += `<span class="hc${rose ? ' rose' : ''}" style="--a:${(.06 + share * .84).toFixed(2)};color:${share > .55 ? 'var(--bone)' : 'var(--ink)'}" data-tip="${rowName[row]} row, ${squareLabel(key)}${rose ? ' (rose)' : ''}: ${count} landing${count === 1 ? '' : 's'}">${count || ''}</span>`;
+    html += `<span class="hc${rose ? ' rose' : ''}${share > .55 ? ' busy' : ''}" style="--a:${(.06 + share * .84).toFixed(2)}" data-tip="${rowName[row]} row, ${squareLabel(key)}${rose ? ' (rose)' : ''}: ${count} landing${count === 1 ? '' : 's'}">${count || ''}</span>`;
   }
   return html + '</div><p class="cap">Where counters landed this game, both sides together. Darker squares saw more landings; ringed squares are roses.</p>';
 }
@@ -157,10 +157,10 @@ function thisGameStatsHTML() {
     ${statTiles([['Time played', formatClock(stats.playMs)], ['Moves', sun.moves + moon.moves], ['Dice rolls', sun.rolls + moon.rolls], ['Captures', sun.captures + moon.captures]])}
     <p class="race">${race} The lead has changed hands ${stats.leadChanges} time${stats.leadChanges === 1 ? '' : 's'}.</p>
     <h3>Side by side</h3>
-    <div class="scroll-x"><table class="cmp"><thead><tr><th></th>${SIDES.map(side => `<th><i style="background:${SIDE_COLOUR[side]}"></i>${names[side]}</th>`).join('')}</tr></thead><tbody>${
+    <div class="scroll-x"><table class="cmp"><thead><tr><th></th>${SIDES.map(side => `<th><i class="${SIDE_SWATCH[side]}"></i>${names[side]}</th>`).join('')}</tr></thead><tbody>${
       rows.map(([label, sunValue, moonValue, better, note]) => `<tr><th scope="row">${label}${note ? `<small>${note}</small>` : ''}</th>${cell(sunValue, moonValue, better)}${cell(moonValue, sunValue, better)}</tr>`).join('')}</tbody></table></div>
     <h3>Dice luck</h3>
-    ${rollChart(SIDES.map(side => ({ name: names[side], colour: SIDE_COLOUR[side], counts: stats.bySide[side].rollCounts })))}
+    ${rollChart(SIDES.map(side => ({ name: names[side], swatch: SIDE_SWATCH[side], counts: stats.bySide[side].rollCounts })))}
     <h3>Busiest squares</h3>
     ${heatmap(stats.landings)}`;
 }
@@ -179,7 +179,7 @@ function lifetimeStatsHTML() {
     <h3>Records</h3>
     <p class="race">Quickest game: <b>${lifetime.quickest === null ? '–' : formatClock(lifetime.quickest)}</b> · Fewest moves to win: <b>${lifetime.fewestMoves ?? '–'}</b></p>
     <h3>Dice luck, all games</h3>
-    ${rollChart([{ name: 'All rolls', colour: SIDE_COLOUR[MOON], counts: lifetime.dist }])}
+    ${rollChart([{ name: 'All rolls', swatch: SIDE_SWATCH[MOON], counts: lifetime.dist }])}
     <p class="cap">Counts finished games only. Saved in this browser.</p>
     <div class="reset">${resetAsk
       ? 'Erase all lifetime stats and the win tally? <button class="btn danger" type="button" id="reset-yes">Erase</button> <button class="btn" type="button" id="reset-no">Keep them</button>'

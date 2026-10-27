@@ -12,7 +12,7 @@
   Affero General Public License for more details: https://www.gnu.org/licenses/agpl-3.0.html
 
   Source: https://github.com/MrSuttonmann/ur
-  The music (music/village-consort.mp3) is not covered by this licence; see the README.
+  The music (the files in music/) is not covered by this licence; see the README.
 -->
 <html lang="en">
 <head>
@@ -40,11 +40,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/header.css">
+<link rel="stylesheet" href="css/controls.css">
+<link rel="stylesheet" href="css/variants.css">
+<link rel="stylesheet" href="css/dialogs.css">
+<link rel="stylesheet" href="css/board.css">
+<link rel="stylesheet" href="css/pieces.css">
+<link rel="stylesheet" href="css/dock.css">
+<link rel="stylesheet" href="css/ledger.css">
+<link rel="stylesheet" href="css/rules.css">
+<link rel="stylesheet" href="css/footer.css">
+<link rel="stylesheet" href="css/guide.css">
+<link rel="stylesheet" href="css/stats.css">
+<link rel="stylesheet" href="css/drawings.css">
+<link rel="stylesheet" href="css/portraits.css">
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<svg class="svg-defs" width="0" height="0" aria-hidden="true">
   <defs>
     <!-- cuts the bite out of the Moon counter's crescent -->
     <mask id="moonmask" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40">
@@ -98,7 +112,7 @@
   <header>
     <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
     <h1><span class="cap">T</span>he Royal Game of Ur</h1>
-    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round" filter="url(#ink)"/><circle cx="118" cy="8" r="2.4" style="fill:var(--vermilion)"/></svg>
+    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" class="flourish-line" filter="url(#ink)"/><circle cx="118" cy="8" r="2.4" class="flourish-dot"/></svg>
     <div class="head-row">
       <p class="tally" id="tally"></p>
       <div class="tb-group tools" role="group" aria-label="Help and settings">
@@ -165,7 +179,7 @@
   </section>
 
   <footer class="foot">
-    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M14 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M14 9 c-4 5 -10 3 -10 -1 c0 -4 6 -5 8 -1 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" style="fill:none;stroke:var(--ink-soft);stroke-width:1.4;stroke-linecap:round" filter="url(#ink)"/><circle cx="130" cy="8" r="2.4" style="fill:var(--vermilion)"/></svg>
+    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M14 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M14 9 c-4 5 -10 3 -10 -1 c0 -4 6 -5 8 -1 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" class="flourish-line" filter="url(#ink)"/><circle cx="130" cy="8" r="2.4" class="flourish-dot"/></svg>
     <p class="foot-title">The Royal Game of Ur</p>
     <p>First played in the city of Ur around 2600 BCE, and across the Middle East for some three thousand years. The classic rules here follow Irving Finkel’s reading of a Babylonian tablet from 177 BCE. <a href="https://www.britishmuseum.org/collection/object/W_1928-1009-378" target="_blank" rel="noopener">See the original board at the British Museum</a>, or <a href="https://en.wikipedia.org/wiki/Royal_Game_of_Ur" target="_blank" rel="noopener">read the game’s history on Wikipedia</a>.</p>
     <div class="foot-btns">
@@ -175,16 +189,16 @@
       </a>
       <a class="brand-btn bmc" href="https://buymeacoffee.com/MrSuttonmann" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">
-          <path d="M8 2.8 C7 4 9 5 8 6.4 M11.5 2.4 C10.5 3.7 12.5 4.6 11.5 6.2 M15 2.8 C14 4 16 5 15 6.4" style="fill:none;stroke:#3b2a1b;stroke-width:1.4;stroke-linecap:round"/>
-          <path d="M4.5 8.5 H18.5 L17 20 C16.9 21 16.2 21.6 15.2 21.6 H7.8 C6.8 21.6 6.1 21 6 20 Z" style="fill:#fffaf0;stroke:#3b2a1b;stroke-width:1.5;stroke-linejoin:round"/>
-          <path d="M5.2 12 H17.9 L17.4 16 H5.7 Z" style="fill:#b6432a;fill-opacity:.85"/>
-          <path d="M18.3 10.5 C21.5 10.3 21.5 15.2 17.6 15" style="fill:none;stroke:#3b2a1b;stroke-width:1.5;stroke-linecap:round"/>
+          <path d="M8 2.8 C7 4 9 5 8 6.4 M11.5 2.4 C10.5 3.7 12.5 4.6 11.5 6.2 M15 2.8 C14 4 16 5 15 6.4" class="coffee-steam"/>
+          <path d="M4.5 8.5 H18.5 L17 20 C16.9 21 16.2 21.6 15.2 21.6 H7.8 C6.8 21.6 6.1 21 6 20 Z" class="coffee-cup"/>
+          <path d="M5.2 12 H17.9 L17.4 16 H5.7 Z" class="coffee"/>
+          <path d="M18.3 10.5 C21.5 10.3 21.5 15.2 17.6 15" class="coffee-cup-handle"/>
         </g></svg>
         <span>Buy me a coffee</span>
       </a>
     </div>
     <dl class="colophon">
-      <div><dt>Music</dt><dd>“Village Consort” and “Folk Round” by Kevin MacLeod, <a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons: By Attribution 4.0</a>.</dd></div>
+      <div><dt>Music</dt><dd>“Village Consort”, “Folk Round” and “Lord of the Land” by Kevin MacLeod, <a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons: By Attribution 4.0</a>.</dd></div>
       <div><dt>Licence</dt><dd>This game is free software under the <a href="https://github.com/MrSuttonmann/ur/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL-3.0</a>. You’re welcome to study, change and share it.</dd></div>
       <div><dt>Your data</dt><dd>Your stats and settings are saved in this browser only, and never sent anywhere.</dd></div>
     </dl>
@@ -199,7 +213,7 @@
     </div>
     <div class="rules">
       <p class="variant-now" id="variant-now" hidden></p>
-      <h4 style="margin-top:0">The goal</h4>
+      <h4 class="first-heading">The goal</h4>
       <p>Each side has seven counters. Be the first to move all seven along your route and off the board.</p>
 
       <h4>Your turn</h4>
@@ -214,12 +228,12 @@
       <svg class="route" viewBox="0 0 248 94" role="img" aria-labelledby="route-desc">
         <desc id="route-desc">Board diagram. The Sun's counters start at the gap in the bottom row, move left to the end, go up and right along the whole middle row, come down and move left two squares, then leave. The Moon does the same along the top row.</desc>
         <defs>
-          <marker id="ar-sun" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" style="fill:var(--c-sun)"/></marker>
-          <marker id="ar-moon" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" style="fill:var(--c-moon)"/></marker>
+          <marker id="ar-sun" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="route-arrowhead-sun"/></marker>
+          <marker id="ar-moon" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="route-arrowhead-moon"/></marker>
         </defs>
         <g id="route-cells"></g>
-        <polyline id="route-sun" style="fill:none;stroke:var(--c-sun);stroke-width:3;stroke-linejoin:round" marker-end="url(#ar-sun)"/>
-        <polyline id="route-moon" style="fill:none;stroke:var(--c-moon);stroke-width:3;stroke-linejoin:round;stroke-dasharray:6 3" marker-end="url(#ar-moon)"/>
+        <polyline id="route-sun" class="route-line route-line-sun" marker-end="url(#ar-sun)"/>
+        <polyline id="route-moon" class="route-line route-line-moon" marker-end="url(#ar-moon)"/>
       </svg>
       <p><span class="sun">Sun</span> (solid line) uses the bottom row; <span class="moon">Moon</span> (dashed line) uses the top row. Both race along the middle row, which is where captures happen. Press <em>Route</em> at the top of the page to number every square along each side’s route.</p>
 
@@ -255,12 +269,14 @@
       <p>Choose a variant with <b>Variant</b> before a game. Each one changes only what’s listed here; everything else follows the rules above.</p>
       <ul>
         <li><b>Masters’ route</b>, after games historian James Masters. The route is 16 squares. After seven squares of the middle row, counters climb into the opponent’s far corner (squares 12 and 13), come down the end of the middle row (14), and return to their own row (15 and 16) before leaving. Counters can be captured anywhere the two routes cross, which now includes the far end. The roses on squares 12 and 16 are shared, so like the centre rose they’re safe.</li>
+        <li><b>Murray’s route</b>, after games historian H. J. R. Murray. The route is 27 squares: Masters’ route as far as square 16, then back down the whole middle row (17 to 23) and along your own row (24 to 27), leaving the board where you came in. The middle row is crossed twice, so its squares carry two numbers, such as 8/20. Roses come every fourth square, and the shared ones are safe.</li>
+        <li><b>Doubling back</b>, the route drawn on Wikipedia. The route is 20 squares. Counters enter on the corner rose of their own row (square 1) and move towards the bridge (to 4), go up the middle row (5 to 8), round the far end through their own row first (9 and 10), the end of the middle row (11) and the opponent’s row (12 and 13), then back down the whole middle row (14 to 20) and off its end. Roses come every fourth square, and the shared ones are safe.</li>
         <li><b>Quick</b> (a house rule): five counters each instead of seven.</li>
         <li><b>Raiders</b> (a house rule): every capture earns another roll, and no rose is safe.</li>
       </ul>
 
       <p>These rules were reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in 177 BCE.</p>
-      <p style="margin-bottom:0">Odds of each roll with four tetrahedral dice:</p>
+      <p class="odds-intro">Odds of each roll with four tetrahedral dice:</p>
       <div class="odds" id="odds"></div>
     </div>
    </div>
@@ -314,7 +330,7 @@
       <button class="btn close" type="button" id="close-options" aria-label="Close options">Close</button>
     </div>
     <div class="rules">
-      <h4 style="margin-top:0">Play</h4>
+      <h4 class="first-heading">Play</h4>
       <label class="opt" for="opt-auto">
         <input type="checkbox" class="toggle" id="opt-auto">
         <span><b>Auto-move</b><small>When a roll leaves only one legal move, play it for me.</small></span>
@@ -362,10 +378,10 @@
 <svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
   <defs>
     <marker id="head-ink" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="20" markerHeight="20" orient="auto">
-      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" style="fill:var(--vermilion)"/>
+      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" class="move-arrowhead"/>
     </marker>
     <marker id="head-red" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" orient="auto">
-      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" style="fill:var(--vermilion)"/>
+      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" class="move-arrowhead"/>
     </marker>
   </defs>
   <path class="move-arrow advice" id="arrow-advice" marker-end="url(#head-red)" hidden/>
@@ -402,6 +418,7 @@
 <script src="js/game.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/board.js"></script>
+<script src="js/speech.js"></script>
 <script src="js/portraits.js"></script>
 <script src="js/prefs.js"></script>
 <script src="js/icons.js"></script>

@@ -13,6 +13,14 @@ const VARIANT_COPY = {
     tag: 'James Masters’ route',
     prose: 'A longer route that crosses your opponent’s path. Counters loop round the far end through the enemy corner, so the battle carries on right to the finish.',
   },
+  murray: {
+    tag: 'H. J. R. Murray’s route',
+    prose: 'The long way home. After looping round the far end, counters come all the way back down the middle row and out where they came in. A slow, tense game with fights in both directions.',
+  },
+  doubling: {
+    tag: 'As drawn on Wikipedia',
+    prose: 'Counters start in the corner, run up the middle and round the far end, then double back down the middle row to leave. Every fourth square is a rose.',
+  },
   quick: {
     tag: 'House rule',
     prose: 'The classic game with five counters each instead of seven. Ideal when you only have a few minutes.',
@@ -25,7 +33,8 @@ const VARIANT_COPY = {
 
 // the facts at a glance, worked out from the rules themselves
 function variantFacts(rules) {
-  const safeRoses = [...rules.roses].filter(square => isSafeSquare(square, rules)).length;
+  // counted by cell, since a route that doubles back crosses some roses twice
+  const safeRoses = new Set([...rules.roses].filter(square => isSafeSquare(square, rules)).map(square => routeCellKey(SUN, square, rules))).size;
   const facts = [`${rules.counters} counters`, `${rules.length}-square route`,
     safeRoses ? `${safeRoses === 1 ? 'centre rose' : safeRoses + ' roses'} safe` : 'no safe roses'];
   if (rules.captureRoll) facts.push('captures roll again');
@@ -41,22 +50,20 @@ function variantThumbnail(rules) {
   BOARD_PICTURES.forEach((pictures, row) => pictures.forEach((picture, column) => {
     if (!picture) return;
     const key = cellKey([row, column]), x = THUMB.margin + column * pitch, y = THUMB.margin + row * pitch;
-    const rose = ROSE_CELLS.has(key), square = rules.squareAt[SUN][key] || rules.squareAt[MOON][key];
-    const safe = rose && isSafeSquare(square, rules);
-    svg += `<rect x="${x}" y="${y}" width="${THUMB.cell}" height="${THUMB.cell}" rx="2.5" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .6 : 1};stroke:${safe ? 'var(--ochre)' : 'var(--ink-soft)'};stroke-width:${safe ? 2 : .8}"/>`;
-    if (rose) svg += `<circle cx="${x + THUMB.cell / 2}" cy="${y + THUMB.cell / 2}" r="2.6" style="fill:var(--vermilion)"/>`;
+    const rose = ROSE_CELLS.has(key), safe = rose && isSafeSquare(anySquareAt(key, rules), rules);
+    svg += `<rect x="${x}" y="${y}" width="${THUMB.cell}" height="${THUMB.cell}" rx="2.5" class="thumb-square${rose ? ' thumb-rose' : ''}${safe ? ' safe-sq' : ''}"/>`;
+    if (rose) svg += `<circle cx="${x + THUMB.cell / 2}" cy="${y + THUMB.cell / 2}" r="2.6" class="thumb-rose-dot"/>`;
   }));
-  const routeLine = (side, lane, style) => {
-    const cells = rules.cells[side], first = cells[0], last = cells[cells.length - 1];
-    const points = [[first[0], first[1] + .7], ...cells, [last[0], last[1] - .8]].map(cell => centreOf(cell, lane).map(n => n.toFixed(1)).join(','));
-    return `<polyline points="${points.join(' ')}" style="fill:none;${style};stroke-width:1.8;stroke-linejoin:round"/>`;
+  const routeLine = (side, lane) => {
+    const points = routeWithLeads(rules.cells[side]).map(cell => centreOf(cell, lane).map(n => n.toFixed(1)).join(','));
+    return `<polyline points="${points.join(' ')}" class="thumb-route thumb-route-${side === SUN ? 'sun' : 'moon'}"/>`;
   };
-  svg += routeLine(MOON, -1.5, 'stroke:var(--c-moon);stroke-dasharray:3 2');
-  svg += routeLine(SUN, 1.5, 'stroke:var(--c-sun)');
+  svg += routeLine(MOON, -1.5);
+  svg += routeLine(SUN, 1.5);
   // a row of counters below the board, and crossed swords when captures roll again
   const countersY = THUMB.margin + boardHeight + 8;
   for (let i = 0; i < rules.counters; i++)
-    svg += `<circle cx="${THUMB.margin + 5 + i * 11}" cy="${countersY}" r="4" style="fill:var(--sunfire);stroke:var(--ink);stroke-width:.8"/>`;
+    svg += `<circle cx="${THUMB.margin + 5 + i * 11}" cy="${countersY}" r="4" class="thumb-counter"/>`;
   if (rules.captureRoll) svg += `<g transform="translate(${THUMB.margin + boardWidth - 16} ${countersY - 8}) scale(.68)">${ICONS.swords}</g>`;
   return `<svg viewBox="0 0 ${boardWidth + THUMB.margin * 2} ${countersY + 8}" aria-hidden="true">${svg}</svg>`;
 }

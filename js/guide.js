@@ -34,7 +34,7 @@ function nextGuideTip() {
     if (!seen('move')) return ['move', yourTray, 'Counters that can move <b>glow</b>. Point at one to see where it would land, then click it. New counters join the board through your gate.'];
     const tipFor = (id, isRelevant, text) => { const move = !seen(id) && moves.find(isRelevant); return move ? [id, yourLanding(move), text] : null; };
     return tipFor('capture', move => move.captures >= 0, `You can <b>capture</b>! Land on ${opponentNameMidSentence()}’s counter here to send it back to the start.`)
-      || tipFor('centre', move => move.to === currentRules.centre, 'This is the <b>centre rose</b>, ringed in gold. Land here to roll again, and no one can capture you while you sit on it.')
+      || tipFor('centre', move => isCentre(HUMAN_SIDE, move.to), 'This is the <b>centre rose</b>, ringed in gold. Land here to roll again, and no one can capture you while you sit on it.')
       || tipFor('rose', move => isRose(move.to), 'This move lands on a <b>rose</b>, so you’ll roll again.')
       || tipFor('home', move => move.to === currentRules.home, 'This roll can bring a counter <b>home</b>. You need the exact number to leave: a 1 from your last square, a 2 from the one before.')
       || (canAdvise() && !seen('advise') ? ['advise', $('advise'), 'Not sure which to move? <b>Advise me</b> shows what the King would do, and why.'] : null);

@@ -1,0 +1,37 @@
+/* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
+
+/* The header: title, win tally and the row of icon buttons. */
+
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--f-note); font-style: italic; font-size: 15px; color: var(--ink-soft); margin: 0; }
+h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px, 7vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 .cap { color: var(--vermilion); font-size: 1.35em; line-height: .8; }
+.flourish { width: min(260px, 70%); height: 16px; display: block; }
+.flourish-line { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
+.flourish-dot { fill: var(--vermilion); }
+
+.tally { margin: 0; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+/* header row: win tally on the left, hand-drawn icon buttons on the right; game setup on its own strip below */
+.head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin-top: -6px; }
+
+.icon-btn {
+  display: inline-flex; flex-direction: column; align-items: center; min-width: 50px; padding: 3px 5px 2px;
+  font-family: var(--f-note); font-size: 13px; line-height: 1.15; color: var(--ink);
+  background: none; border: 1.5px solid transparent; border-radius: var(--hand); cursor: pointer;
+}
+.icon-btn:hover { background: var(--paper-deep); border-color: var(--ink-soft); }
+.icon-btn:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 2px; }
+.icon-btn svg { width: 28px; height: 28px; }
+[data-icon] { display: inline-flex; }
+[data-icon] svg { overflow: visible; }
+.tally b { color: var(--ink); }
+
+#route[aria-pressed="true"] { background: var(--paper-deep); border-color: var(--ink); box-shadow: inset 1px 2px 3px rgba(40,28,18,.25); }
+
+/* phones: seven icon buttons span the width in one row */
+@media (max-width: 480px) {
+  .head-row .tb-group.tools { flex: 1 1 100%; flex-wrap: nowrap; justify-content: space-between; gap: 0; }
+  .icon-btn { min-width: 0; padding: 3px 2px 2px; font-size: 12px; }
+  .icon-btn svg { width: 26px; height: 26px; }
+}

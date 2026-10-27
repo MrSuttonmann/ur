@@ -1,12 +1,13 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// Background music: two tracks taking turns, with the Music button and volume setting.
+// Background music: three tracks taking turns, with the Music button and volume setting.
 // Browsers only allow audio after the player interacts, so it fades in on the first click or key press.
 
 const musicPlayer = $('bgm');
 const PLAYLIST = [
   { src: 'music/village-consort.mp3', title: 'Village Consort' },
   { src: 'music/folk-round.mp3', title: 'Folk Round' },
+  { src: 'music/lord-of-the-land.mp3', title: 'Lord of the Land' },
 ];
 const FADE_MS = { in: 1500, out: 500, toNewVolume: 400, handOver: 400 };
 const FADE_STEP_MS = 50;

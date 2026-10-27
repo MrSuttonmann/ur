@@ -105,7 +105,11 @@ function landDice(result) {
     speak(game.turn, 'pass', 0, .5);
     game.note = game.roll === 0 ? 'Rolled 0. Turn passes.' : `No legal move with a ${game.roll}. Turn passes.`;
     writeToLedger(`${playerName(game.turn)} rolled ${game.roll}: no move`);
-  } else game.note = '';
+  } else {
+    game.note = '';
+    if (game.roll === MAX_ROLL) speak(game.turn, 'bigRoll', 0, .35);
+  }
+  remarkIfSlow();
   render();
   continueGame();
 }
@@ -121,7 +125,7 @@ function animateHops(side, move, done) {
   if (prefersReducedMotion || !el) { sfxHop(0, 0, true); return done(); }
   clearMovePreview();
   el.classList.remove('movable');
-  el.style.zIndex = 20;
+  el.classList.add('hopping');   // above everything it passes over
   const start = el.getBoundingClientRect();
   const startX = start.left + start.width / 2, startY = start.top + start.height / 2;
   const cellWidth = boardCells[cellKey([ROW.SHARED, 0])].getBoundingClientRect().width;
@@ -226,9 +230,11 @@ function applyMoveToGame(side, move, landsOnRose) {
 }
 // sounds and the players' reactions
 function reactToMove(side, move, landsOnRose, finished) {
+  const countersLeft = game.positions[side].filter(square => square !== currentRules.home).length;
   if (finished) { speak(side, 'win', 300); speak(opponentOf(side), 'lose', 1500); }
   else if (move.captures >= 0) { speak(side, 'capture'); speak(opponentOf(side), 'captured', 900); }
-  else if (move.to === currentRules.centre && isSafeSquare(move.to, currentRules)) speak(side, 'centre', 0, .8);
+  else if (isSafeSquare(move.to, currentRules)) speak(side, isCentre(side, move.to) ? 'centre' : 'safeRose', 0, .8);
+  else if (move.to === currentRules.home && countersLeft === 1) { speak(side, 'lastOne', 0, .9); speak(opponentOf(side), 'worried', 1200, .7); }
   else if (move.to === currentRules.home) speak(side, 'home', 0, .6);
   else if (landsOnRose) speak(side, 'rose', 0, .5);
   if (move.to === currentRules.home) sfxHome();

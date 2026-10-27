@@ -1,0 +1,74 @@
+/* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
+
+/* The trays and the counters, with the petals and words that celebrate a move. */
+
+/* trays */
+.game { display: flex; flex-direction: column; gap: 12px; }
+/* the play area is pressed and held on touchscreens (to preview a move), so it mustn't start selecting text */
+.game { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.piece { touch-action: manipulation; }
+.tray {
+  position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
+  background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand); padding: 8px 14px;
+  transition: border-color .25s, box-shadow .25s;
+}
+.tray.active { border-color: var(--ink); box-shadow: 3px 3px 0 -1px var(--ochre); }
+.tray-name { font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tray-name .side { font-family: var(--f-note); font-style: italic; font-weight: 400; color: var(--ink-soft); }
+/* "to move" is a tag pinned to the tray's top edge, so it never reflows the tray */
+.chip {
+  position: absolute; top: -11px; right: 16px; transform: rotate(1.5deg);
+  font-family: var(--f-note); font-style: italic; font-weight: 400; font-size: 13px; line-height: 18px; color: var(--vermilion);
+  padding: 0 9px; background: var(--bone); border: 1.5px solid var(--ink); border-radius: 9px 6px 10px 5px;
+}
+.tray-count { font-family: var(--f-note); font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; }
+/* tall enough for the enlarged movable counter, so highlighting one doesn't grow the tray */
+.pool { display: flex; align-items: center; min-height: calc(var(--cell) * .66); gap: 3px; flex-wrap: wrap; }
+.pool.home { justify-content: flex-end; }
+.pool.home .piece + .piece { margin-left: calc(var(--cell) * -.24); }
+.pool .piece { width: calc(var(--cell) * .55); }
+.pool .piece.movable { width: calc(var(--cell) * .66); }
+.pool.target { outline: 2px dashed var(--vermilion); outline-offset: 3px; border-radius: 10px; }
+
+/* pieces: painted tokens */
+.piece {
+  position: relative; display: block; width: 88%; aspect-ratio: 1; max-width: 100%; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: 50%; cursor: default; font: inherit;
+  filter: drop-shadow(1px 3px 1.5px rgba(40,28,18,.6));
+}
+
+.piece svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.piece.movable { cursor: pointer; filter: drop-shadow(0 0 4px var(--sunfire)) drop-shadow(0 0 2px var(--sunfire)) drop-shadow(1px 3px 1.5px rgba(40,28,18,.6)); animation: bob 1.3s ease-in-out infinite; }
+.piece:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 3px; }
+/* keyboard players see a number on each counter that can move */
+.kbd .piece.movable[data-key]::after {
+  content: attr(data-key); position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%;
+  font: 600 12px/18px var(--f-body); text-align: center; color: var(--bone); background: var(--ink); border: 1.5px solid var(--bone);
+}
+@keyframes bob { 50% { transform: translateY(-3px) rotate(-4deg); } }
+/* a moving counter passes over the others: hopping along its route, or gliding to its new place after a redraw */
+.piece.gliding { z-index: 5; }
+.piece.hopping { z-index: 20; }
+.petal {
+  position: absolute; left: 50%; top: 50%; width: 8px; height: 10px; margin: -5px 0 0 -4px; z-index: 30; pointer-events: none;
+  border-radius: 60% 60% 60% 0; background: var(--vermilion); opacity: .85;
+}
+.petal.alt { background: var(--ochre); }
+/* event words ride on a little parchment scroll with rolled ends */
+.float-word {
+  position: absolute; left: 50%; top: -4px; z-index: 40; pointer-events: none; white-space: nowrap;
+  font-family: var(--f-display); font-size: 17px; line-height: 1.2; color: var(--vermilion);
+  padding: 4px 14px 3px;
+  background: linear-gradient(180deg, var(--bone) 0%, #fffaf0 45%, var(--paper-deep) 100%);
+  border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  box-shadow: 0 5px 10px -3px rgba(40,28,18,.45);
+}
+.float-word::before, .float-word::after {
+  content: ""; position: absolute; top: -5px; bottom: -5px; width: 10px;
+  border: 1.5px solid var(--ink); border-radius: 6px;
+  background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
+}
+.float-word::before { left: -7px; }
+.float-word::after { right: -7px; }
+
+@media (prefers-reduced-motion: reduce) { .piece.movable { animation: none; } }

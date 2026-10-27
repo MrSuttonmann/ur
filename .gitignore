@@ -1,0 +1,17 @@
+# operating system clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# local tooling and notes
+.remember/
+.claude/settings.local.json
+node_modules/
+.wrangler/
+*.log

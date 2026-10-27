@@ -4,7 +4,7 @@ The 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. 
 
 - **Vs computer:** three strengths (Squire, Knight, King). The computer looks ahead over every possible dice roll. **Advise me** shows what the King would play, and why: unlimited against the Squire, five times a game against the Knight.
 - **Two players:** pass-and-play on one device.
-- **Rules:** Irving Finkel's reconstruction from the British Museum tablet, James Masters' longer 16-square route, and two house variants (Quick and Raiders), chosen with Variant before a game.
+- **Rules:** Irving Finkel's reconstruction from the British Museum tablet, the longer routes of James Masters (16 squares) and H. J. R. Murray (27), the doubling-back route drawn on Wikipedia, and two house variants (Quick and Raiders), chosen with Variant before a game.
 - **Guided first game:** new players get tips as each rule first comes up; it can be replayed from Options.
 - Animated counters and dice, sound effects made in the browser, and background music.
 - **Keyboard play:** R or Space to roll, number keys or arrows and Enter to move, A for advice.
@@ -24,13 +24,14 @@ python3 -m http.server 8000
 | Path | What it holds |
 |---|---|
 | `index.html` | The page markup, dialogs and SVG definitions |
-| `css/style.css` | All styles |
+| `css/*.css` | Styles, one file per part of the page (`base.css` holds the colours, fonts and page) |
 | `js/rules.js` | The board, the rules, rule variants and the computer opponent (no page code) |
 | `js/sound.js` | Synthesised sound effects |
 | `js/game.js` | Game state, the turn sequence, and making moves |
 | `js/stats.js` | Stats recording and the Stats window |
 | `js/board.js` | Drawing the board, counters, dice and move arrows; `render()` |
-| `js/portraits.js` | Player portraits, expressions and speech |
+| `js/speech.js` | What the characters say, and their speech bubbles |
+| `js/portraits.js` | Player portraits and expressions |
 | `js/prefs.js` | Saved preferences |
 | `js/icons.js` | Hand-drawn toolbar icons |
 | `js/bubbles.js` | Pinning a note beside something (guide tips, advice) |
@@ -65,4 +66,4 @@ The music is not covered by this licence; see Credits.
 
 ## Credits
 
-Music: "Village Consort" and "Folk Round" by Kevin MacLeod ([incompetech.com](https://incompetech.com)), licensed under [Creative Commons: By Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).
+Music: "Village Consort", "Folk Round" and "Lord of the Land" by Kevin MacLeod ([incompetech.com](https://incompetech.com)), licensed under [Creative Commons: By Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).

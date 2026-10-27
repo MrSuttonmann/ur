@@ -6,7 +6,7 @@
 const ADVICE_LIMIT = { easy: Infinity, medium: 5 };
 const ADVISER_LEVEL = 'hard';
 const THREATENED = .25;              // a counter this likely to be hit counts as "in danger"
-const LONG_WAY_SQUARE = 9;           // capturing a counter this far along is worth pointing out
+const LONG_WAY = .6;                 // capturing a counter this far along its route is worth pointing out
 
 const adviceOffered = () => game.mode === 'ai' && game.level in ADVICE_LIMIT && game.phase === 'move'
   && !isComputer(game.turn) && legalMoves(game.positions, game.turn, game.roll).length > 1;
@@ -32,8 +32,11 @@ function giveAdvice() {
 function explainMove(side, move) {
   const reasons = [];
   if (move.to === currentRules.home) reasons.push('brings a counter home');
-  if (move.captures >= 0) reasons.push(`captures their counter on square ${move.to}${move.to >= LONG_WAY_SQUARE ? ', which had come a long way' : ''}`);
-  if (isSafeSquare(move.to, currentRules)) reasons.push(move.to === currentRules.centre
+  if (move.captures >= 0) {
+    const theirProgress = game.positions[opponentOf(side)][move.captures] / currentRules.length;
+    reasons.push(`captures their counter on square ${move.to}${theirProgress >= LONG_WAY ? ', which had come a long way' : ''}`);
+  }
+  if (isSafeSquare(move.to, currentRules)) reasons.push(isCentre(side, move.to)
     ? 'takes the centre rose, so you roll again and it’s safe there' : 'takes a contested rose, so you roll again and it’s safe there');
   else if (isRose(move.to)) reasons.push('lands on a rose, so you roll again');
   else if (currentRules.captureRoll && move.captures >= 0) reasons.push('earns another roll for the capture');
