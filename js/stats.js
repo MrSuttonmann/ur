@@ -6,6 +6,7 @@
 const createSideStats = () => ({
   rolls: 0, rollCounts: Array(MAX_ROLL + 1).fill(0), moves: 0, squaresTravelled: 0, passes: 0,
   captures: 0, lost: 0, roses: 0, roseChain: 0, longestRoseChain: 0, home: 0, msOnTurn: 0, adviceTaken: 0,
+  mostBehind: 0,   // the furthest behind in the race this side has been, in squares
 });
 function createGameStats() {
   return { playMs: 0, bySide: SIDES.map(createSideStats), landings: {}, leader: null, leadChanges: 0 };
@@ -25,6 +26,8 @@ function recordMove(side, move, landsOnRose) {
   const leader = sunToGo === moonToGo ? stats.leader : sunToGo < moonToGo ? SUN : MOON;
   if (stats.leader !== null && leader !== stats.leader) stats.leadChanges++;
   stats.leader = leader;
+  stats.bySide[SUN].mostBehind = Math.max(stats.bySide[SUN].mostBehind, sunToGo - moonToGo);
+  stats.bySide[MOON].mostBehind = Math.max(stats.bySide[MOON].mostBehind, moonToGo - sunToGo);
 }
 
 // ---------- lifetime: finished games only, kept in this browser ----------
@@ -122,8 +125,9 @@ function heatmap(landings) {
 let statsTab = 'game', resetAsk = false;
 function drawStats() {
   document.querySelectorAll('.stats-tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === statsTab)));
-  $('stats-body').innerHTML = statsTab === 'game' ? thisGameStatsHTML() : lifetimeStatsHTML();
-  if (statsTab !== 'game') wireResetButtons();
+  const TAB_HTML = { game: thisGameStatsHTML, life: lifetimeStatsHTML, honours: honoursHTML };
+  $('stats-body').innerHTML = TAB_HTML[statsTab]();
+  if (statsTab === 'life') wireResetButtons();
 }
 
 const statTiles = tiles => `<div class="tiles">${tiles.map(([label, value]) => `<div class="tile-s"><span>${label}</span><b>${value}</b></div>`).join('')}</div>`;
@@ -182,7 +186,7 @@ function lifetimeStatsHTML() {
     ${rollChart([{ name: 'All rolls', swatch: SIDE_SWATCH[MOON], counts: lifetime.dist }])}
     <p class="cap">Counts finished games only. Saved in this browser.</p>
     <div class="reset">${resetAsk
-      ? 'Erase all lifetime stats and the win tally? <button class="btn danger" type="button" id="reset-yes">Erase</button> <button class="btn" type="button" id="reset-no">Keep them</button>'
+      ? 'Erase all lifetime stats, honours and the win tally? <button class="btn danger" type="button" id="reset-yes">Erase</button> <button class="btn" type="button" id="reset-no">Keep them</button>'
       : '<button class="btn" type="button" id="reset-ask">Reset lifetime stats</button>'}</div>`;
 }
 function wireResetButtons() {
@@ -190,6 +194,7 @@ function wireResetButtons() {
   $('reset-no')?.addEventListener('click', () => { resetAsk = false; drawStats(); $('reset-ask').focus(); });
   $('reset-yes')?.addEventListener('click', () => {
     lifetime = createLifetimeStats(); saveLifetime();
+    honours = createHonours(); saveHonours();
     tally = { you: 0, computer: 0, sun: 0, moon: 0 }; saveTally();
     resetAsk = false; drawStats(); render(); $('reset-ask').focus();
   });

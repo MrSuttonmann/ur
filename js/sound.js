@@ -31,9 +31,10 @@ function readyAudio() {
   } catch (e) { return null; }
   return audioContext;
 }
-// browsers only allow sound after the player interacts, so wake the audio on any tap or key
-addEventListener('pointerdown', readyAudio);
-addEventListener('keydown', readyAudio);
+// Browsers only allow sound after the player interacts, so wake the audio on any tap or key. iPads count a
+// finished tap (touchend or click), not a finger landing (pointerdown): sound started then is refused.
+const USER_ACTIVATION_EVENTS = ['touchend', 'click', 'keydown'];
+USER_ACTIVATION_EVENTS.forEach(type => addEventListener(type, () => readyAudio(), { capture: true, passive: true }));
 
 // ---------- building blocks ----------
 // a short burst of filtered noise: clicks, cracks, rattles, whooshes (higher sharpness = narrower band)

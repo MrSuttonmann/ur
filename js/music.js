@@ -67,10 +67,9 @@ if (otherTabs) otherTabs.onmessage = e => {
   }
 };
 
-// the first click or key press anywhere (other than on the Music button itself) starts it
+// the first tap or key press anywhere (other than on the Music button itself) starts it
 const startOnFirstInteraction = e => { if (!musicStarted && !(e.target.closest && e.target.closest('#music'))) startMusic(); };
-addEventListener('pointerdown', startOnFirstInteraction);
-addEventListener('keydown', startOnFirstInteraction);
+USER_ACTIVATION_EVENTS.forEach(type => addEventListener(type, startOnFirstInteraction, { capture: true, passive: true }));
 // pause while the tab is hidden, pick up again on return
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { clearInterval(fadeTimer); clearTimeout(restTimer); musicPlayer.pause(); }

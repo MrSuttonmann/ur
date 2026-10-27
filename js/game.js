@@ -18,6 +18,7 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
     phase, roll: null, dice: null,
     winner: null, lastLanding: null, note: '', advice: null,
     mode, level, variant, guided, tips: {}, log: [], stats: createGameStats(),
+    newHonours: [],   // honours the game earned, once it's over
   };
 }
 const isComputer = side => game.mode === 'ai' && side === COMPUTER_SIDE;
@@ -247,8 +248,11 @@ function finishGame(winner) {
   else tally[winner === SUN ? 'sun' : 'moon']++;
   saveTally();
   recordGame(winner);
+  game.newHonours = awardHonours(winner);
   render();
+  prepareResultCard();
   showEndBanner(winner);
+  announceHonours(game.newHonours);
 }
 
 function endTurn(again) {

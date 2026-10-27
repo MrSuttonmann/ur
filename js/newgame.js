@@ -13,6 +13,7 @@ function abandonCurrentGame() {
   closeGuideTip(false);
   clearSpeech();
   hideEndBanner();
+  hideHonourNote();
 }
 
 // start playing with the chosen mode and opponent; { guided: true } starts the guided first game

@@ -56,6 +56,7 @@
 <link rel="stylesheet" href="css/drawings.css">
 <link rel="stylesheet" href="css/portraits.css">
 <link rel="stylesheet" href="css/banner.css">
+<link rel="stylesheet" href="css/honours.css">
 </head>
 <body>
 <canvas class="backdrop" id="backdrop" aria-hidden="true"></canvas>
@@ -382,6 +383,7 @@
 </dialog>
 
 <div class="end-banner" id="end-banner" hidden aria-hidden="true"></div>
+<div class="honour-note" id="honour-note" role="status" hidden></div>
 <svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
   <defs>
     <marker id="head-ink" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="20" markerHeight="20" orient="auto">
@@ -414,6 +416,7 @@
     <div class="stats-tabs" role="tablist">
       <button type="button" role="tab" data-tab="game" aria-selected="true" aria-controls="stats-body">This game</button>
       <button type="button" role="tab" data-tab="life" aria-selected="false" aria-controls="stats-body">All time</button>
+      <button type="button" role="tab" data-tab="honours" aria-selected="false" aria-controls="stats-body">Honours</button>
     </div>
     <div id="stats-body" role="tabpanel"></div>
   </div>
@@ -424,10 +427,12 @@
 <script src="js/sound.js"></script>
 <script src="js/game.js"></script>
 <script src="js/stats.js"></script>
+<script src="js/honours.js"></script>
 <script src="js/board.js"></script>
 <script src="js/speech.js"></script>
 <script src="js/portraits.js"></script>
 <script src="js/banner.js"></script>
+<script src="js/card.js"></script>
 <script src="js/prefs.js"></script>
 <script src="js/backdrop.js"></script>
 <script src="js/icons.js"></script>

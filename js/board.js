@@ -457,7 +457,9 @@ function renderStatus() {
   status.classList.toggle('win', game.phase === 'over');
   const [headline, hint] = statusText();
   const whoseCounter = isInPlay() ? `<span class="turn-counter" aria-hidden="true">${counterSVG(game.turn, game.turn)}</span>` : '';
-  status.innerHTML = `<strong>${whoseCounter}${headline}</strong><span>${hint}</span>`;
+  const share = game.phase === 'over'
+    ? `<button class="btn with-icon share-result" id="share-result" type="button">${iconSVG('share')}Share result</button>` : '';
+  status.innerHTML = `<strong>${whoseCounter}${headline}</strong><span>${hint}</span>${share}`;
 }
 function statusText() {
   const who = playerName(game.turn), yourTurn = game.mode === 'ai' && game.turn !== COMPUTER_SIDE;
