@@ -6,6 +6,10 @@ let audioContext = null, masterVolume = null, whiteNoise = null;
 let muted = false;
 try { muted = localStorage.getItem('ur-muted') === '1'; } catch (e) {}
 
+// The game's sound and music are ambient, as a game's should be: they play alongside the player's own music,
+// follow the silent switch, and don't make iPhones show the page as now playing media (Safari 17 and later).
+if (navigator.audioSession) navigator.audioSession.type = 'ambient';
+
 const MASTER_VOLUME = .7;
 const SILENT = .0001, NEARLY_SILENT = .001;    // exponential ramps can't reach zero
 const ATTACK_SECONDS = .012, TAIL_SECONDS = .02;

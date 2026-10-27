@@ -3,7 +3,10 @@
 // Background music: three tracks taking turns, with the Music button and volume setting.
 // Browsers only allow audio after the player interacts, so it fades in on the first click or key press.
 
-const musicPlayer = $('bgm');
+// The player is kept out of the page: browsers that collect a page's audio and video (Brave's Playlist,
+// "Add to playlist" on a long press) would otherwise take the game's background music for media to save.
+const musicPlayer = new Audio();
+musicPlayer.preload = 'none';
 const PLAYLIST = [
   { src: 'music/village-consort.mp3', title: 'Village Consort' },
   { src: 'music/folk-round.mp3', title: 'Folk Round' },
