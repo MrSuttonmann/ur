@@ -63,6 +63,22 @@
 .key-tile svg.tile { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .key-tile.safe-sq { border-radius: 5px; box-shadow: 0 0 0 2px var(--ochre), 0 0 0 3.5px var(--ink); }
 
+/* danger shading (against the Squire): a red wash as strong as the chance of being landed on, under the
+   counters, and that chance written over the square's foot, above them. The cell's --danger runs from 0 to 1. */
+.danger-wash {
+  position: absolute; inset: 3%; border-radius: 6px; pointer-events: none;
+  background: var(--vermilion); border: 2px solid var(--vermilion);
+  opacity: min(.7, calc(var(--danger, 0) * .9)); transition: opacity .3s;
+}
+.danger-chance {
+  position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); z-index: 3; pointer-events: none;
+  padding: 0 4px; border-radius: 6px; border: 1px solid var(--vermilion); background: var(--bone); color: var(--vermilion);
+  font: 600 clamp(9px, calc(var(--cell) * .2), 12px)/1.3 var(--f-body); font-variant-numeric: tabular-nums;
+}
+.danger-chance:empty { display: none; }
+.key-item[hidden] { display: none; }
+.key-danger-swatch { width: 30px; height: 30px; border-radius: 5px; background: linear-gradient(90deg, rgba(182,67,42,.12), rgba(182,67,42,.75)); border: 1.5px solid var(--ink); }
+
 .cell .tile .art { transition: opacity .25s; }
 .cell.occupied .tile .art { opacity: .28; }
 

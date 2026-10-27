@@ -37,6 +37,7 @@ const ICONS = {
   bellOff: `<path d="M5.5 16.5 C6 11 7.5 6.5 12 6.5 C16.5 6.5 18 11 18.5 16.5 Z" class="bell-metal silenced"/>
     <path d="M5.5 16.5 C6 11 7.5 6.5 12 6.5 C16.5 6.5 18 11 18.5 16.5 Z M4 16.5 H20 M12 6.5 V4.2 M10.3 18.6 A1.8 1.8 0 0 0 13.7 18.6" class="ink-line"/>
     <path d="M3.5 3.5 L20.5 20.5" class="icon-strike"/>`,
+  undo: `<path d="M8.5 5.5 L4 10 L8.5 14.5" class="ink-line"/><path d="M4.5 10 H14 C17.5 10 20 12.5 20 15.5 C20 18.5 17.5 20 14.5 20 H10" class="ink-line"/>`,
   share: `<path d="M8.5 9.5 H6 V20.5 H18 V9.5 H15.5" class="ink-line"/><path d="M12 15 V3.5 M8.3 7.2 L12 3.5 L15.7 7.2" class="ink-line"/>`,
 };
 const iconSVG = name => `<svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">${ICONS[name]}</g></svg>`;

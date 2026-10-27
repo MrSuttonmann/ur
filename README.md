@@ -2,12 +2,12 @@
 
 The 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. Play it at [ur.littleberrylodge.co.uk](https://ur.littleberrylodge.co.uk/).
 
-- **Vs computer:** three strengths (Squire, Knight, King). The computer looks ahead over every possible dice roll. **Advise me** shows what the King would play, and why: unlimited against the Squire, five times a game against the Knight.
+- **Vs computer:** three strengths (Squire, Knight, King). The computer looks ahead over every possible dice roll. **Advise me** shows what the King would play, and why: unlimited against the Squire, five times a game against the Knight. Against the Squire the board also shades each square by the chance he can land there next turn, and **Undo** takes back your last move until you roll again.
 - **Two players:** pass-and-play on one device.
 - **Rules:** Irving Finkel's reconstruction from the British Museum tablet, the longer routes of James Masters (16 squares) and H. J. R. Murray (27), the doubling-back route drawn on Wikipedia, and two house variants (Quick and Raiders), chosen with Variant before a game.
 - **Guided first game:** new players get tips as each rule first comes up; it can be replayed from Options.
 - Animated counters and dice, sound effects made in the browser, and background music.
-- **Keyboard play:** R or Space to roll, number keys or arrows and Enter to move, A for advice.
+- **Keyboard play:** R or Space to roll, number keys or arrows and Enter to move, A for advice, U to undo (against the Squire).
 - **Installable and offline:** install it from the browser or Options, and it keeps working with no connection.
 - Stats for the current game and all time, saved in the browser.
 
@@ -40,6 +40,8 @@ python3 -m http.server 8000
 | `js/icons.js` | Hand-drawn toolbar icons |
 | `js/bubbles.js` | Pinning a note beside something (guide tips, advice) |
 | `js/advice.js` | Advise me |
+| `js/danger.js` | Danger shading against the Squire |
+| `js/undo.js` | Undo against the Squire |
 | `js/guide.js` | The guided first game |
 | `js/newgame.js` | Starting games, the set-up board, confirming before a game is lost |
 | `js/options.js` | The Options window |

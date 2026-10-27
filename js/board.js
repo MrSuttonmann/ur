@@ -94,7 +94,8 @@ for (let row = 0; row < BOARD_ROWS; row++) for (let column = 0; column < BOARD_C
   const key = cellKey([row, column]);
   const cell = document.createElement('div');
   cell.className = 'cell';
-  cell.innerHTML = tileSVG(kind, tileSeed++) + '<span class="num"></span><span class="num num-moon"></span><div class="slot"></div>';
+  cell.innerHTML = tileSVG(kind, tileSeed++) + '<span class="danger-wash" aria-hidden="true"></span><span class="num"></span><span class="num num-moon"></span><div class="slot"></div>'
+    + '<span class="danger-chance" aria-hidden="true"></span>';
   boardCells[key] = cell;
   boardElement.appendChild(cell);
 }
@@ -112,7 +113,8 @@ $('key').innerHTML = `
   <span class="key-title">Board key</span>
   <span class="key-item"><span class="key-icons">${keyTile('ros', 0)}</span><span><b>Rose</b><small>Land here to roll again</small></span></span>
   <span class="key-item"><span class="key-icons" id="key-centre-tile">${keyTile('ros', 1, true)}</span><span><b id="key-centre-name">Centre rose</b><small id="key-centre">Roll again, and safe from capture</small></span></span>
-  <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((kind, i) => keyTile(kind, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>`;
+  <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((kind, i) => keyTile(kind, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>
+  <span class="key-item" id="key-danger" hidden><span class="key-icons"><span class="key-danger-swatch"></span></span><span><b>Danger</b><small>Chance the Squire can land there next turn</small></span></span>`;
 
 // ---------- labelling the board for the current rules ----------
 // Each cell's square numbers on each side's route, written like "5/17" where a route doubles back;
@@ -352,8 +354,10 @@ function render() {
   playLandingEffects(effects);
   if (game.phase !== 'rolling') drawDice(game.dice, true);
   renderTurn();
+  renderDanger();
   renderStatus();
   renderRollOrAdvise();
+  renderUndo();
   renderLedger();
   renderSetupControls();
   renderTally();

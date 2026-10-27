@@ -14,6 +14,7 @@ function abandonCurrentGame() {
   clearSpeech();
   hideEndBanner();
   hideHonourNote();
+  forgetUndoPoint();
 }
 
 // start playing with the chosen mode and opponent; { guided: true } starts the guided first game

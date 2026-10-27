@@ -11,7 +11,8 @@ const STREAK_SHORT = 3, STREAK_LONG = 7;
 const VETERAN_GAMES = 25;
 const HONOUR_NOTE_MS = 6000;           // how long the "honour earned" note stays up
 
-// Every honour: its name, how it's earned, and a test of a finished game (see honourCheckFor).
+// Every honour: its name, how it's earned, and a test of a finished game (see honourCheckFor). Skill honours
+// aren't earned in a game where you took back a move.
 // Ids are saved in players' browsers, so they stay as they are.
 const HONOURS = [
   { id: 'first-win', name: 'First Victory', how: 'Win a game against the computer.', test: g => g.won },
@@ -20,15 +21,15 @@ const HONOURS = [
   { id: 'own-counsel', name: 'Own Counsel', how: 'Beat Sir Knight without asking for advice.',
     test: g => g.won && g.level === 'medium' && g.you.adviceTaken === 0 },
   { id: 'king', name: 'The King Dethroned', how: 'Beat the King.', test: g => g.won && g.level === 'hard' },
-  { id: 'untouchable', name: 'Untouchable', how: 'Win without losing a single counter.', test: g => g.won && g.you.lost === 0 },
-  { id: 'clean-sweep', name: 'Clean Sweep', how: 'Win before your opponent brings a single counter home.', test: g => g.won && g.them.home === 0 },
-  { id: 'whisker', name: 'By a Whisker', how: 'Win when your opponent has every counter home but one.',
+  { id: 'untouchable', skill: true, name: 'Untouchable', how: 'Win without losing a single counter.', test: g => g.won && g.you.lost === 0 },
+  { id: 'clean-sweep', skill: true, name: 'Clean Sweep', how: 'Win before your opponent brings a single counter home.', test: g => g.won && g.them.home === 0 },
+  { id: 'whisker', skill: true, name: 'By a Whisker', how: 'Win when your opponent has every counter home but one.',
     test: g => g.won && g.them.home === g.counters - 1 },
-  { id: 'comeback', name: 'Against the Odds', how: `Win after falling ${COMEBACK_SQUARES} squares or more behind in the race.`,
+  { id: 'comeback', skill: true, name: 'Against the Odds', how: `Win after falling ${COMEBACK_SQUARES} squares or more behind in the race.`,
     test: g => g.won && g.you.mostBehind >= COMEBACK_SQUARES },
-  { id: 'hunter', name: 'Hunter', how: `Capture ${HUNTER_CAPTURES} counters in one game against the computer.`,
+  { id: 'hunter', skill: true, name: 'Hunter', how: `Capture ${HUNTER_CAPTURES} counters in one game against the computer.`,
     test: g => g.vsComputer && g.you.captures >= HUNTER_CAPTURES },
-  { id: 'garden', name: 'Garden Path', how: `Land on roses ${GARDEN_ROSES} times in one turn against the computer.`,
+  { id: 'garden', skill: true, name: 'Garden Path', how: `Land on roses ${GARDEN_ROSES} times in one turn against the computer.`,
     test: g => g.vsComputer && g.you.longestRoseChain >= GARDEN_ROSES },
   { id: 'swift', name: 'Swift', how: 'Win in under five minutes.', test: g => g.won && g.playMs < SWIFT_MS },
   { id: 'streak', name: 'On a Roll', how: `Win ${STREAK_SHORT} games in a row.`, test: g => g.won && lifetime.streak >= STREAK_SHORT },
@@ -50,7 +51,7 @@ const isEarned = honour => Boolean(honours.earned[honour.id]);
 function honourCheckFor(winner) {
   const vsComputer = game.mode === 'ai', sides = game.stats.bySide;
   return {
-    vsComputer, won: vsComputer && winner === HUMAN_SIDE, level: game.level,
+    vsComputer, won: vsComputer && winner === HUMAN_SIDE, level: game.level, tookBack: game.undos > 0,
     you: sides[HUMAN_SIDE], them: sides[COMPUTER_SIDE], counters: currentRules.counters, playMs: game.stats.playMs,
   };
 }
@@ -60,7 +61,7 @@ function awardHonours(winner) {
   const check = honourCheckFor(winner);
   if (check.won && !honours.variantsWon.includes(game.variant)) honours.variantsWon.push(game.variant);
   const today = new Date().toISOString().slice(0, 10);
-  const newlyEarned = HONOURS.filter(honour => !isEarned(honour) && honour.test(check));
+  const newlyEarned = HONOURS.filter(honour => !isEarned(honour) && !(honour.skill && check.tookBack) && honour.test(check));
   newlyEarned.forEach(honour => { honours.earned[honour.id] = today; });
   saveHonours();
   return newlyEarned;
@@ -85,7 +86,7 @@ function honoursHTML() {
       return `<li class="honour${earned ? ' earned' : ''}">${honourMedalSVG(earned)}<div><b>${honour.name}</b><span>${honour.how}</span>${
         earned ? `<small>Earned ${formatEarnedDate(honours.earned[honour.id])}</small>` : ''}</div></li>`;
     }).join('')}</ul>
-    <p class="cap">Saved in this browser.</p>`;
+    <p class="cap">${joinAsList(HONOURS.filter(honour => honour.skill).map(honour => honour.name))} can’t be earned in a game where you take back a move. Saved in this browser.</p>`;
 }
 
 // the note that slides in once the end banner has gone, naming the honours just earned

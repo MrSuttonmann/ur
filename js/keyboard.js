@@ -1,6 +1,7 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// Keyboard play: R or Space rolls, number keys or arrows and Enter move, A asks for advice, Esc closes a tip.
+// Keyboard play: R or Space rolls, number keys or arrows and Enter move, A asks for advice, U takes back a move
+// (against the Squire), Esc closes a tip.
 // Number badges and the keyboard hint only show once someone uses the keyboard; the mouse hides them again.
 
 let keyboardMode = false;
@@ -22,6 +23,7 @@ function focusFirstMovable() {
 
 const isRollKey = (e, tag) => e.key === 'r' || e.key === 'R' || (e.key === ' ' && !['BUTTON', 'SUMMARY'].includes(tag));
 const isAdviseKey = e => e.key === 'a' || e.key === 'A';
+const isUndoKey = e => e.key === 'u' || e.key === 'U';
 const ARROW_STEP = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
 document.addEventListener('keydown', e => {
@@ -32,6 +34,10 @@ document.addEventListener('keydown', e => {
   if (typing) return;
   if (isRollKey(e, tag)) {
     if (game.phase === 'roll' && !isComputer(game.turn)) { e.preventDefault(); rollDice(); }
+    return;
+  }
+  if (isUndoKey(e)) {
+    if (canUndo()) { e.preventDefault(); undoMove(); }
     return;
   }
   if (game.phase !== 'move' || isComputer(game.turn)) return;

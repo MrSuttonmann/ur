@@ -19,9 +19,13 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
     winner: null, lastLanding: null, note: '', advice: null,
     mode, level, variant, guided, tips: {}, log: [], stats: createGameStats(),
     newHonours: [],   // honours the game earned, once it's over
+    undos: 0,         // moves you took back
   };
 }
 const isComputer = side => game.mode === 'ai' && side === COMPUTER_SIDE;
+// against the Squire the game helps you learn: it shades the squares in danger and lets you take back a move
+const LEARNER_LEVEL = 'easy';
+const isLearnerGame = () => game.mode === 'ai' && game.level === LEARNER_LEVEL;
 
 // against the computer, the Moon side goes by the opponent's name
 const OPPONENT_NAME = { easy: 'The Squire', medium: 'Sir Knight', hard: 'The King' };
@@ -191,6 +195,7 @@ function showEventScroll(cell, word) {
 function makeMove(move) {
   if (game.phase !== 'move') return;
   clearTimeout(pendingStep);  // a pending auto-move must not fire into a later turn
+  saveUndoPoint();
   game.phase = 'animating';
   game.advice = null;
   clearAdvice();

@@ -50,6 +50,18 @@
 .advise:hover:not(:disabled) { background: var(--paper-deep); }
 .advise:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
 
+/* Undo (against the Squire): a quieter button beside Roll */
+.undo {
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer; padding: 5px 12px;
+  font-family: var(--f-note); font-size: 16px; color: var(--ink);
+  background: none; border: 1.5px solid var(--ink-soft); border-radius: var(--hand);
+}
+.undo[hidden] { display: none; }
+.undo svg { width: 20px; height: 20px; }
+.undo:hover:not(:disabled) { background: var(--paper-deep); }
+.undo:disabled { opacity: .4; cursor: default; }
+.undo:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
+
 /* the hint line always holds its space, even when empty, so the dice box never changes height mid-turn */
 .status span { display: block; min-height: 1.5em; color: var(--ink-soft); font-family: var(--f-note); font-style: italic; font-size: 15px; }
 .status.win strong { color: var(--vermilion); font-family: var(--f-display); font-size: 26px; font-weight: 400; }
