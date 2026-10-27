@@ -12,6 +12,7 @@ function abandonCurrentGame() {
   gameId++; clearTimeout(pendingStep);
   closeGuideTip(false);
   clearSpeech();
+  hideEndBanner();
 }
 
 // start playing with the chosen mode and opponent; { guided: true } starts the guided first game

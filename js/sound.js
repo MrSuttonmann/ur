@@ -127,6 +127,18 @@ function sfxFanfare(delaySeconds = 0) {
   noiseBurst({ at: chordAt, centreHz: 180, volume: .5, seconds: .4, sharpness: 1.5 });
   tone({ at: chordAt, fromHz: 110, toHz: 60, volume: .5, seconds: .45 });
 }
+// defeat: a sad trombone, four notes sliding down a semitone at a time, the last one wobbling away
+const LAMENT_NOTES = [392, 370, 349, 330];   // G4 F#4 F4 E4
+function sfxLament(delaySeconds = 0) {
+  if (!readyAudio()) return;
+  const start = audioContext.currentTime + delaySeconds;
+  LAMENT_NOTES.forEach((hz, i) => {
+    const last = i === LAMENT_NOTES.length - 1;
+    brass({ at: start + i * .42, hz, seconds: last ? 1.1 : .34, volume: .14 });
+  });
+  const wobbleAt = start + 3 * .42 + .2;
+  tone({ at: wobbleAt, wave: 'triangle', fromHz: 330, toHz: 300, volume: .05, seconds: .9 });
+}
 // a capture: a hollow thump, a crack, and a comic falling "wah"
 function sfxCapture() {
   if (!readyAudio()) return;

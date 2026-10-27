@@ -3,7 +3,8 @@
 // The player's preferences, saved in this browser only.
 
 const DEFAULT_MUSIC_VOLUME = 20;   // percent: quiet enough that the dice and counters come through
-const prefs = { autoMove: true, variant: 'classic', music: true, musicVol: DEFAULT_MUSIC_VOLUME };
+const DEFAULT_BACKDROP = 'sky';
+const prefs = { autoMove: true, variant: 'classic', music: true, musicVol: DEFAULT_MUSIC_VOLUME, backdrop: DEFAULT_BACKDROP };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('ur-prefs')) || {}); } catch (e) {}
 if (!VARIANTS[prefs.variant]) prefs.variant = 'classic';
 const savePrefs = () => { try { localStorage.setItem('ur-prefs', JSON.stringify(prefs)); } catch (e) {} };

@@ -10,16 +10,21 @@
 .tray {
   position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
   background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand); padding: 8px 14px;
-  transition: border-color .25s, box-shadow .25s;
+  transition: border-color .25s, box-shadow .25s, background-color .25s;
 }
-.tray.active { border-color: var(--ink); box-shadow: 3px 3px 0 -1px var(--ochre); }
+/* whose turn it is: their tray takes a wash and a heavy border in their side's colour, and the other tray fades back */
+.tray-sun { --side: var(--c-sun); --side-wash: rgba(233,165,44,.2); }
+.tray-moon { --side: var(--c-moon); --side-wash: rgba(58,98,168,.1); }
+.tray.active { background-color: var(--side-wash); border: 2.5px solid var(--side); box-shadow: 3px 3px 0 -1px var(--ink); }
+.tray.off-turn > * { opacity: .6; filter: saturate(.6); transition: opacity .25s, filter .25s; }
 .tray-name { font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .tray-name .side { font-family: var(--f-note); font-style: italic; font-weight: 400; color: var(--ink-soft); }
-/* "to move" is a tag pinned to the tray's top edge, so it never reflows the tray */
+/* "your turn" is a tag in the side's colour pinned to the tray's top edge, so it never reflows the tray */
 .chip {
-  position: absolute; top: -11px; right: 16px; transform: rotate(1.5deg);
-  font-family: var(--f-note); font-style: italic; font-weight: 400; font-size: 13px; line-height: 18px; color: var(--vermilion);
-  padding: 0 9px; background: var(--bone); border: 1.5px solid var(--ink); border-radius: 9px 6px 10px 5px;
+  position: absolute; top: -13px; right: 16px; transform: rotate(1.5deg);
+  font-family: var(--f-note); font-style: italic; font-weight: 600; font-size: 15px; line-height: 22px; color: #fffaf0;
+  padding: 0 11px; background: var(--side); border: 1.5px solid var(--ink); border-radius: 9px 6px 10px 5px;
+  box-shadow: 1px 2px 0 var(--ink);
 }
 .tray-count { font-family: var(--f-note); font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; }
 /* tall enough for the enlarged movable counter, so highlighting one doesn't grow the tray */

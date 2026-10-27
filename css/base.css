@@ -52,6 +52,8 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 22px 44px;
 }
+/* the animated background (js/backdrop.js) sits behind everything and never takes a click */
+.backdrop { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 .wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
 
 /* scrollbars (ledger and every modal): an inked rail with a rolled-parchment handle, like the scroll banners */

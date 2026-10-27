@@ -23,6 +23,12 @@
 .roll:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
 .status { flex: 1 1 150px; min-width: 0; }
 .status strong { display: block; font-size: 18px; }
+/* the dice box shows whose turn it is: a stripe in their side's colour, and their counter beside the headline */
+.dock { transition: border-color .25s, box-shadow .25s; }
+.game[data-turn="sun"] .dock { border-color: var(--c-sun); box-shadow: inset 6px 0 0 var(--c-sun); }
+.game[data-turn="moon"] .dock { border-color: var(--c-moon); box-shadow: inset 6px 0 0 var(--c-moon); }
+.status .turn-counter { display: inline-block; min-height: 0; width: 22px; height: 22px; margin-right: 7px; vertical-align: -4px; }
+.status .turn-counter svg { width: 100%; height: 100%; display: block; overflow: visible; }
 /* Roll and Advise me share one slot: the inactive one is hidden but keeps its size */
 .act { display: grid; }
 .act > * { grid-area: 1 / 1; }

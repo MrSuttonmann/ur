@@ -55,8 +55,10 @@
 <link rel="stylesheet" href="css/stats.css">
 <link rel="stylesheet" href="css/drawings.css">
 <link rel="stylesheet" href="css/portraits.css">
+<link rel="stylesheet" href="css/banner.css">
 </head>
 <body>
+<canvas class="backdrop" id="backdrop" aria-hidden="true"></canvas>
 
 <svg class="svg-defs" width="0" height="0" aria-hidden="true">
   <defs>
@@ -154,9 +156,9 @@
   <section class="game" id="game" aria-label="Game">
     <div class="portrait" id="portrait1" aria-hidden="true"><div class="medal" id="medal1"></div><div class="pname" id="pname1"></div><div class="speech" id="speech1" hidden></div></div>
     <div class="portrait" id="portrait0" aria-hidden="true"><div class="medal" id="medal0"></div><div class="pname" id="pname0"></div><div class="speech" id="speech0" hidden></div></div>
-    <div class="tray" id="tray1"></div>
+    <div class="tray tray-moon" id="tray1"></div>
     <div class="slab"><div class="board" id="board"></div></div>
-    <div class="tray" id="tray0"></div>
+    <div class="tray tray-sun" id="tray0"></div>
 
     <div class="dock">
       <div class="dice idle" id="dice" aria-hidden="true"></div>
@@ -342,6 +344,11 @@
       </div>
       <p class="now-playing" id="now-playing" aria-live="polite"></p>
 
+      <div class="opt-range">
+        <label for="opt-backdrop"><b>Background</b></label>
+        <select id="opt-backdrop"></select>
+      </div>
+
       <h4>App</h4>
       <p id="install-text">Install the game to play it from your home screen or desktop, even with no connection.</p>
       <button class="btn" type="button" id="install-btn" hidden>Install the game</button>
@@ -375,6 +382,7 @@
   </div>
 </dialog>
 
+<div class="end-banner" id="end-banner" hidden aria-hidden="true"></div>
 <svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
   <defs>
     <marker id="head-ink" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="20" markerHeight="20" orient="auto">
@@ -420,7 +428,9 @@
 <script src="js/board.js"></script>
 <script src="js/speech.js"></script>
 <script src="js/portraits.js"></script>
+<script src="js/banner.js"></script>
 <script src="js/prefs.js"></script>
+<script src="js/backdrop.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/bubbles.js"></script>
 <script src="js/advice.js"></script>

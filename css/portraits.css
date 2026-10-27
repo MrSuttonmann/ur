@@ -46,6 +46,11 @@
 @media (max-width: 699px) and (prefers-reduced-motion: reduce) { .portrait { transition: none; } }
 .medal { width: 150px; height: 150px; filter: drop-shadow(1px 4px 3px rgba(40,28,18,.35)); }
 .medal svg { width: 100%; height: 100%; overflow: visible; }
+/* whose turn it is: their medallion glows in their side's colour, and the other player's fades back */
+.medal { transition: filter .25s, opacity .25s; }
+.game[data-turn="sun"] #medal0 { filter: drop-shadow(0 0 5px var(--sunfire)) drop-shadow(0 0 3px var(--sunfire)) drop-shadow(1px 4px 3px rgba(40,28,18,.35)); }
+.game[data-turn="moon"] #medal1 { filter: drop-shadow(0 0 5px var(--c-moon)) drop-shadow(0 0 3px var(--c-moon)) drop-shadow(1px 4px 3px rgba(40,28,18,.35)); }
+.game[data-turn="sun"] #medal1, .game[data-turn="moon"] #medal0 { opacity: .65; }
 .pname { font-family: var(--f-display); font-size: 17px; }
 .speech {
   position: relative; margin-top: 10px; max-width: 190px; padding: 8px 12px; text-align: center;

@@ -8,8 +8,8 @@
   to download up front, so each track is saved the first time it plays and then served from the
   cache, including the byte ranges audio players ask for.
 */
-const CACHE = 'ur-v5';
-const CODE = ['css/base.css', 'css/header.css', 'css/controls.css', 'css/variants.css', 'css/dialogs.css', 'css/board.css', 'css/pieces.css', 'css/dock.css', 'css/ledger.css', 'css/rules.css', 'css/footer.css', 'css/guide.css', 'css/stats.css', 'css/drawings.css', 'css/portraits.css', 'js/rules.js', 'js/sound.js', 'js/game.js', 'js/stats.js', 'js/board.js', 'js/speech.js', 'js/portraits.js', 'js/prefs.js', 'js/icons.js', 'js/bubbles.js', 'js/advice.js', 'js/guide.js', 'js/newgame.js', 'js/options.js', 'js/variants.js', 'js/controls.js', 'js/modals.js', 'js/keyboard.js', 'js/install.js', 'js/music.js', 'js/main.js'];
+const CACHE = 'ur-v6';
+const CODE = ['css/base.css', 'css/header.css', 'css/controls.css', 'css/variants.css', 'css/dialogs.css', 'css/board.css', 'css/pieces.css', 'css/dock.css', 'css/ledger.css', 'css/rules.css', 'css/footer.css', 'css/guide.css', 'css/stats.css', 'css/drawings.css', 'css/portraits.css', 'css/banner.css', 'js/rules.js', 'js/sound.js', 'js/game.js', 'js/stats.js', 'js/board.js', 'js/speech.js', 'js/portraits.js', 'js/banner.js', 'js/prefs.js', 'js/backdrop.js', 'js/icons.js', 'js/bubbles.js', 'js/advice.js', 'js/guide.js', 'js/newgame.js', 'js/options.js', 'js/variants.js', 'js/controls.js', 'js/modals.js', 'js/keyboard.js', 'js/install.js', 'js/music.js', 'js/main.js'];
 const SHELL = ['./', 'manifest.webmanifest', ...CODE,
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 

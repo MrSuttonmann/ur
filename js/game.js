@@ -239,7 +239,7 @@ function reactToMove(side, move, landsOnRose, finished) {
   else if (landsOnRose) speak(side, 'rose', 0, .5);
   if (move.to === currentRules.home) sfxHome();
   if (landsOnRose) sfxRose();
-  if (finished) sfxFanfare(.5);
+  if (finished) (isComputer(side) ? sfxLament : sfxFanfare)(.5);   // a computer win is your loss
 }
 function finishGame(winner) {
   game.phase = 'over'; game.winner = winner;
@@ -248,6 +248,7 @@ function finishGame(winner) {
   saveTally();
   recordGame(winner);
   render();
+  showEndBanner(winner);
 }
 
 function endTurn(again) {

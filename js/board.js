@@ -289,15 +289,26 @@ function createCounter(side, counter, move) {
   return el;
 }
 
+// whose turn it is shows on their tray, the dice box and their portrait, all in their side's colour
+const isInPlay = () => game.phase !== 'over' && game.phase !== 'setup';
+function turnTag(side) {
+  if (isComputer(side)) return 'thinking…';
+  return game.mode === 'ai' ? 'your turn' : `${SIDE_NAME[side]}’s turn`;
+}
+function renderTurn() {
+  $('game').dataset.turn = isInPlay() ? SIDE_NAME[game.turn].toLowerCase() : '';
+}
+
 function renderTray(side) {
   const tray = $('tray' + side), squares = game.positions[side];
   const waiting = squares.filter(square => square === IN_TRAY).length;
   const home = squares.filter(square => square === currentRules.home).length;
-  const active = game.phase !== 'over' && game.phase !== 'setup' && game.turn === side;
+  const active = isInPlay() && game.turn === side;
   const plays = game.mode === 'ai' ? ` <span class="side">${side === COMPUTER_SIDE ? 'plays' : 'play'} the ${SIDE_NAME[side]}</span>` : '';
   tray.classList.toggle('active', active);
+  tray.classList.toggle('off-turn', isInPlay() && !active);
   tray.innerHTML = `
-    <div class="tray-name">${playerName(side)}${plays}${active ? ' <span class="chip">to move</span>' : ''}</div>
+    <div class="tray-name">${playerName(side)}${plays}${active ? ` <span class="chip">${turnTag(side)}</span>` : ''}</div>
     <div class="tray-count">${waiting} waiting · ${home} of ${squares.length} home</div>
     <div class="pool wait"></div><div class="pool home"></div>`;
   return { waiting: tray.querySelector('.wait'), home: tray.querySelector('.home') };
@@ -311,6 +322,7 @@ function render() {
   animateCounterChanges(previousPlaces, effects);
   playLandingEffects(effects);
   if (game.phase !== 'rolling') drawDice(game.dice, true);
+  renderTurn();
   renderStatus();
   renderRollOrAdvise();
   renderLedger();
@@ -406,7 +418,8 @@ function renderStatus() {
   const status = $('status');
   status.classList.toggle('win', game.phase === 'over');
   const [headline, hint] = statusText();
-  status.innerHTML = `<strong>${headline}</strong><span>${hint}</span>`;
+  const whoseCounter = isInPlay() ? `<span class="turn-counter" aria-hidden="true">${counterSVG(game.turn, game.turn)}</span>` : '';
+  status.innerHTML = `<strong>${whoseCounter}${headline}</strong><span>${hint}</span>`;
 }
 function statusText() {
   const who = playerName(game.turn), yourTurn = game.mode === 'ai' && game.turn !== COMPUTER_SIDE;

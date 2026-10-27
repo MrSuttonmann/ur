@@ -32,7 +32,9 @@ python3 -m http.server 8000
 | `js/board.js` | Drawing the board, counters, dice and move arrows; `render()` |
 | `js/speech.js` | What the characters say, and their speech bubbles |
 | `js/portraits.js` | Player portraits and expressions |
+| `js/banner.js` | The win or lose banner at the end of a game |
 | `js/prefs.js` | Saved preferences |
+| `js/backdrop.js` | The animated background behind the page |
 | `js/icons.js` | Hand-drawn toolbar icons |
 | `js/bubbles.js` | Pinning a note beside something (guide tips, advice) |
 | `js/advice.js` | Advise me |
