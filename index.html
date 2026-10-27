@@ -1,9 +1,41 @@
 <!doctype html>
+<!--
+  The Royal Game of Ur
+  Copyright (C) 2026 MrSuttonmann
+
+  This program is free software: you can redistribute it and/or modify it under the terms of the
+  GNU Affero General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  Affero General Public License for more details: https://www.gnu.org/licenses/agpl-3.0.html
+
+  Source: https://github.com/MrSuttonmann/ur
+  The music (music/village-consort.mp3) is not covered by this licence; see the README.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="The Royal Game of Ur, the 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. Play the computer or a friend on one device.">
+<!-- link previews when the page is shared -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Royal Game of Ur">
+<meta property="og:description" content="Play the 4,600-year-old race game from ancient Mesopotamia on a hand-painted board, against the computer or a friend.">
+<meta property="og:url" content="https://ur.littleberrylodge.co.uk/">
+<meta property="og:image" content="https://ur.littleberrylodge.co.uk/og-image.jpg">
+<link rel="canonical" href="https://ur.littleberrylodge.co.uk/">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The hand-painted Royal Game of Ur board with Sun and Moon counters in play">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3e7c9">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ur">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='6' fill='%23d6a540' stroke='%233b2a1b' stroke-width='2'/%3E%3Cg fill='%23b6432a' stroke='%233b2a1b' stroke-width='1.2'%3E%3Ccircle cx='20' cy='12' r='6.4'/%3E%3Ccircle cx='27.6' cy='17.5' r='6.4'/%3E%3Ccircle cx='24.7' cy='26.5' r='6.4'/%3E%3Ccircle cx='15.3' cy='26.5' r='6.4'/%3E%3Ccircle cx='12.4' cy='17.5' r='6.4'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='5' fill='%23f6ecd2' stroke='%233b2a1b' stroke-width='1.2'/%3E%3C/svg%3E">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Royal Game of Ur</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -29,6 +61,7 @@
   --c-sun: #b97a12;
   --c-moon: #3a62a8;
   --night: #1c2a52;
+  --green: #4a7a37;
   --sunfire: #e9a52c;
 
   --f-display: "Uncial Antiqua", "IM Fell English", Georgia, serif;
@@ -74,22 +107,61 @@ select, .btn {
 }
 .btn:hover, select:hover { background: var(--paper-deep); }
 .btn:focus-visible, select:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 3px; }
-.tally { margin-left: auto; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.tally { margin: 0; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+/* header row: win tally on the left, hand-drawn icon buttons on the right; game setup on its own strip below */
+.head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin-top: -6px; }
+.toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 8px 10px 8px 12px; background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand);
+}
+.tb-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.tb-group.tools { gap: 2px; }
+.field { display: inline-flex; align-items: center; gap: 8px; }
+.field > span { font-family: var(--f-note); font-style: italic; font-size: 15px; color: var(--ink-soft); }
+/* the green call to start a game; between games only */
+.btn.start { color: #fffaf0; background: var(--green); border: 2px solid var(--ink); box-shadow: 2px 3px 0 var(--ink); }
+.btn.start:hover { background: #3e6a2e; }
+.seg input:disabled + label { opacity: .5; cursor: not-allowed; }
+select:disabled { opacity: .55; cursor: not-allowed; }
+dialog.confirm { width: min(440px, calc(100vw - 24px)); }
+.confirm h2 { font-family: var(--f-display); font-weight: 400; font-size: 26px; margin: 0; }
+.confirm p { margin: 0; }
+.confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.log .waiting { font-style: italic; }
+.btn.with-icon { display: inline-flex; align-items: center; gap: 6px; }
+.btn.with-icon svg { width: 20px; height: 20px; }
+.icon-btn {
+  display: inline-flex; flex-direction: column; align-items: center; min-width: 50px; padding: 3px 5px 2px;
+  font-family: var(--f-note); font-size: 13px; line-height: 1.15; color: var(--ink);
+  background: none; border: 1.5px solid transparent; border-radius: var(--hand); cursor: pointer;
+}
+.icon-btn:hover { background: var(--paper-deep); border-color: var(--ink-soft); }
+.icon-btn:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 2px; }
+.icon-btn svg { width: 28px; height: 28px; }
+[data-icon] { display: inline-flex; }
+[data-icon] svg { overflow: visible; }
 .tally b { color: var(--ink); }
 
 /* trays */
 .game { display: flex; flex-direction: column; gap: 12px; }
 .tray {
-  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
+  position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
   background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand); padding: 8px 14px;
   transition: border-color .25s, box-shadow .25s;
 }
 .tray.active { border-color: var(--ink); box-shadow: 3px 3px 0 -1px var(--ochre); }
 .tray-name { font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .tray-name .side { font-family: var(--f-note); font-style: italic; font-weight: 400; color: var(--ink-soft); }
-.chip { font-family: var(--f-note); font-style: italic; font-size: 14px; color: var(--vermilion); }
+/* "to move" is a tag pinned to the tray's top edge, so it never reflows the tray */
+.chip {
+  position: absolute; top: -11px; right: 16px; transform: rotate(1.5deg);
+  font-family: var(--f-note); font-style: italic; font-weight: 400; font-size: 13px; line-height: 18px; color: var(--vermilion);
+  padding: 0 9px; background: var(--bone); border: 1.5px solid var(--ink); border-radius: 9px 6px 10px 5px;
+}
 .tray-count { font-family: var(--f-note); font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; }
-.pool { display: flex; align-items: center; min-height: calc(var(--cell) * .58); gap: 3px; flex-wrap: wrap; }
+/* tall enough for the enlarged movable counter, so highlighting one doesn't grow the tray */
+.pool { display: flex; align-items: center; min-height: calc(var(--cell) * .66); gap: 3px; flex-wrap: wrap; }
 .pool.home { justify-content: flex-end; }
 .pool.home .piece + .piece { margin-left: calc(var(--cell) * -.24); }
 .pool .piece { width: calc(var(--cell) * .55); }
@@ -116,8 +188,13 @@ select, .btn {
 .cell svg.tile { position: absolute; inset: -3%; width: 106%; height: 106%; overflow: visible; }
 .cell.gap { display: grid; place-items: center; text-align: center; font-family: var(--f-note); font-style: italic; color: var(--ink); font-size: clamp(11px, calc(var(--cell) * .24), 15px); line-height: 1.1; }
 .cell.gap.g1 { grid-column: span 2; }
-.cell .num { position: absolute; top: 1px; left: 5px; font-family: var(--f-note); font-size: 12px; color: var(--ink); opacity: 0; transition: opacity .2s; font-variant-numeric: tabular-nums; pointer-events: none; }
-.show-route .cell .num { opacity: .9; }
+.cell .num {
+  position: absolute; top: -5px; left: -4px; z-index: 2; min-width: 17px; padding: 0 3px; text-align: center;
+  font-family: var(--f-note); font-size: 12px; line-height: 16px; color: var(--ink); font-variant-numeric: tabular-nums;
+  background: var(--bone); border: 1px solid var(--ink-soft); border-radius: 8px 6px 9px 5px;
+  opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.show-route .cell .num { opacity: 1; }
 .slot { position: absolute; inset: 0; display: grid; place-items: center; }
 .cell.lastto::before {
   content: ""; position: absolute; inset: 2px; border-radius: 40%; pointer-events: none;
@@ -127,6 +204,25 @@ select, .btn {
   content: ""; position: absolute; inset: 5px; border-radius: 50% 46% 52% 44%; border: 2.5px dashed var(--ink); pointer-events: none;
 }
 .cell.target.capture::after { border: 3px solid var(--vermilion); }
+/* move arrows: dots that march from the counter towards its landing square */
+.arrow-layer { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 45; }
+.arrow-layer { filter: drop-shadow(0 0 1.5px #fffaf0) drop-shadow(0 0 1px #fffaf0); }
+.move-arrow { fill: none; stroke: var(--vermilion); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 10 7; animation: march .9s linear infinite; }
+@keyframes march { to { stroke-dashoffset: -17; } }
+@media (prefers-reduced-motion: reduce) { .move-arrow { animation: none; } }
+/* the centre rose is the one safe square: a gold ring sets it apart from the other roses */
+.cell.safe-sq { border-radius: 7px; box-shadow: 0 0 0 2.5px var(--ochre), 0 0 0 4px var(--ink); }
+
+/* board key: the painted icons with what each one does */
+.key { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 10px 14px; border: 1.5px dashed var(--ink-soft); border-radius: var(--hand); }
+.key-title { font-family: var(--f-display); font-size: 17px; flex-basis: 100%; }
+.key-item { display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 1.25; min-width: 0; }
+.key-item b { font-weight: 600; }
+.key-item small { display: block; font-family: var(--f-note); font-style: italic; font-size: 13px; color: var(--ink-soft); }
+.key-icons { display: flex; gap: 3px; flex-shrink: 0; }
+.key-tile { position: relative; width: 30px; height: 30px; flex-shrink: 0; }
+.key-tile svg.tile { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.key-tile.safe-sq { border-radius: 5px; box-shadow: 0 0 0 2px var(--ochre), 0 0 0 3.5px var(--ink); }
 
 /* pieces: painted tokens */
 .piece {
@@ -139,6 +235,11 @@ select, .btn {
 .piece svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .piece.movable { cursor: pointer; filter: drop-shadow(0 0 4px var(--sunfire)) drop-shadow(0 0 2px var(--sunfire)) drop-shadow(1px 3px 1.5px rgba(40,28,18,.6)); animation: bob 1.3s ease-in-out infinite; }
 .piece:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 3px; }
+/* keyboard players see a number on each counter that can move */
+.kbd .piece.movable[data-key]::after {
+  content: attr(data-key); position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%;
+  font: 600 12px/18px var(--f-body); text-align: center; color: var(--bone); background: var(--ink); border: 1.5px solid var(--bone);
+}
 @keyframes bob { 50% { transform: translateY(-3px) rotate(-4deg); } }
 .petal {
   position: absolute; left: 50%; top: 50%; width: 8px; height: 10px; margin: -5px 0 0 -4px; z-index: 30; pointer-events: none;
@@ -181,16 +282,89 @@ select, .btn {
 .roll:active:not(:disabled) { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .roll:disabled { opacity: .45; cursor: default; }
 .roll:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
-.status { flex: 1 1 200px; min-width: 0; }
+.status { flex: 1 1 150px; min-width: 0; }
 .status strong { display: block; font-size: 18px; }
-.status span { color: var(--ink-soft); font-family: var(--f-note); font-style: italic; font-size: 15px; }
+/* Roll and Advise me share one slot: the inactive one is hidden but keeps its size */
+.act { display: grid; }
+.act > * { grid-area: 1 / 1; }
+.act > .swapped { visibility: hidden; }
+.advise {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  font-family: var(--f-display); font-size: 17px; padding: 6px 14px; color: var(--ink);
+  background: var(--bone); border: 2px solid var(--ink); border-radius: var(--hand); box-shadow: 2px 3px 0 var(--ink);
+}
+.advise svg { width: 24px; height: 24px; }
+/* the count sits on the corner so it never changes the button's width (Roll shares this slot) */
+.advise { position: relative; }
+.advise .left {
+  position: absolute; top: -10px; right: -10px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; border: 1.5px solid var(--bone);
+  font: 600 12px/20px var(--f-body); color: var(--bone); background: var(--vermilion);
+}
+.advise:disabled { opacity: .55; cursor: default; box-shadow: 1px 1px 0 var(--ink); }
+.advise:disabled .left { background: var(--ink-soft); }
+.advise:hover:not(:disabled) { background: var(--paper-deep); }
+.advise:focus-visible { outline: 2.5px dashed var(--ink); outline-offset: 4px; }
+/* the advised move: a red halo on the counter and a red dashed ring where it lands */
+.piece.advised { filter: drop-shadow(0 0 3px var(--vermilion)) drop-shadow(0 0 3px var(--vermilion)) drop-shadow(1px 3px 1.5px rgba(40,28,18,.6)); }
+.cell.advised-target, .pool.advised-target { outline: 3px dashed var(--vermilion); outline-offset: 1px; border-radius: 7px; }
+/* in variants where the centre rose isn't safe, it loses its gold ring */
+.no-safe .safe-sq { box-shadow: none; }
+
+/* the hint line always holds its space, even when empty, so the dice box never changes height mid-turn */
+.status span { display: block; min-height: 1.5em; color: var(--ink-soft); font-family: var(--f-note); font-style: italic; font-size: 15px; }
 .status.win strong { color: var(--vermilion); font-family: var(--f-display); font-size: 26px; font-weight: 400; }
 
 .under { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
 .log { list-style: none; margin: 0; padding: 0; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .log li:first-child { color: var(--ink); }
-.route-toggle { font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-.route-toggle input { accent-color: var(--vermilion); }
+/* move history: a ruled parchment box with a scroll-banner label */
+.ledger {
+  position: relative; flex: 1 1 320px; min-width: 0; margin-top: 14px; padding: 22px 6px 10px 12px;
+  background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand);
+}
+/* the whole game's history; six ruled lines show, the rest scroll. The rules scroll with the text */
+.ledger .log {
+  gap: 0; max-height: calc(23px * 6); overflow-y: auto; overscroll-behavior: contain;
+  list-style: none; padding: 0 8px 0 0;
+  background-image: repeating-linear-gradient(180deg, transparent 0 22px, rgba(110,88,64,.13) 22px 23px);
+  background-attachment: local;
+}
+/* hanging move numbers; top-aligned so the smaller digits never make a line taller than its rule */
+.ledger .log li { line-height: 23px; padding-left: 2.4em; }
+.ledger .log .n { display: inline-block; width: 2em; margin-left: -2.4em; margin-right: .4em; text-align: right; vertical-align: top; font-size: 13px; color: var(--vermilion); font-variant-numeric: tabular-nums; }
+.ledger .log:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 3px; border-radius: 4px; }
+/* scrollbars (ledger and every modal): an inked rail with a rolled-parchment handle, like the scroll banners */
+.ledger .log::-webkit-scrollbar, .stats-inner::-webkit-scrollbar, .scroll-x::-webkit-scrollbar { width: 13px; height: 13px; }
+.ledger .log::-webkit-scrollbar-track, .stats-inner::-webkit-scrollbar-track { background: linear-gradient(90deg, transparent 5.5px, var(--ink-soft) 5.5px 7px, transparent 7px); }
+.stats-inner::-webkit-scrollbar-track { margin-block: 16px; }
+.scroll-x::-webkit-scrollbar-track { background: linear-gradient(180deg, transparent 5.5px, var(--ink-soft) 5.5px 7px, transparent 7px); }
+.ledger .log::-webkit-scrollbar-thumb, .stats-inner::-webkit-scrollbar-thumb, .scroll-x::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
+  border: 1.5px solid var(--ink); border-radius: 7px 5px 8px 4px / 9px 6px 8px 5px;
+}
+.scroll-x::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep)); }
+.ledger .log::-webkit-scrollbar-thumb:hover, .stats-inner::-webkit-scrollbar-thumb:hover { background: linear-gradient(90deg, var(--ochre), #f6dc9c 50%, var(--ochre)); }
+.scroll-x::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--ochre), #f6dc9c 50%, var(--ochre)); }
+.ledger .log::-webkit-scrollbar-button, .stats-inner::-webkit-scrollbar-button, .scroll-x::-webkit-scrollbar-button { display: none; }
+@supports not selector(::-webkit-scrollbar) {
+  .ledger .log, .stats-inner, .scroll-x { scrollbar-width: thin; scrollbar-color: var(--ink-soft) transparent; }
+}
+.ledger-label {
+  position: absolute; top: -14px; left: 18px; transform: rotate(-2deg);
+  font-family: var(--f-display); font-size: 16px; color: var(--vermilion); white-space: nowrap;
+  padding: 3px 14px 2px;
+  background: linear-gradient(180deg, var(--bone) 0%, #fffaf0 45%, var(--paper-deep) 100%);
+  border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  box-shadow: 0 3px 6px -2px rgba(40,28,18,.4);
+}
+.ledger-label::before, .ledger-label::after {
+  content: ""; position: absolute; top: -5px; bottom: -5px; width: 9px;
+  border: 1.5px solid var(--ink); border-radius: 6px;
+  background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
+}
+.ledger-label::before { left: -6px; }
+.ledger-label::after { right: -6px; }
+#route[aria-pressed="true"] { background: var(--paper-deep); border-color: var(--ink); box-shadow: inset 1px 2px 3px rgba(40,28,18,.25); }
 
 /* rules */
 details { border: 1.5px solid var(--ink-soft); border-radius: var(--hand); padding: 12px 18px; background: rgba(246,236,210,.55); }
@@ -199,6 +373,117 @@ summary:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 4p
 .rules { max-width: 62ch; }
 .rules li { margin-bottom: 6px; }
 .rules li::marker { color: var(--vermilion); }
+.rules h4 { font-family: var(--f-display); font-weight: 400; font-size: 18px; margin: 16px 0 4px; }
+.rules p { margin: 0 0 6px; }
+.variant-now { padding: 6px 12px; border: 1.5px dashed var(--vermilion); border-radius: var(--hand); }
+
+/* options: variant cards and a hand-drawn toggle */
+.variants { display: grid; gap: 8px; }
+.variant { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; cursor: pointer; border: 1.5px solid var(--ink-soft); border-radius: var(--hand); }
+.variant input { position: absolute; opacity: 0; pointer-events: none; }
+.variant b { font-family: var(--f-display); font-weight: 400; font-size: 18px; display: block; }
+.variant small { display: block; font-size: 14px; color: var(--ink-soft); line-height: 1.4; }
+.variant .dot { flex-shrink: 0; width: 16px; height: 16px; margin-top: 4px; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--bone); }
+.variant:has(input:checked) { border-color: var(--ink); background: var(--paper); box-shadow: 3px 3px 0 -1px var(--ochre); }
+.variant:has(input:checked) .dot { background: radial-gradient(circle, var(--vermilion) 0 4px, var(--bone) 4.5px); }
+.variant:has(input:focus-visible) { outline: 2px dashed var(--vermilion); outline-offset: 3px; }
+.variant b small.house { display: inline; margin-left: 6px; font-family: var(--f-note); font-style: italic; font-size: 13px; }
+
+/* footer: a quiet colophon under the game */
+.foot { margin-top: 18px; padding-inline: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 15px; color: var(--ink-soft); }
+.foot .flourish { width: min(240px, 70%); }
+.foot p { margin: 0; text-wrap: pretty; }
+.foot-title { font-family: var(--f-display); font-size: 19px; color: var(--ink); }
+.foot a { color: var(--vermilion); text-underline-offset: 2px; }
+.foot a:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 2px; }
+/* credits and licence: a small ruled colophon, a label beside each line */
+.colophon { width: min(100%, 580px); margin: 16px 0 0; text-align: left; border-top: 1px dashed var(--ink-soft); }
+.colophon div { display: grid; grid-template-columns: 6.5em 1fr; gap: 4px 14px; padding: 10px 6px; border-bottom: 1px dashed var(--ink-soft); }
+.colophon dt { font-family: var(--f-display); font-size: 15px; color: var(--vermilion); }
+.colophon dd { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink-soft); }
+@media (max-width: 480px) { .colophon div { grid-template-columns: 1fr; } }
+/* footer link buttons: each brand's colours, drawn in the page's hand-inked style */
+.foot-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 6px 0 2px; }
+.brand-btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px 7px 12px; text-decoration: none;
+  font-weight: 600; font-size: 15px; border: 2px solid var(--ink); border-radius: var(--hand); box-shadow: 2px 3px 0 var(--ink);
+  transition: transform .1s, box-shadow .1s;
+}
+.brand-btn svg { width: 22px; height: 22px; flex-shrink: 0; overflow: visible; }
+.brand-btn.gh { background: #24292f; color: #ffffff; }
+.brand-btn.bmc { background: #ffdd00; color: #000000; }
+.brand-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 4px 0 var(--ink); }
+.brand-btn:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.brand-btn:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .brand-btn { transition: none; } }
+
+/* phones: seven icon buttons span the width in one row, and the dice box keeps dice, total and button on one line */
+@media (max-width: 480px) {
+  .head-row .tb-group.tools { flex: 1 1 100%; flex-wrap: nowrap; justify-content: space-between; gap: 0; }
+  .icon-btn { min-width: 0; padding: 3px 2px 2px; font-size: 12px; }
+  .icon-btn svg { width: 26px; height: 26px; }
+  .die { width: 30px; height: 28px; }
+  .dice { gap: 4px; }
+  .roll { padding: 8px 18px; }
+  .advise { padding: 6px 10px; font-size: 16px; gap: 4px; }
+  .advise svg { width: 20px; height: 20px; }
+  .advise .me { display: none; }
+  /* setup strip: mode and New game share the first row, the opponent picker gets its own full-width row */
+  .seg label { padding: 5px 10px; font-size: 14px; }
+  #newgame { order: 2; padding: 5px 10px; font-size: 14px; }
+  .field { order: 3; flex: 1 1 100%; }
+  .field select { flex: 1; min-width: 0; }
+}
+
+.variant-note:not(:empty) { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--f-note); font-style: italic; }
+.opt { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.now-playing { margin: 6px 0 0; font-family: var(--f-note); font-style: italic; font-size: 14px; color: var(--ink-soft); }
+.opt-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; }
+.opt-range input[type=range] { -webkit-appearance: none; appearance: none; flex: 1 1 160px; max-width: 260px; height: 22px; background: none; cursor: pointer; }
+.opt-range input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--paper-deep); border: 1.5px solid var(--ink); border-radius: 5px 3px 6px 3px; }
+.opt-range input[type=range]::-moz-range-track { height: 6px; background: var(--paper-deep); border: 1.5px solid var(--ink); border-radius: 5px 3px 6px 3px; }
+.opt-range input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7.5px; border-radius: 50%; background: var(--ochre); border: 1.5px solid var(--ink); }
+.opt-range input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--ochre); border: 1.5px solid var(--ink); }
+.opt-range input[type=range]:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 3px; }
+.opt b { display: block; }
+.opt small { display: block; font-size: 14px; color: var(--ink-soft); }
+.toggle {
+  appearance: none; flex-shrink: 0; position: relative; width: 40px; height: 22px; margin: 2px 0 0; cursor: pointer;
+  background: var(--paper-deep); border: 1.5px solid var(--ink); border-radius: 12px 10px 13px 9px;
+}
+.toggle::before {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--bone); border: 1.5px solid var(--ink); transition: transform .2s;
+}
+.toggle:checked { background: var(--sage); }
+.toggle:checked::before { transform: translateX(17px); background: #fffaf0; }
+.toggle:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 3px; }
+
+/* guided game: a parchment tip pointing at the thing it explains */
+.coach {
+  position: absolute; z-index: 60; width: min(320px, calc(100vw - 32px)); padding: 12px 14px 10px;
+  background: #fffaf0; color: var(--ink); border: 2px solid var(--ink); border-radius: 12px 16px 10px 14px / 14px 10px 16px 12px;
+  box-shadow: 0 10px 24px -10px rgba(40,28,18,.6);
+}
+.coach::before {
+  content: ""; position: absolute; left: calc(var(--ax, 50%) - 8px); width: 14px; height: 14px; background: #fffaf0;
+  border: 2px solid var(--ink); transform: rotate(45deg);
+}
+.coach[data-side="below"]::before { top: -9px; border-right: 0; border-bottom: 0; }
+.coach[data-side="above"]::before { bottom: -9px; border-left: 0; border-top: 0; }
+.coach p { margin: 0 0 10px; font-size: 16px; line-height: 1.45; }
+/* advice: a smaller note that never blocks a click on the board beneath it */
+.advice-note { width: min(270px, calc(100vw - 32px)); padding: 8px 12px; pointer-events: none; z-index: 55; border-color: var(--vermilion); }
+.advice-note::before { border-color: var(--vermilion); }
+.advice-note p { margin: 0; font-size: 15px; line-height: 1.4; }
+.coach-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.linkish { font: inherit; font-family: var(--f-note); font-style: italic; font-size: 14px; color: var(--ink-soft); background: none; border: 0; padding: 2px; cursor: pointer; text-decoration: underline; }
+.linkish:focus-visible { outline: 2px dashed var(--vermilion); }
+.coach-focus { outline: 3px solid var(--ochre) !important; outline-offset: 3px; border-radius: 8px; }
+
+.rules .route { display: block; width: 100%; max-width: 340px; height: auto; margin: 6px 0 2px; }
+.rules .sun { color: var(--c-sun); font-weight: 600; }
+.rules .moon { color: var(--c-moon); font-weight: 600; }
 .odds { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 10px; align-items: center; font-variant-numeric: tabular-nums; max-width: 360px; margin-top: 8px; }
 .odds .bar { height: 11px; background: var(--vermilion); opacity: .75; border-radius: 6px 2px 7px 3px; }
 .odds .n { font-family: var(--f-display); font-size: 18px; }
@@ -321,20 +606,34 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
     <h1><span class="cap">T</span>he Royal Game of Ur</h1>
     <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round" filter="url(#ink)"/><circle cx="118" cy="8" r="2.4" style="fill:var(--vermilion)"/></svg>
-    <div class="controls">
-      <div class="seg" role="radiogroup" aria-label="Mode">
-        <input type="radio" name="mode" id="mode-ai" value="ai" checked><label for="mode-ai">Vs computer</label>
-        <input type="radio" name="mode" id="mode-local" value="local"><label for="mode-local">Two players</label>
+    <div class="head-row">
+      <p class="tally" id="tally"></p>
+      <div class="tb-group tools" role="group" aria-label="Help and settings">
+        <button class="icon-btn" id="open-rules" type="button" aria-haspopup="dialog"><span data-icon="book"></span>Rules</button>
+        <button class="icon-btn" id="open-tactics" type="button" aria-haspopup="dialog"><span data-icon="swords"></span>Strategy</button>
+        <button class="icon-btn" id="open-stats" type="button" aria-haspopup="dialog"><span data-icon="tally"></span>Stats</button>
+        <button class="icon-btn" id="route" type="button" aria-pressed="false" title="Number every square along each side's route"><span data-icon="route"></span>Route</button>
+        <button class="icon-btn" id="sound" type="button" aria-pressed="true"><span data-icon="bell"></span><span class="lbl">Sound</span></button>
+        <button class="icon-btn" id="music" type="button" aria-pressed="true"><span data-icon="music"></span><span class="lbl">Music</span></button>
+        <button class="icon-btn" id="open-options" type="button" aria-haspopup="dialog"><span data-icon="key"></span>Options</button>
       </div>
-      <select id="level" aria-label="Computer strength">
-        <option value="easy">Squire (easy)</option>
-        <option value="medium" selected>Knight (medium)</option>
-        <option value="hard">King (hard)</option>
-      </select>
-      <button class="btn" id="newgame" type="button">New game</button>
-      <button class="btn" id="sound" type="button" aria-pressed="true">Sound on</button>
-      <button class="btn" id="open-stats" type="button" aria-haspopup="dialog">Stats</button>
-      <div class="tally" id="tally"></div>
+    </div>
+    <div class="toolbar">
+      <div class="tb-group" role="group" aria-label="Game setup">
+        <div class="seg" role="radiogroup" aria-label="Mode">
+          <input type="radio" name="mode" id="mode-ai" value="ai" checked><label for="mode-ai">Vs computer</label>
+          <input type="radio" name="mode" id="mode-local" value="local"><label for="mode-local">Two players</label>
+        </div>
+        <label class="field" id="level-field" for="level">
+          <span>Opponent</span>
+          <select id="level">
+            <option value="easy">Squire (easy)</option>
+            <option value="medium" selected>Knight (medium)</option>
+            <option value="hard">King (hard)</option>
+          </select>
+        </label>
+        <button class="btn with-icon start" id="newgame" type="button"><span data-icon="play"></span><span class="lbl">Start game</span></button>
+      </div>
     </div>
   </header>
 
@@ -346,31 +645,224 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     <div class="dock">
       <div class="dice idle" id="dice" aria-hidden="true"></div>
       <div class="total" id="total" aria-hidden="true">–</div>
-      <button class="roll" id="roll" type="button">Roll</button>
+      <div class="act">
+        <button class="roll" id="roll" type="button">Roll</button>
+        <button class="advise swapped" id="advise" type="button" disabled><span data-icon="owl"></span>Advise<span class="me">&nbsp;me</span><span class="left" id="advice-left" hidden></span></button>
+      </div>
       <div class="status" id="status" aria-live="polite"></div>
     </div>
 
+    <div class="key" id="key" aria-label="Board key"></div>
+
     <div class="under">
-      <ol class="log" id="log" aria-label="Recent moves"></ol>
-      <label class="route-toggle"><input type="checkbox" id="route"> Show route numbers</label>
+      <section class="ledger" aria-labelledby="ledger-label">
+        <span class="ledger-label" id="ledger-label">The Scribe’s Ledger</span>
+        <ol class="log" id="log" tabindex="0" aria-label="Move history, newest first"></ol>
+      </section>
     </div>
   </section>
 
-  <details>
-    <summary>How to play</summary>
+  <footer class="foot">
+    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M14 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M14 9 c-4 5 -10 3 -10 -1 c0 -4 6 -5 8 -1 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" style="fill:none;stroke:var(--ink-soft);stroke-width:1.4;stroke-linecap:round" filter="url(#ink)"/><circle cx="130" cy="8" r="2.4" style="fill:var(--vermilion)"/></svg>
+    <p class="foot-title">The Royal Game of Ur</p>
+    <p>First played in the city of Ur around 2600 BCE, and across the Middle East for some three thousand years. The classic rules here follow Irving Finkel’s reading of a Babylonian tablet from 177 BCE. <a href="https://www.britishmuseum.org/collection/object/W_1928-1009-378" target="_blank" rel="noopener">See the original board at the British Museum</a>, or <a href="https://en.wikipedia.org/wiki/Royal_Game_of_Ur" target="_blank" rel="noopener">read the game’s history on Wikipedia</a>.</p>
+    <div class="foot-btns">
+      <a class="brand-btn gh" href="https://github.com/MrSuttonmann/ur" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>View on GitHub</span>
+      </a>
+      <a class="brand-btn bmc" href="https://buymeacoffee.com/MrSuttonmann" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">
+          <path d="M8 2.8 C7 4 9 5 8 6.4 M11.5 2.4 C10.5 3.7 12.5 4.6 11.5 6.2 M15 2.8 C14 4 16 5 15 6.4" style="fill:none;stroke:#3b2a1b;stroke-width:1.4;stroke-linecap:round"/>
+          <path d="M4.5 8.5 H18.5 L17 20 C16.9 21 16.2 21.6 15.2 21.6 H7.8 C6.8 21.6 6.1 21 6 20 Z" style="fill:#fffaf0;stroke:#3b2a1b;stroke-width:1.5;stroke-linejoin:round"/>
+          <path d="M5.2 12 H17.9 L17.4 16 H5.7 Z" style="fill:#b6432a;fill-opacity:.85"/>
+          <path d="M18.3 10.5 C21.5 10.3 21.5 15.2 17.6 15" style="fill:none;stroke:#3b2a1b;stroke-width:1.5;stroke-linecap:round"/>
+        </g></svg>
+        <span>Buy me a coffee</span>
+      </a>
+    </div>
+    <dl class="colophon">
+      <div><dt>Music</dt><dd>“Village Consort” and “Folk Round” by Kevin MacLeod, <a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons: By Attribution 4.0</a>.</dd></div>
+      <div><dt>Licence</dt><dd>This game is free software under the <a href="https://github.com/MrSuttonmann/ur/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL-3.0</a>. You’re welcome to study, change and share it.</dd></div>
+      <div><dt>Your data</dt><dd>Your stats and settings are saved in this browser only, and never sent anywhere.</dd></div>
+    </dl>
+    <audio id="bgm" preload="none"></audio>
+  </footer>
+
+  <dialog id="rules-dlg" class="stats" aria-labelledby="rules-title">
+   <div class="stats-inner">
+    <div class="stats-head">
+      <h2 id="rules-title">How to Play</h2>
+      <button class="btn close" type="button" id="close-rules" aria-label="Close how to play">Close</button>
+    </div>
     <div class="rules">
-      <p>These are the rules reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in 177 BCE.</p>
+      <p class="variant-now" id="variant-now" hidden></p>
+      <h4 style="margin-top:0">The goal</h4>
+      <p>Each side has seven counters. Be the first to move all seven along your route and off the board.</p>
+
+      <h4>Your turn</h4>
       <ul>
-        <li>Each player has seven pieces and a fourteen-square route: four squares in your own row, eight along the shared middle row, then two back in your own row, then off the board through your gate.</li>
-        <li>Roll four tetrahedral dice and count the painted tips. Move one piece exactly that many squares. A piece enters through your gate, so a 1 places it on your first square.</li>
-        <li>You can't land on your own piece. Landing on an opponent in the middle row sends it back to start.</li>
-        <li>Landing on a rose gives you another roll. The central rose is a sanctuary: a piece there can't be captured.</li>
-        <li>Bearing a piece off needs the exact count. The first player to bring all seven home wins.</li>
+        <li>Roll the four dice and count the red tips. That number, from 0 to 4, is your move.</li>
+        <li>Pick one counter and move it exactly that many squares along your route. A new counter enters from your tray, so a roll of 1 puts it on your first square.</li>
+        <li>If you roll 0, or no counter can move the full amount, your turn passes.</li>
       </ul>
+
+      <h4>Your route</h4>
+      <p>Counters enter at your gate, travel four squares along your own row, cross the whole shared middle row, then come back two squares in your own row and leave by the gate.</p>
+      <svg class="route" viewBox="0 0 248 94" role="img" aria-labelledby="route-desc">
+        <desc id="route-desc">Board diagram. The Sun's counters start at the gap in the bottom row, move left to the end, go up and right along the whole middle row, come down and move left two squares, then leave. The Moon does the same along the top row.</desc>
+        <defs>
+          <marker id="ar-sun" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" style="fill:var(--c-sun)"/></marker>
+          <marker id="ar-moon" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" style="fill:var(--c-moon)"/></marker>
+        </defs>
+        <g id="route-cells"></g>
+        <polyline points="130,77 17,77 17,51 227,51 227,77 170,77" style="fill:none;stroke:var(--c-sun);stroke-width:3;stroke-linejoin:round" marker-end="url(#ar-sun)"/>
+        <polyline points="130,17 17,17 17,43 227,43 227,17 170,17" style="fill:none;stroke:var(--c-moon);stroke-width:3;stroke-linejoin:round;stroke-dasharray:6 3" marker-end="url(#ar-moon)"/>
+      </svg>
+      <p><span class="sun">Sun</span> (solid line) uses the bottom row; <span class="moon">Moon</span> (dashed line) uses the top row. Both race along the middle row, which is where captures happen. Press <em>Route</em> at the top of the page to number every square from 1 to 14.</p>
+
+      <h4>Captures</h4>
+      <ul>
+        <li>You can't land on one of your own counters.</li>
+        <li>Landing on an opponent's counter in the middle row knocks it back to their tray, and it must start again.</li>
+        <li>Your own row is private, so counters there are always safe.</li>
+      </ul>
+
+      <h4>Roses</h4>
+      <ul>
+        <li>Landing on any rose gives you another roll straight away.</li>
+        <li>The centre rose, ringed in gold, is a safe square. A counter on it can't be captured, so an opponent can't land there while you hold it.</li>
+      </ul>
+
+      <h4>Bringing counters home</h4>
+      <p>A counter leaves the board one step after its last square, and it needs the exact roll. From your last square you need a 1; from the square before it you need a 2.</p>
+
+      <h4>The other pictures</h4>
+      <p>The castles, shields, crowns, trees and dots are decoration only and have no effect on play. The original board from Ur was also covered in patterned squares, and only the rosettes have a known rule.</p>
+
+      <h4>Playing with the keyboard</h4>
+      <ul>
+        <li><b>R</b> or <b>Space</b>: roll the dice.</li>
+        <li><b>1</b>, <b>2</b>, <b>3</b>…: move the counter with that number. Numbers appear on the counters that can move once you start using the keyboard; 1 is the one furthest along.</li>
+        <li><b>Arrow keys</b> step through the counters that can move, showing where each would land; <b>Enter</b> moves the one you’re on.</li>
+        <li><b>A</b>: Advise me, when playing the Squire or Knight.</li>
+        <li><b>Tab</b> reaches every button, and <b>Esc</b> closes a window or a guide tip.</li>
+      </ul>
+
+      <p>These rules were reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in 177 BCE.</p>
       <p style="margin-bottom:0">Odds of each roll with four tetrahedral dice:</p>
       <div class="odds" id="odds"></div>
     </div>
-  </details>
+   </div>
+  </dialog>
+
+  <dialog id="tactics-dlg" class="stats" aria-labelledby="tactics-title">
+   <div class="stats-inner">
+    <div class="stats-head">
+      <h2 id="tactics-title">Strategy</h2>
+      <button class="btn close" type="button" id="close-tactics" aria-label="Close strategy">Close</button>
+    </div>
+    <div class="rules">
+      <p>Ur is a game of luck, but good choices add up over a game. These ideas are the same ones the King-level computer weighs on every move. Square numbers count along your route from 1 to 14; press <em>Route</em> to see them on the board.</p>
+
+      <h4>Hold the centre rose</h4>
+      <p>Square 8 is the strongest square on the board. Landing there gives you another roll, it can't be captured, and while you sit on it your opponent can't land there either. That blocks one of their best squares and makes their counters harder to move safely. Getting a counter onto it early and keeping it there is often worth more than racing ahead.</p>
+
+      <h4>Set up rose landings</h4>
+      <ul>
+        <li>The roses are on squares 4, 8 and 14. Each landing is a free extra turn.</li>
+        <li>2 is the most likely roll (6 in 16), so a counter two squares before a rose has the best chance of reaching it next turn.</li>
+        <li>Entering a new counter with a 4 lands it straight on your first rose, square 4, and earns another roll.</li>
+      </ul>
+
+      <h4>Get through the danger zone quickly</h4>
+      <p>Squares 5 to 12 (except the centre rose) are shared, and any opposing counter up to four squares behind can capture you there. How likely that is depends on the gap:</p>
+      <div class="odds" id="danger-odds"></div>
+      <p>Two squares ahead of an enemy is the worst place to stop; four ahead is fairly safe. Squares 1 to 4 and 13 to 14 are your own and always safe, so a counter waiting on square 4 threatens anything that enters the middle row ahead of it.</p>
+
+      <h4>Capture the counters that have come furthest</h4>
+      <p>A capture sends a counter back to the start, so knocking off one on square 12 costs your opponent twelve squares of progress, while one on square 5 costs only five. When you have a choice, hit the most advanced counter. The same goes in reverse: protect your own far-travelled counters first.</p>
+
+      <h4>Keep your options open</h4>
+      <ul>
+        <li>Having two or three counters on the board means most rolls give you a useful move, so you pass fewer turns.</li>
+        <li>Too many counters in the middle row at once leaves more of them open to capture. Spread the risk.</li>
+        <li>Your own counters block each other, so avoid lining them up where a common roll would need to land on one.</li>
+      </ul>
+
+      <h4>Plan your exits</h4>
+      <p>A counter needs the exact roll to leave. From square 13 that is a 2, the most likely roll; from square 14 it is a 1. Square 14 is also a rose, so landing on it earns an extra roll, but a counter parked there can be slow to get home. Don't let several counters queue at the end waiting for the same number.</p>
+    </div>
+   </div>
+  </dialog>
+</div>
+
+<dialog id="options-dlg" class="stats" aria-labelledby="options-title">
+  <div class="stats-inner">
+    <div class="stats-head">
+      <h2 id="options-title">Options</h2>
+      <button class="btn close" type="button" id="close-options" aria-label="Close options">Close</button>
+    </div>
+    <div class="rules">
+      <h4 style="margin-top:0">Rules</h4>
+      <div class="variants" id="variants" role="radiogroup" aria-label="Rule variant"></div>
+      <div class="variant-note" id="variant-note" aria-live="polite"></div>
+
+      <h4>Play</h4>
+      <label class="opt" for="opt-auto">
+        <input type="checkbox" class="toggle" id="opt-auto">
+        <span><b>Auto-move</b><small>When a roll leaves only one legal move, play it for me.</small></span>
+      </label>
+
+      <div class="opt-range">
+        <label for="opt-vol"><b>Music volume</b></label>
+        <input type="range" id="opt-vol" min="0" max="100" step="5">
+      </div>
+      <p class="now-playing" id="now-playing" aria-live="polite"></p>
+
+      <h4>App</h4>
+      <p id="install-text">Install the game to play it from your home screen or desktop, even with no connection.</p>
+      <button class="btn" type="button" id="install-btn" hidden>Install the game</button>
+
+      <h4>Guided game</h4>
+      <p>New to Ur, or teaching someone? The guided game is played against the Squire, with tips as each part of the rules comes up.</p>
+      <button class="btn" type="button" id="replay-guide">Play the guided game</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="confirm-dlg" class="stats confirm" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+  <div class="stats-inner">
+    <h2 id="confirm-title">Start a new game?</h2>
+    <p id="confirm-text">The game in progress will be lost.</p>
+    <div class="confirm-actions">
+      <button class="btn" type="button" id="confirm-no">Keep playing</button>
+      <button class="btn start" type="button" id="confirm-yes">Start a new game</button>
+    </div>
+  </div>
+</dialog>
+
+<svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
+  <defs>
+    <marker id="head-ink" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="20" markerHeight="20" orient="auto">
+      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" style="fill:var(--vermilion)"/>
+    </marker>
+    <marker id="head-red" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" orient="auto">
+      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" style="fill:var(--vermilion)"/>
+    </marker>
+  </defs>
+  <path class="move-arrow advice" id="arrow-advice" marker-end="url(#head-red)" hidden/>
+  <path class="move-arrow" id="arrow-preview" marker-end="url(#head-ink)" hidden/>
+</svg>
+
+<div class="coach advice-note" id="advice-note" role="status" hidden><p id="advice-text"></p></div>
+
+<div class="coach" id="coach" role="dialog" aria-labelledby="coach-text" hidden>
+  <p id="coach-text"></p>
+  <div class="coach-actions">
+    <button class="btn" type="button" id="coach-ok">Got it</button>
+    <button class="linkish" type="button" id="coach-skip">Skip the guide</button>
+  </div>
 </div>
 
 <dialog id="stats" class="stats" aria-labelledby="stats-title">
@@ -390,8 +882,21 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
 
 <script>
 (() => {
-  const N = 7, OFF = 15;
+  const OFF = 15, CENTRE = 8;
   const ROSETTES = new Set([4, 8, 14]);
+
+  // rule variants: Classic is Finkel's reconstruction; the others are house variants
+  const VARIANTS = {
+    classic: { name: 'Classic', counters: 7, safeCentre: true, captureRoll: false,
+      blurb: 'Irving Finkel’s reconstruction from the British Museum tablet. Seven counters each; roses give another roll and the centre rose is safe.' },
+    quick: { name: 'Quick', counters: 5, safeCentre: true, captureRoll: false,
+      blurb: 'The classic rules with five counters each, for a game about two-thirds as long.' },
+    raiders: { name: 'Raiders', counters: 7, safeCentre: false, captureRoll: true,
+      blurb: 'A fiercer game: every capture earns another roll, and the centre rose gives no protection.' },
+  };
+  let RULES = VARIANTS.classic;
+  const rollsAgain = m => ROSETTES.has(m.to) || (RULES.captureRoll && m.cap >= 0);
+  const COUNT_WORD = { 5: 'five', 7: 'seven' };
   const PROB = [1, 4, 6, 4, 1].map(x => x / 16);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const SIDE = ['Sun', 'Moon'];
@@ -408,7 +913,7 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     const res = [];
     if (!roll) return res;
     const seen = new Set();
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < pos[p].length; i++) {
       const x = pos[p][i];
       if (x === OFF || seen.has(x)) continue;
       seen.add(x);
@@ -418,7 +923,7 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
       let cap = -1;
       if (t >= 5 && t <= 12) {
         const j = pos[1 - p].indexOf(t);
-        if (j >= 0) { if (t === 8) continue; cap = j; }
+        if (j >= 0) { if (t === CENTRE && RULES.safeCentre) continue; cap = j; }
       }
       res.push({ i, from: x, to: t, cap });
     }
@@ -440,10 +945,11 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
       if (x === OFF) { s += 22; continue; }
       if (x === 0) continue;
       s += x;
-      if (x === 8) s += 4;
-      else if (x === 4 || x === 14) s += 1.5;
+      const safeHere = x === CENTRE && RULES.safeCentre;
+      if (safeHere) s += 4;
+      else if (ROSETTES.has(x)) s += 1.5;
       if (x >= 13) s += 1;
-      if (x >= 5 && x <= 12 && x !== 8) {
+      if (x >= 5 && x <= 12 && !safeHere) {
         let danger = 0;
         for (const y of opp) if (y < x && x - y <= 4) danger += PROB[x - y];
         s -= Math.min(danger, 1) * (x + 2);
@@ -473,7 +979,7 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     const np = applyMove(pos, p, m);
     if (won(np, p)) return p === me ? 1e4 + depth : -1e4 - depth;
     if (depth <= 1) return evaluate(np, me);
-    return chanceNode(np, ROSETTES.has(m.to) ? p : 1 - p, depth - 1, me);
+    return chanceNode(np, rollsAgain(m) ? p : 1 - p, depth - 1, me);
   }
   function aiChoose(pos, p, roll, level) {
     const ms = legalMoves(pos, p, roll);
@@ -492,13 +998,14 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
   let S, gen = 0, timer = null;
   const $ = id => document.getElementById(id);
 
-  function fresh(mode, level) {
+  function fresh(mode, level, variant, guided, phase = 'roll') {
+    const n = VARIANTS[variant].counters;
     return {
-      pos: [Array(N).fill(0), Array(N).fill(0)],
-      turn: Math.random() < 0.5 ? 0 : 1,
-      phase: 'roll', roll: null, dice: null,
-      winner: null, lastTo: null, note: '',
-      mode, level, log: [], stats: freshStats(),
+      pos: [Array(n).fill(0), Array(n).fill(0)],
+      turn: guided ? 0 : Math.random() < 0.5 ? 0 : 1,
+      phase, roll: null, dice: null,
+      winner: null, lastTo: null, note: '', advice: null,
+      mode, level, variant, guided, tips: {}, log: [], stats: freshStats(),
     };
   }
   const isAI = p => S.mode === 'ai' && p === 1;
@@ -515,18 +1022,27 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
   }
 
   function advance() {
-    if (S.phase === 'over') return;
+    if (S.phase === 'over' || S.phase === 'setup') return;
+    // while a guide tip is open the game waits; dismissing it calls advance() again
+    if (coachOpen) { advancePending = true; return; }
     if (S.phase === 'roll') { if (isAI(S.turn)) schedule(doRoll, 750); return; }
     if (S.phase === 'move') {
       const ms = legalMoves(S.pos, S.turn, S.roll);
       if (!ms.length) schedule(() => endTurn(false), 1400);
       else if (isAI(S.turn)) schedule(() => doMove(aiChoose(S.pos, S.turn, S.roll, S.level)), 700);
+      // the forced move is worked out again when the timer fires, in case the player already moved
+      else if (ms.length === 1 && prefs.autoMove && !S.guided) schedule(() => {
+        const now = S.phase === 'move' && !isAI(S.turn) ? legalMoves(S.pos, S.turn, S.roll) : [];
+        if (now.length === 1) doMove(now[0]);
+      }, 750);
     }
   }
 
   function doRoll() {
     if (S.phase !== 'roll') return;
     S.phase = 'rolling';
+    S.advice = null;
+    dismissCoach(false);
     sfxDice();
     tumbleDice();
     const g = gen;
@@ -740,27 +1256,33 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
 
   function doMove(m) {
     if (S.phase !== 'move') return;
+    clearTimeout(timer);  // a pending auto-move must not fire into a later turn
     S.phase = 'animating';
+    S.advice = null;
+    clearAdvice();
+    dismissCoach(false);
     hopAlong(S.turn, m, () => finishMove(m));
   }
 
   function finishMove(m) {
-    const p = S.turn, again = ROSETTES.has(m.to);
+    const p = S.turn, rose = ROSETTES.has(m.to), again = rollsAgain(m);
     fx = {
       moved: p + '-' + m.i,
       cap: m.cap >= 0 ? (1 - p) + '-' + m.cap : null,
       cell: m.to === OFF ? null : coord(p, m.to).join(','),
-      rose: again,
+      rose,
     };
+    if (m.cap >= 0) lastCaptureOf = 1 - p;
     let desc = m.from === 0 ? `entered a piece${m.to > 1 ? ' to ' + m.to : ''}` : m.to === OFF ? 'brought a piece home' : `moved ${m.from} → ${m.to}`;
     if (m.cap >= 0) desc += `, captured a ${SIDE[1 - p]} piece`;
-    if (again) desc += ', landed on a rose and rolls again';
+    if (rose) desc += ', landed on a rose and rolls again';
+    else if (again) desc += ' and rolls again';
     addLog(`${nameOf(p)} rolled ${S.roll}: ${desc}`);
     S.pos = applyMove(S.pos, p, m);
     S.lastTo = m.to === OFF ? null : coord(p, m.to);
-    recordMove(p, m, again);
+    recordMove(p, m, rose);
     if (m.to === OFF) sfxHome();
-    if (again) sfxRose();
+    if (rose) sfxRose();
     if (won(S.pos, p)) {
       sfxFanfare(.5);
       S.phase = 'over'; S.winner = p;
@@ -770,7 +1292,7 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
       render();
       return;
     }
-    S.note = again ? 'A rose! Roll again.' : '';
+    S.note = rose ? 'A rose! Roll again.' : again ? 'A capture! Roll again.' : '';
     endTurn(again);
   }
 
@@ -781,7 +1303,7 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     advance();
   }
 
-  function addLog(s) { S.log.unshift(s); S.log.length = Math.min(S.log.length, 5); }
+  function addLog(s) { S.log.unshift(s); }
 
   // ---------- stats ----------
   function freshStats() {
@@ -833,7 +1355,7 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
 
   // the game clock only runs while the page is visible and the game is unfinished
   setInterval(() => {
-    if (!S || S.phase === 'over' || document.visibilityState !== 'visible') return;
+    if (!S || S.phase === 'over' || S.phase === 'setup' || document.visibilityState !== 'visible') return;
     S.stats.ms += 1000; S.stats.p[S.turn].ms += 1000;
     if ($('stats').open && statsTab === 'game') drawStats();
   }, 1000);
@@ -1041,11 +1563,31 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
       continue;
     }
     const el = document.createElement('div');
-    el.className = 'cell';
+    const safe = r === 1 && c === 3;
+    el.className = 'cell' + (safe ? ' safe-sq' : '');
+    el.title = (kind === 'ros' ? (safe ? 'Centre rose: roll again, and safe from capture' : 'Rose: roll again')
+      : 'Ordinary square (the picture is decoration only)') + ` · square ${routeNum[r + ',' + c]}`;
     el.innerHTML = tileSVG(kind, k++) + `<span class="num">${routeNum[r + ',' + c]}</span><div class="slot"></div>`;
     cells[r + ',' + c] = el;
     board.appendChild(el);
   }
+
+  // board key: the same painted tiles, small, with what each one does
+  const keyTile = (kind, seed, safe) => `<span class="key-tile${safe ? ' safe-sq' : ''}">${tileSVG(kind, seed)}</span>`;
+  $('key').innerHTML = `
+    <span class="key-title">Board key</span>
+    <span class="key-item"><span class="key-icons">${keyTile('ros', 0)}</span><span><b>Rose</b><small>Land here to roll again</small></span></span>
+    <span class="key-item"><span class="key-icons" id="key-centre-tile">${keyTile('ros', 1, true)}</span><span><b>Centre rose</b><small id="key-centre">Roll again, and safe from capture</small></span></span>
+    <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((t, i) => keyTile(t, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>`;
+
+  // squares for the route diagram in the rules
+  $('route-cells').innerHTML = PATTERN.flatMap((row, r) => row.map((kind, c) => {
+    const x = 4 + c * 30, y = 4 + r * 30;
+    if (!kind) return c === 4 && r !== 1 ? `<text x="152" y="${y + 16}" text-anchor="middle" style="font:italic 9px var(--f-note);fill:var(--ink-soft)">gate</text>` : '';
+    const rose = kind === 'ros', safe = r === 1 && c === 3;
+    return `<rect x="${x}" y="${y}" width="26" height="26" rx="4" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .55 : 1};stroke:${safe ? 'var(--ochre)' : 'var(--ink-soft)'};stroke-width:${safe ? 2.5 : 1}"/>`
+      + (rose ? `<circle cx="${x + 13}" cy="${y + 13}" r="5" style="fill:var(--vermilion);fill-opacity:.8"/>` : '');
+  })).join('');
 
   // each die lives in a persistent slot so its tumble survives the face changes
   const dieSlots = [0, 1, 2, 3].map(() => {
@@ -1080,12 +1622,38 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
 
   function clearTargets() {
     document.querySelectorAll('.target').forEach(e => e.classList.remove('target', 'capture'));
+    $('arrow-preview').setAttribute('hidden', '');
   }
   function showTarget(m) {
     clearTargets();
+    if (S.phase !== 'move') return;  // e.g. pointing at a counter while another is still hopping
     const el = m.to === OFF ? document.querySelector(`#tray${S.turn} .home`) : cells[coord(S.turn, m.to).join(',')];
     el.classList.add('target');
     if (m.cap >= 0) el.classList.add('capture');
+    const piece = document.querySelector(`[data-pid="${S.turn}-${m.i}"]`);
+    if (piece) drawArrow($('arrow-preview'), piece, el);
+  }
+
+  // a curved dotted arrow from a counter to where it would land; it bows upwards, leaves from the
+  // counter's edge and stops at the target ring. Coordinates are page coordinates, so it scrolls with the board.
+  function drawArrow(path, fromEl, toEl) {
+    const centre = el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2 + scrollX, y: r.top + r.height / 2 + scrollY, r: Math.min(r.width, r.height) / 2 }; };
+    const a = centre(fromEl), b = centre(toEl);
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+    let nx = -dy / len, ny = dx / len;
+    if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
+    const bow = Math.min(len * .32, 80);
+    const c = { x: (a.x + b.x) / 2 + nx * bow, y: (a.y + b.y) / 2 + ny * bow };
+    // on short hops, shrink the gaps so the arrow never turns inside out
+    const room = Math.min(1, len / ((a.r + b.r) * 1.6));
+    const along = (p, d) => { const l = Math.hypot(c.x - p.x, c.y - p.y) || 1; return { x: p.x + (c.x - p.x) * d / l, y: p.y + (c.y - p.y) * d / l }; };
+    const s = along(a, a.r * .9 * room), e = along(b, (b.r * .72 + 6) * room);
+    // the layer covers the whole page so nothing it draws is clipped
+    const layer = $('arrow-layer');
+    layer.setAttribute('width', document.documentElement.scrollWidth);
+    layer.setAttribute('height', document.documentElement.scrollHeight);
+    path.setAttribute('d', `M${s.x.toFixed(1)} ${s.y.toFixed(1)} Q${c.x.toFixed(1)} ${c.y.toFixed(1)} ${e.x.toFixed(1)} ${e.y.toFixed(1)}`);
+    path.removeAttribute('hidden');
   }
 
   function makePiece(p, i, m) {
@@ -1114,11 +1682,11 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     const tray = $('tray' + p);
     const waiting = S.pos[p].filter(x => x === 0).length;
     const home = S.pos[p].filter(x => x === OFF).length;
-    const active = S.phase !== 'over' && S.turn === p;
+    const active = S.phase !== 'over' && S.phase !== 'setup' && S.turn === p;
     tray.classList.toggle('active', active);
     tray.innerHTML = `
       <div class="tray-name">${nameOf(p)}${S.mode === 'ai' ? ` <span class="side">play${p === 0 ? '' : 's'} the ${SIDE[p]}</span>` : ''}${active ? ' <span class="chip">to move</span>' : ''}</div>
-      <div class="tray-count">${waiting} waiting · ${home} of 7 home</div>
+      <div class="tray-count">${waiting} waiting · ${home} of ${S.pos[p].length} home</div>
       <div class="pool wait"></div><div class="pool home"></div>`;
     return { wait: tray.querySelector('.wait'), home: tray.querySelector('.home') };
   }
@@ -1129,13 +1697,23 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
 
     const moves = S.phase === 'move' && !isAI(S.turn) ? legalMoves(S.pos, S.turn, S.roll) : [];
     const movable = new Map(moves.map(m => [S.turn + '-' + m.i, m]));
+    // keyboard numbers: the counter furthest along the route is 1
+    const keyOrder = moves.slice().sort((a, b) => b.from - a.from).map(m => m.i);
 
     Object.values(cells).forEach(c => { c.querySelector('.slot').replaceChildren(); c.classList.remove('lastto', 'target', 'capture', 'occupied'); });
+    clearTargets();  // the counters are rebuilt, so any preview ring or arrow belongs to the old ones
     if (S.lastTo) cells[S.lastTo.join(',')].classList.add('lastto');
     const trays = [renderTray(0), renderTray(1)];
-    for (const p of [0, 1]) for (let i = 0; i < N; i++) {
+    for (const p of [0, 1]) for (let i = 0; i < S.pos[p].length; i++) {
       const x = S.pos[p][i];
       const el = makePiece(p, i, movable.get(p + '-' + i));
+      if (S.advice && S.phase === 'move' && p === S.turn && i === S.advice.i) el.classList.add('advised');
+      const key = keyOrder.indexOf(i);
+      if (movable.has(p + '-' + i) && key >= 0) {
+        el.dataset.key = key + 1;
+        el.setAttribute('aria-keyshortcuts', String(key + 1));
+        el.setAttribute('aria-label', el.getAttribute('aria-label') + `. Key ${key + 1}`);
+      }
       if (x === 0) trays[p].wait.appendChild(el);
       else if (x === OFF) trays[p].home.appendChild(el);
       else {
@@ -1186,9 +1764,12 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     st.classList.toggle('win', S.phase === 'over');
     const who = nameOf(S.turn), you = S.mode === 'ai' && S.turn === 0;
     let head = '', sub = '';
-    if (S.phase === 'over') {
+    if (S.phase === 'setup') {
+      head = 'Ready when you are';
+      sub = S.mode === 'ai' ? 'Choose your opponent, then press Start game.' : 'Press Start game when you’re both ready.';
+    } else if (S.phase === 'over') {
       head = S.mode === 'ai' ? (S.winner === 0 ? 'Victory is yours!' : 'The computer triumphs.') : `The ${SIDE[S.winner]} triumphs!`;
-      sub = 'All seven pieces brought home.';
+      sub = `All ${COUNT_WORD[S.pos[S.winner].length]} counters brought home.`;
     } else if (S.phase === 'roll') {
       head = isAI(S.turn) ? 'The computer rolls…' : you ? 'Your roll' : `${who} to roll`;
       sub = S.note || (isAI(S.turn) ? '' : 'Press Space or R to roll.');
@@ -1197,32 +1778,315 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     } else {
       const has = legalMoves(S.pos, S.turn, S.roll).length;
       head = `${you ? 'You' : who} rolled ${S.roll}.`;
-      sub = S.note || (isAI(S.turn) ? 'Pondering…' : has ? 'Choose a glowing piece.' : '');
+      const auto = has === 1 && prefs.autoMove && !S.guided && !isAI(S.turn);
+      sub = S.note || (isAI(S.turn) ? 'Pondering…' : auto ? 'Only one move: playing it for you.'
+        : has ? (kbdMode ? `Press ${has > 1 ? '1 to ' + has : '1'}, or use the arrows and Enter.` : 'Choose a glowing piece.') : '');
+      if (S.advice) sub = 'Advice is marked on the board.';
     }
     st.innerHTML = `<strong>${head}</strong><span>${sub}</span>`;
     btn.textContent = S.phase === 'over' ? 'Play again' : 'Roll';
     btn.disabled = !(S.phase === 'over' || (S.phase === 'roll' && !isAI(S.turn)));
+    // Advise me takes the Roll button's place while the player is choosing, so the dice box keeps its size
+    // Advise me takes the slot whenever advice is on offer; on Knight a badge counts what's left and it greys out at 0
+    const offered = adviceOffered(), left = adviceLeft(), adv = $('advise');
+    btn.classList.toggle('swapped', offered);
+    adv.classList.toggle('swapped', !offered);
+    adv.disabled = !offered || left <= 0;
+    $('advice-left').hidden = left === Infinity || !(S.level in ADVICE_LIMIT);
+    $('advice-left').textContent = left === Infinity ? '' : left;
+    adv.title = left <= 0 ? 'No advice left this game' : left === Infinity ? '' : `${left} piece${left === 1 ? '' : 's'} of advice left this game`;
+    adv.setAttribute('aria-label', left <= 0 ? 'Advise me: no advice left this game' : left === Infinity ? 'Advise me' : `Advise me, ${left} left`);
+    drawAdvice();
 
-    $('log').innerHTML = S.log.map(l => `<li>${l}</li>`).join('');
-    $('level').hidden = S.mode !== 'ai';
+    // newest first; if the reader has scrolled back through older moves, keep their place as new lines arrive
+    const log = $('log'), top = log.scrollTop, h = log.scrollHeight;
+    log.innerHTML = S.log.length ? S.log.map((l, i) => `<li><span class="n">${S.log.length - i}.</span>${l}</li>`).join('')
+      : '<li class="waiting">The scribe awaits the first move.</li>';
+    if (top > 2) log.scrollTop = top + log.scrollHeight - h;
+    $('level-field').hidden = S.mode !== 'ai';
+    // mode and opponent can only change between games; the button invites a start, or offers a new game mid-game
+    const locked = !gameIdle(), why = locked ? 'Start a new game to change this' : '';
+    document.querySelectorAll('input[name=mode]').forEach(r => { r.disabled = locked; });
+    $('level').disabled = locked;
+    document.querySelector('.seg').title = why;
+    $('level-field').title = why;
+    $('newgame').classList.toggle('start', !locked);
+    $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : 'Start game';
     $('tally').innerHTML = S.mode === 'ai'
       ? `Wins: You <b>${tally.you}</b> · Computer <b>${tally.computer}</b>`
       : `Wins: Sun <b>${tally.sun}</b> · Moon <b>${tally.moon}</b>`;
+    if (S.variant !== 'classic') $('tally').innerHTML += ` · <i>${RULES.name} rules</i>`;
+    guideCheck();
+    focusFirstMovable();
   }
 
   // ---------- controls ----------
-  function newGame() {
+  // ---------- preferences (this browser only) ----------
+  const prefs = { autoMove: true, variant: 'classic', music: true, musicVol: 20 };
+  try { Object.assign(prefs, JSON.parse(localStorage.getItem('ur-prefs')) || {}); } catch (e) {}
+  if (!VARIANTS[prefs.variant]) prefs.variant = 'classic';
+  const savePrefs = () => { try { localStorage.setItem('ur-prefs', JSON.stringify(prefs)); } catch (e) {} };
+
+  // show what the current variant changes: the centre rose's ring, its hover text, the key and the rules
+  function applyRulesUI() {
+    board.classList.toggle('no-safe', !RULES.safeCentre);
+    const centre = cells['1,3'];
+    centre.title = (RULES.safeCentre ? 'Centre rose: roll again, and safe from capture' : 'Centre rose: roll again (not safe in these rules)') + ' · square 8';
+    $('key-centre').textContent = RULES.safeCentre ? 'Roll again, and safe from capture' : 'Roll again, but not safe in these rules';
+    $('key-centre-tile').firstElementChild.classList.toggle('safe-sq', RULES.safeCentre);
+    const vn = $('variant-now');
+    vn.hidden = S.variant === 'classic';
+    vn.innerHTML = S.variant === 'classic' ? '' : `You’re playing the <b>${RULES.name}</b> variant. ${RULES.blurb} The rules below are the classic ones.`;
+  }
+
+  // ---------- advise me: the King-level computer suggests a move ----------
+  // advice is offered against the Squire (unlimited) and the Knight (five per game), never the King
+  const ADVICE_LIMIT = { easy: Infinity, medium: 5 };
+  const adviceOffered = () => S.mode === 'ai' && S.level in ADVICE_LIMIT && S.phase === 'move'
+    && !isAI(S.turn) && legalMoves(S.pos, S.turn, S.roll).length > 1;
+  const adviceLeft = () => S.level in ADVICE_LIMIT ? ADVICE_LIMIT[S.level] - (S.stats.p[0].advice || 0) : 0;
+  const canAdvise = () => adviceOffered() && adviceLeft() > 0;
+  // chance an opposing counter can land on square sq with its next roll
+  function dangerTo(pos, p, sq) {
+    if (sq < 5 || sq > 12 || (sq === CENTRE && RULES.safeCentre)) return 0;
+    const seen = new Set(); let d = 0;
+    for (const y of pos[1 - p]) if (y < sq && sq - y <= 4 && !seen.has(y)) { seen.add(y); d += PROB[sq - y]; }
+    return Math.min(d, 1);
+  }
+  const listOf = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  function giveAdvice() {
+    if (S.advice) return;  // asking again on the same roll shows the same advice and doesn't use another
+    if (!canAdvise()) return;
+    const p = S.turn, m = aiChoose(S.pos, p, S.roll, 'hard');
+    const why = [];
+    if (m.to === OFF) why.push('brings a counter home');
+    if (m.cap >= 0) why.push(`captures their counter on square ${m.to}${m.to >= 9 ? ', which had come a long way' : ''}`);
+    if (m.to === CENTRE && RULES.safeCentre) why.push('takes the centre rose, so you roll again and it’s safe there');
+    else if (ROSETTES.has(m.to)) why.push('lands on a rose, so you roll again');
+    else if (RULES.captureRoll && m.cap >= 0) why.push('earns another roll for the capture');
+    const before = dangerTo(S.pos, p, m.from), after = m.to === OFF ? 0 : dangerTo(applyMove(S.pos, p, m), p, m.to);
+    if (before >= .25 && after < before) why.push('moves a threatened counter out of danger');
+    if (!why.length) why.push(m.from === 0 ? 'brings a new counter into play' : 'leaves your counters safest overall');
+    let text = `Advice: move the counter ${m.from === 0 ? 'from your tray' : 'on ' + m.from} ${m.to === OFF ? 'home' : 'to ' + m.to}. It ${listOf(why)}.`;
+    if (after > 0) text += ` It could be hit next turn (${Math.round(after * 100)}% chance).`;
+    S.advice = { i: m.i, to: m.to, text };
+    S.stats.p[p].advice = (S.stats.p[p].advice || 0) + 1;
+    render();
+  }
+  function clearAdvice() {
+    document.querySelectorAll('.advised-target').forEach(e => e.classList.remove('advised-target'));
+    $('arrow-advice').setAttribute('hidden', '');
+    $('advice-note').hidden = true;
+  }
+  // the advised landing square gets a red ring, with the reasoning in a note pinned beside it
+  function drawAdvice() {
+    clearAdvice();
+    if (!S.advice || S.phase !== 'move') return;
+    const el = S.advice.to === OFF ? document.querySelector(`#tray${S.turn} .home`) : cells[coord(S.turn, S.advice.to).join(',')];
+    el.classList.add('advised-target');
+    $('advice-text').textContent = S.advice.text;
+    $('advice-note').hidden = false;
+    const piece = document.querySelector('.piece.advised');
+    if (piece) drawArrow($('arrow-advice'), piece, el);
+    const pieceBelow = piece && piece.getBoundingClientRect().top > el.getBoundingClientRect().bottom - 4;
+    placeBubble($('advice-note'), el, pieceBelow ? 'above' : 'below');
+  }
+  $('advise').addEventListener('click', giveAdvice);
+
+  // ---------- guided first game ----------
+  let coachOpen = false, advancePending = false, coachAnchor = null, lastCaptureOf = null;
+  const guideDone = () => { try { return localStorage.getItem('ur-guide-done') === '1'; } catch (e) { return false; } };
+  function finishGuide() { try { localStorage.setItem('ur-guide-done', '1'); } catch (e) {} }
+  const cellOf = m => m.to === OFF ? $('tray0') : cells[coord(0, m.to).join(',')];
+
+  // the next tip worth showing, one idea at a time, each once per guided game
+  function nextTip() {
+    const seen = id => S.tips[id], human = S.turn === 0, n = S.pos[0].length;
+    if (!seen('welcome')) return ['welcome', $('tray0'), `You play the <b>Sun</b>. Race all ${COUNT_WORD[n]} of your counters along the board and home before the computer’s Moon. They wait here in your tray.`];
+    if (S.phase === 'over') return seen('done') ? null : ['done', $('open-rules').parentElement,
+      'That’s the guided game done! <b>Rules</b> and <b>Strategy</b> up here explain more, and <b>Options</b> lets you try other rules or replay this guide.'];
+    if (lastCaptureOf === 0 && !seen('captured')) return ['captured', $('tray0'), 'Ouch! The computer landed on one of your counters and sent it back to your tray. It has to start the route again.'];
+    if (human && S.phase === 'roll' && !seen('roll')) return ['roll', $('roll'), 'Press <b>Roll</b>, or the Space bar. Count the red tips on the four dice: that’s how many squares you move, from 0 to 4.'];
+    if (human && S.phase === 'roll' && !seen('danger')) {
+      const x = S.pos[0].find(x => x >= 5 && x <= 12 && !(x === CENTRE && RULES.safeCentre));
+      if (x) return ['danger', cells[coord(0, x).join(',')], 'This counter has reached the <b>shared middle row</b>. The computer can land on it here and send it back to the start, so don’t linger.'];
+    }
+    if (human && S.phase === 'move') {
+      const ms = legalMoves(S.pos, 0, S.roll);
+      if (!ms.length) return seen('pass') ? null : ['pass', $('status'), S.roll === 0
+        ? 'A roll of 0 means no move this time, so your turn passes.' : 'None of your counters can move exactly that far, so your turn passes.'];
+      if (!seen('move')) return ['move', $('tray0'), 'Counters that can move <b>glow</b>. Point at one to see where it would land, then click it. New counters join the board through your gate.'];
+      const pick = (id, test, text) => { const m = !seen(id) && ms.find(test); return m ? [id, cellOf(m), text] : null; };
+      return pick('capture', m => m.cap >= 0, 'You can <b>capture</b>! Land on the computer’s counter here to send it back to the start.')
+        || pick('centre', m => m.to === CENTRE, 'This is the <b>centre rose</b>, ringed in gold. Land here to roll again, and no one can capture you while you sit on it.')
+        || pick('rose', m => ROSETTES.has(m.to), 'This move lands on a <b>rose</b>, so you’ll roll again.')
+        || pick('home', m => m.to === OFF, 'This roll can bring a counter <b>home</b>. You need the exact number to leave: a 1 from your last square, a 2 from the one before.')
+        || (canAdvise() && !seen('advise') ? ['advise', $('advise'), 'Not sure which to move? <b>Advise me</b> shows what the strongest computer would do, and why.'] : null);
+    }
+    return null;
+  }
+  function guideCheck() {
+    if (!S || !S.guided) return;
+    if (coachOpen) { placeCoach(); return; }
+    const tip = nextTip();
+    lastCaptureOf = null;
+    if (!tip) return;
+    const [id, anchor, html] = tip;
+    S.tips[id] = true;
+    if (id === 'done') finishGuide();
+    coachOpen = true; coachAnchor = anchor;
+    $('coach-text').innerHTML = html;
+    $('coach-skip').hidden = id === 'done';
+    $('coach').hidden = false;
+    anchor.classList.add('coach-focus');
+    anchor.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+    placeCoach();
+    setTimeout(placeCoach, 400);  // again once any smooth scroll has settled
+    $('coach-ok').focus({ preventScroll: true });
+  }
+  function placeCoach() { if (coachOpen) placeBubble($('coach'), coachAnchor); }
+  function placeBubble(c, anchor, prefer = 'below') {
+    const r = anchor.getBoundingClientRect(), w = c.offsetWidth, h = c.offsetHeight;
+    const left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, document.documentElement.clientWidth - w - 12));
+    const fitsBelow = r.bottom + 14 + h < innerHeight, fitsAbove = r.top - h - 14 > 0;
+    const below = prefer === 'above' ? !fitsAbove : fitsBelow || !fitsAbove;
+    c.dataset.side = below ? 'below' : 'above';
+    c.style.left = left + scrollX + 'px';
+    c.style.top = (below ? r.bottom + 14 : r.top - h - 14) + scrollY + 'px';
+    c.style.setProperty('--ax', Math.max(18, Math.min(r.left + r.width / 2 - left, w - 18)) + 'px');
+  }
+  addEventListener('resize', () => { placeCoach(); clearTargets(); drawAdvice(); });
+  // a keyboard player's focus lands on counter 1 whenever there's a move to choose, previewing where it goes
+  function focusFirstMovable() {
+    if (!kbdMode || coachOpen || document.querySelector('dialog[open]')) return;
+    if (document.activeElement && document.activeElement.classList.contains('movable')) return;
+    const first = document.querySelector('.piece.movable[data-key="1"]');
+    if (first) first.focus({ preventScroll: true });
+  }
+  // resume: show any next tip, otherwise let the game carry on
+  function dismissCoach(resume = true) {
+    if (!coachOpen) return;
+    coachOpen = false;
+    $('coach').hidden = true;
+    coachAnchor.classList.remove('coach-focus');
+    if (S.phase === 'over' && S.tips.done) S.guided = false;
+    if (!resume) { advancePending = false; return; }
+    guideCheck();
+    focusFirstMovable();
+    if (!coachOpen && advancePending) { advancePending = false; advance(); }
+  }
+  $('coach-ok').addEventListener('click', () => dismissCoach());
+  $('coach-skip').addEventListener('click', () => { finishGuide(); S.guided = false; dismissCoach(); render(); });
+
+  // ---------- new game ----------
+  function newGame(opts = {}) {
     gen++; clearTimeout(timer);
+    dismissCoach(false);
+    if (S && S.guided && !opts.guided) finishGuide();  // leaving the guided game counts as having seen it
+    if (opts.guided) { $('mode-ai').checked = true; $('level').value = 'easy'; }
     const mode = document.querySelector('input[name=mode]:checked').value;
-    S = fresh(mode, $('level').value);
+    const variant = opts.guided ? 'classic' : prefs.variant;
+    RULES = VARIANTS[variant];
+    S = fresh(mode, $('level').value, variant, !!opts.guided);
+    applyRulesUI();
+    drawVariantNote();
     addLog(`${nameOf(S.turn)} ${S.mode === 'ai' && S.turn === 0 ? 'go' : 'goes'} first.`);
     render();
     advance();
   }
-  $('newgame').addEventListener('click', newGame);
+  // a board laid out and waiting: the player picks mode and opponent, then presses Start game
+  function newSetup() {
+    gen++; clearTimeout(timer);
+    dismissCoach(false);
+    if (S && S.guided) finishGuide();
+    const mode = document.querySelector('input[name=mode]:checked').value;
+    RULES = VARIANTS[prefs.variant];
+    S = fresh(mode, $('level').value, prefs.variant, false, 'setup');
+    applyRulesUI();
+    drawVariantNote();
+    render();
+  }
+  const gameIdle = () => S.phase === 'setup' || S.phase === 'over';
+  // starting over loses a game that has moves in it, so ask first
+  let confirmed = null;
+  function confirmNewGame(action) {
+    if (!gameUnderWay()) { action(); return; }
+    confirmed = action;
+    $('confirm-dlg').showModal();
+    $('confirm-no').focus();
+  }
+  $('confirm-yes').addEventListener('click', () => { $('confirm-dlg').close(); const a = confirmed; confirmed = null; if (a) a(); });
+  $('confirm-no').addEventListener('click', () => $('confirm-dlg').close());
+  $('confirm-dlg').addEventListener('close', () => { confirmed = null; });
+  $('newgame').addEventListener('click', () => { if (gameIdle()) newGame(); else confirmNewGame(newSetup); });
+
+  // ---------- options ----------
+  const gameUnderWay = () => S && S.phase !== 'over' && S.stats.p[0].moves + S.stats.p[1].moves > 0;
+  $('variants').innerHTML = Object.entries(VARIANTS).map(([k, v]) => `
+    <label class="variant"><input type="radio" name="variant" value="${k}"><span class="dot"></span>
+      <span><b>${v.name}${k === 'classic' ? '' : ' <small class="house">house variant</small>'}</b><small>${v.blurb}</small></span></label>`).join('');
+  function drawVariantNote() {
+    document.querySelector(`input[name=variant][value=${prefs.variant}]`).checked = true;
+    const note = $('variant-note');
+    if (S && prefs.variant !== S.variant) {
+      note.innerHTML = `${VARIANTS[prefs.variant].name} rules start with your next game. <button class="btn" type="button" id="variant-now-btn">Set up a new game now</button>`;
+      $('variant-now-btn').addEventListener('click', () => { $('options-dlg').close(); confirmNewGame(newSetup); });
+    } else note.innerHTML = '';
+  }
+  document.querySelectorAll('input[name=variant]').forEach(r => r.addEventListener('change', () => {
+    prefs.variant = r.value; savePrefs();
+    if (gameIdle()) newSetup(); else drawVariantNote();
+  }));
+  $('opt-auto').checked = prefs.autoMove;
+  $('opt-auto').addEventListener('change', e => { prefs.autoMove = e.target.checked; savePrefs(); render(); advance(); });
+  $('replay-guide').addEventListener('click', () => { $('options-dlg').close(); confirmNewGame(() => newGame({ guided: true })); });
+
+  // a refresh or closed tab would lose the game, so ask first (browsers show their own wording here)
+  addEventListener('beforeunload', e => { if (gameUnderWay()) { e.preventDefault(); e.returnValue = ''; } });
+  // hand-drawn toolbar icons: ink lines with the same wobble filter as the board
+  const ICONS = {
+    play: `<path d="M7 4.6 C7 3.9 7.7 3.6 8.3 4 L19.2 11.2 C19.8 11.6 19.8 12.4 19.2 12.8 L8.3 20 C7.7 20.4 7 20.1 7 19.4 Z" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round"/>`,
+    book: `<path d="M12 6.5 C9 4.8 5.5 4.8 2.8 5.8 V19 C5.5 18 9 18 12 19.6 C15 18 18.5 18 21.2 19 V5.8 C18.5 4.8 15 4.8 12 6.5 Z" style="${paint('bone', 1)}"/>
+      <path d="M12 6.5 C9 4.8 5.5 4.8 2.8 5.8 V19 C5.5 18 9 18 12 19.6 C15 18 18.5 18 21.2 19 V5.8 C18.5 4.8 15 4.8 12 6.5 Z M12 6.5 V19.6 M5.2 9 C7 8.5 8.6 8.6 10 9.2 M5.2 12 C7 11.5 8.6 11.6 10 12.2 M14 9.2 C15.4 8.6 17 8.5 18.8 9" style="${ink}"/>
+      <path d="M15.5 12 V21 L16.8 19.8 L18.1 21 V12" style="${paint('vermilion', .9)};stroke:var(--ink);stroke-width:1"/>`,
+    swords: `<path d="M4.5 3.5 L15.5 14.5 M19.5 3.5 L8.5 14.5" style="${ink};stroke-width:1.9"/><path d="M4.5 3.5 L6.8 4 M4.5 3.5 L5 5.8 M19.5 3.5 L17.2 4 M19.5 3.5 L19 5.8" style="${ink}"/>
+      <path d="M12.8 17.3 L17.8 12.3 M6.2 12.3 L11.2 17.3" style="${ink};stroke-width:2"/>
+      <path d="M15.6 15.6 L19 19 M8.4 15.6 L5 19" style="fill:none;stroke:var(--vermilion);stroke-width:2.6;stroke-linecap:round"/>
+      <circle cx="19.8" cy="19.8" r="1.5" style="${paint('ochre', 1)};stroke:var(--ink);stroke-width:1"/><circle cx="4.2" cy="19.8" r="1.5" style="${paint('ochre', 1)};stroke:var(--ink);stroke-width:1"/>`,
+    route: `<path d="M4.5 19.5 C4 14 9.5 15.5 11.5 11.5 C13 8.5 10 6 13.5 4.8 C15.5 4.1 17.5 5 18.5 6.2" style="fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;stroke-dasharray:.1 3.2"/>
+      <path d="M15.8 3.6 L19.2 6.6 L15 7.6" style="${ink};stroke-width:1.6"/><circle cx="4.5" cy="19.5" r="2.2" style="${paint('vermilion', .9)};stroke:var(--ink);stroke-width:1"/>`,
+    owl: `<path d="M6 7.5 L5 3.5 L8.6 5.8 M18 7.5 L19 3.5 L15.4 5.8" style="${ink}"/>
+      <path d="M12 5.2 C17.5 5.2 19.5 9.5 19 14 C18.5 18.5 15.5 21 12 21 C8.5 21 5.5 18.5 5 14 C4.5 9.5 6.5 5.2 12 5.2 Z" style="${paint('ochre', .9)}"/>
+      <path d="M12 5.2 C17.5 5.2 19.5 9.5 19 14 C18.5 18.5 15.5 21 12 21 C8.5 21 5.5 18.5 5 14 C4.5 9.5 6.5 5.2 12 5.2 Z" style="${ink}"/>
+      <circle cx="9" cy="10.5" r="2.6" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1.1"/><circle cx="15" cy="10.5" r="2.6" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1.1"/>
+      <circle cx="9" cy="10.7" r="1" style="fill:var(--ink)"/><circle cx="15" cy="10.7" r="1" style="fill:var(--ink)"/>
+      <path d="M11 13.3 L12 15 L13 13.3 Z" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:.8"/><path d="M9 17 C10.5 18 13.5 18 15 17" style="${ink}"/>`,
+    key: `<circle cx="7" cy="12" r="4.2" style="${paint('ochre', .9)};stroke:var(--ink);stroke-width:1.4"/><circle cx="7" cy="12" r="1.6" style="${paint('bone', 1)};stroke:var(--ink);stroke-width:1"/>
+      <path d="M11.2 12 H21 M17.5 12 V15.5 M20.5 12 V14.5" style="${ink};stroke-width:1.8"/>`,
+    music: `<path d="M8.5 17.5 V6.5 L19.5 4.2 V15.5 M8.5 9.5 L19.5 7.2" style="${ink};stroke-width:1.7"/>
+      <ellipse cx="6.4" cy="17.6" rx="2.6" ry="2" transform="rotate(-20 6.4 17.6)" style="${paint('vermilion', .95)};stroke:var(--ink);stroke-width:1.2"/>
+      <ellipse cx="17.4" cy="15.6" rx="2.6" ry="2" transform="rotate(-20 17.4 15.6)" style="${paint('vermilion', .95)};stroke:var(--ink);stroke-width:1.2"/>`,
+    musicOff: `<path d="M8.5 17.5 V6.5 L19.5 4.2 V15.5 M8.5 9.5 L19.5 7.2" style="${ink};stroke-width:1.7"/>
+      <ellipse cx="6.4" cy="17.6" rx="2.6" ry="2" transform="rotate(-20 6.4 17.6)" style="${paint('paper-deep', .95)};stroke:var(--ink);stroke-width:1.2"/>
+      <ellipse cx="17.4" cy="15.6" rx="2.6" ry="2" transform="rotate(-20 17.4 15.6)" style="${paint('paper-deep', .95)};stroke:var(--ink);stroke-width:1.2"/>
+      <path d="M3.5 3.5 L20.5 20.5" style="fill:none;stroke:var(--vermilion);stroke-width:2.2;stroke-linecap:round"/>`,
+    tally: `<path d="M4.5 5.5 V18.5 M8.5 5 V19 M12.5 5.5 V18.5 M16.5 5 V19" style="${ink};stroke-width:1.9"/><path d="M2.5 15.5 L19.5 7.5" style="fill:none;stroke:var(--vermilion);stroke-width:2.2;stroke-linecap:round"/><path d="M20.5 19 V13" style="${ink};stroke-width:1.9"/>`,
+    bell: `<path d="M5.5 16.5 C6 11 7.5 6.5 12 6.5 C16.5 6.5 18 11 18.5 16.5 Z" style="${paint('ochre', .95)}"/>
+      <path d="M5.5 16.5 C6 11 7.5 6.5 12 6.5 C16.5 6.5 18 11 18.5 16.5 Z M4 16.5 H20 M12 6.5 V4.2 M10.3 18.6 A1.8 1.8 0 0 0 13.7 18.6" style="${ink}"/>
+      <path d="M20.5 8.5 C21.6 9.8 21.6 12 20.5 13.3 M2.5 13.3 C1.4 12 1.4 9.8 2.5 8.5" style="${ink}"/>`,
+    bellOff: `<path d="M5.5 16.5 C6 11 7.5 6.5 12 6.5 C16.5 6.5 18 11 18.5 16.5 Z" style="${paint('paper-deep', .9)}"/>
+      <path d="M5.5 16.5 C6 11 7.5 6.5 12 6.5 C16.5 6.5 18 11 18.5 16.5 Z M4 16.5 H20 M12 6.5 V4.2 M10.3 18.6 A1.8 1.8 0 0 0 13.7 18.6" style="${ink}"/>
+      <path d="M3.5 3.5 L20.5 20.5" style="fill:none;stroke:var(--vermilion);stroke-width:2.2;stroke-linecap:round"/>`,
+  };
+  const iconSVG = name => `<svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">${ICONS[name]}</g></svg>`;
+  document.querySelectorAll('[data-icon]').forEach(s => { s.innerHTML = iconSVG(s.dataset.icon); });
+
   function drawSound() {
-    $('sound').textContent = muted ? 'Sound off' : 'Sound on';
-    $('sound').setAttribute('aria-pressed', String(!muted));
+    const b = $('sound');
+    b.querySelector('[data-icon]').innerHTML = iconSVG(muted ? 'bellOff' : 'bell');
+    b.querySelector('.lbl').textContent = muted ? 'Muted' : 'Sound';
+    b.setAttribute('aria-pressed', String(!muted));
+    b.setAttribute('aria-label', muted ? 'Sound off, turn on' : 'Sound on, turn off');
   }
   $('sound').addEventListener('click', () => {
     muted = !muted;
@@ -1231,6 +2095,102 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     if (!muted) sfxDice();
   });
   drawSound();
+
+  // ---------- background music ----------
+  // browsers only allow audio after the player interacts, so it fades in on the first click or key press
+  const bgm = $('bgm');
+  let fadeTimer = null, musicStarted = false, replayTimer = null;
+  // the two tracks alternate, starting from a random one
+  const PLAYLIST = [
+    { src: 'music/village-consort.mp3', title: 'Village Consort' },
+    { src: 'music/folk-round.mp3', title: 'Folk Round' },
+  ];
+  let track = Math.floor(Math.random() * PLAYLIST.length);
+  const loadTrack = () => { bgm.src = PLAYLIST[track].src; drawNowPlaying(); };
+  function drawNowPlaying() {
+    $('now-playing').textContent = prefs.music ? `Now playing: “${PLAYLIST[track].title}” by Kevin MacLeod` : '';
+  }
+  // only one open copy of the game plays music: whichever tab starts it tells the others to fade out
+  const tabId = Math.random().toString(36).slice(2);
+  let musicChannel = null;
+  try { musicChannel = new BroadcastChannel('ur-music'); } catch (e) {}
+  if (musicChannel) musicChannel.onmessage = e => {
+    if (e.data && e.data.type === 'playing' && e.data.tab !== tabId) { clearTimeout(replayTimer); if (!bgm.paused) fadeTo(0, 400, () => bgm.pause()); }
+  };
+  function fadeTo(target, ms, done) {
+    clearInterval(fadeTimer);
+    const from = bgm.volume, steps = Math.max(1, Math.round(ms / 50));
+    let i = 0;
+    fadeTimer = setInterval(() => {
+      i++;
+      bgm.volume = Math.min(1, Math.max(0, from + (target - from) * i / steps));
+      if (i >= steps) { clearInterval(fadeTimer); if (done) done(); }
+    }, 50);
+  }
+  function startMusic() {
+    if (!prefs.music || document.hidden) return;
+    if (!bgm.paused) { fadeTo(prefs.musicVol / 100, 400); return; }
+    bgm.volume = 0;
+    const played = bgm.play();
+    if (played) played.then(() => {
+      musicStarted = true;
+      if (musicChannel) musicChannel.postMessage({ type: 'playing', tab: tabId });
+      fadeTo(prefs.musicVol / 100, 1500);
+    }).catch(() => {});
+  }
+  function stopMusic() { clearTimeout(replayTimer); fadeTo(0, 500, () => bgm.pause()); }
+  // each piece has a proper ending, so let it finish, rest for two seconds, then fade in the other track
+  bgm.addEventListener('ended', () => {
+    clearTimeout(replayTimer);
+    replayTimer = setTimeout(() => { track = (track + 1) % PLAYLIST.length; loadTrack(); startMusic(); }, 2000);
+  });
+  const kickMusic = e => { if (!musicStarted && !(e.target.closest && e.target.closest('#music'))) startMusic(); };
+  addEventListener('pointerdown', kickMusic);
+  addEventListener('keydown', kickMusic);
+  // pause while the tab is hidden, pick up again on return
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { clearInterval(fadeTimer); clearTimeout(replayTimer); bgm.pause(); }
+    else if (musicStarted) startMusic();
+  });
+  // two windows can both be visible, so returning focus to one also takes the music back
+  addEventListener('focus', () => { if (musicStarted && bgm.paused) startMusic(); });
+  function drawMusic() {
+    const b = $('music');
+    b.querySelector('[data-icon]').innerHTML = iconSVG(prefs.music ? 'music' : 'musicOff');
+    b.querySelector('.lbl').textContent = prefs.music ? 'Music' : 'No music';
+    b.setAttribute('aria-pressed', String(prefs.music));
+    b.setAttribute('aria-label', prefs.music ? 'Music on, turn off' : 'Music off, turn on');
+  }
+  $('music').addEventListener('click', () => {
+    prefs.music = !prefs.music; savePrefs();
+    if (prefs.music) startMusic(); else stopMusic();
+    drawMusic();
+    drawNowPlaying();
+  });
+  loadTrack();
+  $('opt-vol').value = prefs.musicVol;
+  $('opt-vol').addEventListener('input', e => {
+    prefs.musicVol = +e.target.value; savePrefs();
+    clearInterval(fadeTimer);
+    if (!bgm.paused) bgm.volume = prefs.musicVol / 100;
+  });
+  drawMusic();
+
+  // reading modals: open at the top, close by button, backdrop click or Esc, then return focus to the opener
+  function readingModal(dlgId, openId, closeId) {
+    const d = $(dlgId);
+    $(openId).addEventListener('click', () => { d.showModal(); d.querySelector('.stats-inner').scrollTop = 0; $(closeId).focus(); });
+    $(closeId).addEventListener('click', () => d.close());
+    d.addEventListener('click', e => { if (e.target === d) d.close(); });  // click on the backdrop
+    d.addEventListener('close', () => $(openId).focus());
+  }
+  readingModal('rules-dlg', 'open-rules', 'close-rules');
+  readingModal('tactics-dlg', 'open-tactics', 'close-tactics');
+  readingModal('options-dlg', 'open-options', 'close-options');
+
+  // chance an enemy counter this many squares behind rolls exactly the gap
+  $('danger-odds').innerHTML = [1, 2, 3, 4].map(g =>
+    `<span class="n">${g}</span><span class="bar" style="width:${PROB[g] / PROB[2] * 100}%"></span><span class="p">${+(PROB[g] * 100).toFixed(2)}% · enemy ${g} behind</span>`).join('');
 
   const dlg = $('stats');
   $('open-stats').addEventListener('click', () => { statsTab = 'game'; resetAsk = false; drawStats(); dlg.showModal(); $('close-stats').focus(); });
@@ -1248,17 +2208,73 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
     tip.style.top = (e.clientY - tip.offsetHeight - 12) + 'px';
   });
   dlg.addEventListener('pointerleave', () => { $('tip').hidden = true; });
-  document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', newGame));
-  $('level').addEventListener('change', e => { S.level = e.target.value; });
+  document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', () => { if (gameIdle()) newSetup(); }));
+  $('level').addEventListener('change', e => { if (gameIdle()) { S.level = e.target.value; render(); } });
   $('roll').addEventListener('click', () => { if (S.phase === 'over') newGame(); else if (!isAI(S.turn)) doRoll(); });
-  $('route').addEventListener('change', e => board.classList.toggle('show-route', e.target.checked));
+  $('route').addEventListener('click', e => {
+    const on = board.classList.toggle('show-route');
+    e.currentTarget.setAttribute('aria-pressed', String(on));
+  });
+  // ---------- keyboard play ----------
+  // number badges and the keyboard hint only show once someone uses the keyboard; the mouse hides them again
+  let kbdMode = false;
+  function setKbd(on) {
+    if (kbdMode === on) return;
+    kbdMode = on;
+    document.body.classList.toggle('kbd', on);
+    if (S && S.phase === 'move') render();
+  }
+  addEventListener('pointerdown', () => setKbd(false));
   document.addEventListener('keydown', e => {
-    if (e.metaKey || e.ctrlKey || e.altKey || $('stats').open) return;
-    const tag = e.target.tagName;
-    if (e.key === 'r' || e.key === 'R' || (e.key === ' ' && !['BUTTON', 'SELECT', 'INPUT', 'SUMMARY'].includes(tag))) {
+    if (e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return;
+    const tag = e.target.tagName, typing = ['SELECT', 'INPUT', 'TEXTAREA'].includes(tag);
+    if (!typing && e.key !== 'Shift') setKbd(true);
+    if (coachOpen && e.key === 'Escape') { dismissCoach(); return; }
+    if (typing) return;
+    if (e.key === 'r' || e.key === 'R' || (e.key === ' ' && !['BUTTON', 'SUMMARY'].includes(tag))) {
       if (S.phase === 'roll' && !isAI(S.turn)) { e.preventDefault(); doRoll(); }
+      return;
+    }
+    if (S.phase !== 'move' || isAI(S.turn)) return;
+    const list = [...document.querySelectorAll('.piece.movable[data-key]')].sort((a, b) => a.dataset.key - b.dataset.key);
+    if (/^[1-9]$/.test(e.key)) {
+      const el = list[+e.key - 1];
+      if (el) { e.preventDefault(); el.click(); }
+    } else if (/^Arrow(Left|Right|Up|Down)$/.test(e.key) && list.length) {
+      e.preventDefault();
+      const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1, at = list.indexOf(document.activeElement);
+      list[at < 0 ? 0 : (at + dir + list.length) % list.length].focus();
+    } else if ((e.key === 'a' || e.key === 'A') && canAdvise()) {
+      e.preventDefault(); giveAdvice();
     }
   });
+
+  // ---------- installable app, works offline ----------
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+  let installPrompt = null;
+  const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  function drawInstall() {
+    const text = $('install-text'), btn = $('install-btn');
+    btn.hidden = !installPrompt;
+    if (standalone()) text.textContent = 'You’re playing the installed app. It works offline too.';
+    else if (installPrompt) text.textContent = 'Install the game to play it from your home screen or desktop, even with no connection.';
+    else if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+      text.innerHTML = 'To install on iPhone or iPad, open this page in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.';
+    else text.textContent = 'Install the game to play it from your home screen or desktop, even with no connection. If your browser offers it, use its Install or Add to Home Screen option.';
+  }
+  // Chrome, Edge and Android offer installing; keep the offer for our own button
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; drawInstall(); });
+  addEventListener('appinstalled', () => { installPrompt = null; drawInstall(); $('install-text').textContent = 'Installed. Look for The Royal Game of Ur on your home screen or in your apps.'; });
+  $('install-btn').addEventListener('click', async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    drawInstall();
+  });
+  drawInstall();
 
   $('odds').innerHTML = PROB.map((p, n) =>
     `<span class="n">${n}</span><span class="bar" style="width:${p / PROB[2] * 100}%"></span><span class="p">${p * 16} in 16</span>`).join('');
@@ -1270,11 +2286,20 @@ details.tbl th, details.tbl td { padding: 2px 10px; text-align: right; border-bo
       if (S.phase === 'rolling') S.phase = 'roll';
       if (S.phase === 'animating') S.phase = 'move';
       if (!S.stats) S.stats = freshStats();
+      if (!VARIANTS[S.variant]) S.variant = 'classic';
+      S.tips = S.tips || {};
+      RULES = VARIANTS[S.variant];
       document.getElementById(S.mode === 'ai' ? 'mode-ai' : 'mode-local').checked = true;
       $('level').value = S.level;
+      applyRulesUI();
+      drawVariantNote();
       render();
       advance();
-    } else newGame();
+    } else {
+      // first visit gets the guided game; anyone with games already recorded is a returning player
+      const returning = life.games > 0 || Object.values(tally).some(v => v > 0);
+      if (!guideDone() && !returning) newGame({ guided: true }); else newSetup();
+    }
   }
   window.claude?.hot?.snapshot?.(() => ({ S }));
   window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
