@@ -23,7 +23,6 @@ function startGame({ guided = false } = {}) {
   currentRules = VARIANTS[variant];
   game = createGameState(chosenMode(), $('level').value, variant, guided);
   showRulesInPlay();
-  renderVariantNote();
   const who = game.mode === 'ai' && game.turn === HUMAN_SIDE ? 'You go' : `${playerName(game.turn)} goes`;
   writeToLedger(`${who} first.`);
   render();
@@ -39,7 +38,6 @@ function showSetupBoard() {
   currentRules = VARIANTS[prefs.variant];
   game = createGameState(chosenMode(), $('level').value, prefs.variant, false, 'setup');
   showRulesInPlay();
-  renderVariantNote();
   render();
 }
 

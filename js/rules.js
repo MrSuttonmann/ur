@@ -10,30 +10,46 @@ const COMPUTER_SIDE = MOON;          // when playing the computer, it always tak
 const HUMAN_SIDE = SUN;              // …and you take the Sun (also the guided game's side)
 const opponentOf = side => side === SUN ? MOON : SUN;
 
-// ---------- the route ----------
-// Each side counts its own route from 1 to 14. 0 means waiting in the tray; HOME means borne off.
-const IN_TRAY = 0;
-const LAST_PRIVATE_ENTRY_SQUARE = 4;  // squares 1–4 are in the side's own row
-const FIRST_SHARED_SQUARE = 5, LAST_SHARED_SQUARE = 12;
-const LAST_SQUARE = 14, HOME = 15;
-const CENTRE = 8;
-const ROSETTES = new Set([4, 8, 14]);
-const isSharedSquare = square => square >= FIRST_SHARED_SQUARE && square <= LAST_SHARED_SQUARE;
-
-// board rows, top to bottom, and which row is each side's own
+// ---------- the board ----------
+// board rows, top to bottom; each side has its own outer row, and the middle row is shared
 const ROW = { MOON: 0, SHARED: 1, SUN: 2 };
-const OWN_ROW = { [SUN]: ROW.SUN, [MOON]: ROW.MOON };
 const BOARD_ROWS = 3, BOARD_COLUMNS = 8;
-const LAST_COLUMN = BOARD_COLUMNS - 1;
-
-// the board cell [row, column] a side's route square sits on
-function routeCell(side, square) {
-  const own = OWN_ROW[side];
-  if (square <= LAST_PRIVATE_ENTRY_SQUARE) return [own, LAST_PRIVATE_ENTRY_SQUARE - square];       // 1–4: right to left
-  if (square <= LAST_SHARED_SQUARE) return [ROW.SHARED, square - FIRST_SHARED_SQUARE];          // 5–12: left to right
-  return [own, LAST_COLUMN - (square - LAST_SHARED_SQUARE - 1)];                                // 13–14: from the far end back
-}
 const cellKey = ([row, column]) => row + ',' + column;
+const ROSE_CELLS = new Set(['0,0', '0,6', '1,3', '2,0', '2,6']);
+const CENTRE_CELL = '1,3';
+// the Moon's half of the board mirrors the Sun's
+const mirrorRow = row => row === ROW.SUN ? ROW.MOON : row === ROW.MOON ? ROW.SUN : row;
+
+// ---------- routes ----------
+// A route lists the cells a Sun counter visits, square 1 first; the Moon's is the same, mirrored.
+// Counters wait in the tray (square 0) and leave the board one step past the last square.
+const SUN_ENTRY = [[2, 3], [2, 2], [2, 1], [2, 0]];             // squares 1–4: right to left along your own row
+const MIDDLE_ROW = column => [ROW.SHARED, column];
+const ROUTES = {
+  // Finkel's route: along the middle row, then back into your own row for the last two squares
+  finkel: [...SUN_ENTRY, ...[0, 1, 2, 3, 4, 5, 6, 7].map(MIDDLE_ROW), [2, 7], [2, 6]],
+  // James Masters' route: stop one short on the middle row, then loop round the far end of the board
+  // through the opponent's row and back into your own (16 squares)
+  masters: [...SUN_ENTRY, ...[0, 1, 2, 3, 4, 5, 6].map(MIDDLE_ROW), [0, 6], [0, 7], [1, 7], [2, 7], [2, 6]],
+};
+const IN_TRAY = 0;
+
+// Everything the rules need to know about a route, worked out once per variant: each side's cells,
+// which square sits on which cell, which squares are roses, and which are shared with the opponent.
+function buildRules(variant) {
+  const sunCells = ROUTES[variant.route];
+  const cells = { [SUN]: sunCells, [MOON]: sunCells.map(([row, column]) => [mirrorRow(row), column]) };
+  const squareAt = {};   // squareAt[side][cellKey] = that side's square number on the cell
+  for (const side of SIDES) squareAt[side] = Object.fromEntries(cells[side].map((cell, i) => [cellKey(cell), i + 1]));
+  const roses = new Set(), shared = new Set();   // the board is symmetric, so these hold for both sides
+  sunCells.forEach((cell, i) => {
+    const key = cellKey(cell), square = i + 1;
+    if (ROSE_CELLS.has(key)) roses.add(square);
+    if (key in squareAt[MOON]) shared.add(square);
+  });
+  return { ...variant, cells, squareAt, roses, shared,
+    length: sunCells.length, home: sunCells.length + 1, centre: squareAt[SUN][CENTRE_CELL], lastShared: Math.max(...shared) };
+}
 
 // ---------- dice ----------
 // four tetrahedral dice, each with two of four tips marked: chances of rolling 0 to 4
@@ -41,20 +57,27 @@ const MAX_ROLL = 4;
 const ROLL_CHANCE = [1, 4, 6, 4, 1].map(ways => ways / 16);
 
 // ---------- rule variants ----------
-// Classic is Finkel's reconstruction; the others are house variants. Adding a variant means adding an entry here.
-const VARIANTS = {
-  classic: { name: 'Classic', counters: 7, safeCentre: true, captureRoll: false,
-    blurb: 'Irving Finkel’s reconstruction from the British Museum tablet. Seven counters each; roses give another roll and the centre rose is safe.' },
-  quick: { name: 'Quick', counters: 5, safeCentre: true, captureRoll: false,
-    blurb: 'The classic rules with five counters each, for a game about two-thirds as long.' },
-  raiders: { name: 'Raiders', counters: 7, safeCentre: false, captureRoll: true,
-    blurb: 'A fiercer game: every capture earns another roll, and the centre rose gives no protection.' },
+// Classic is Finkel's reconstruction; Masters' route is James Masters'; the others are house variants.
+// Adding a variant means adding an entry here (and a route above if it needs a new one).
+const VARIANT_DEFINITIONS = {
+  classic: { name: 'Classic', route: 'finkel', counters: 7, safeRoses: true, captureRoll: false, house: false },
+  masters: { name: 'Masters’ route', route: 'masters', counters: 7, safeRoses: true, captureRoll: false, house: false },
+  quick: { name: 'Quick', route: 'finkel', counters: 5, safeRoses: true, captureRoll: false, house: true },
+  raiders: { name: 'Raiders', route: 'finkel', counters: 7, safeRoses: false, captureRoll: true, house: true },
 };
+const VARIANTS = Object.fromEntries(Object.entries(VARIANT_DEFINITIONS).map(([id, definition]) => [id, buildRules(definition)]));
 let currentRules = VARIANTS.classic;
 const COUNT_WORD = { 5: 'five', 7: 'seven' };
 
-const isSafeSquare = (square, rules) => square === CENTRE && rules.safeCentre;
-const rollsAgain = (move, rules = currentRules) => ROSETTES.has(move.to) || (rules.captureRoll && move.captures >= 0);
+// the board cell [row, column] a side's route square sits on
+const routeCell = (side, square, rules = currentRules) => rules.cells[side][square - 1];
+const isRose = (square, rules = currentRules) => rules.roses.has(square);
+const isSharedSquare = (square, rules = currentRules) => rules.shared.has(square);
+// a rose that the opponent's route also crosses, in rules where roses protect
+const isSafeSquare = (square, rules = currentRules) => rules.safeRoses && rules.roses.has(square) && rules.shared.has(square);
+const rollsAgain = (move, rules = currentRules) => isRose(move.to, rules) || (rules.captureRoll && move.captures >= 0);
+// the opponent's square number on the same cell as one of yours (undefined if their route doesn't cross it)
+const opponentSquareAt = (side, square, rules) => rules.squareAt[opponentOf(side)][cellKey(routeCell(side, square, rules))];
 
 // ---------- moves ----------
 // A move: { counter, from, to, captures } where captures is the index of the opposing counter taken, or -1.
@@ -65,14 +88,15 @@ function legalMoves(positions, side, roll, rules = currentRules) {
   const own = positions[side], theirs = positions[opponentOf(side)];
   const triedSquares = new Set();   // counters on the same square (the tray) make the same move
   own.forEach((from, counter) => {
-    if (from === HOME || triedSquares.has(from)) return;
+    if (from === rules.home || triedSquares.has(from)) return;
     triedSquares.add(from);
     const to = from + roll;
-    if (to > HOME) return;                          // bearing off needs the exact roll
-    if (to < HOME && own.includes(to)) return;      // can't land on your own counter
+    if (to > rules.home) return;                          // bearing off needs the exact roll
+    if (to < rules.home && own.includes(to)) return;      // can't land on your own counter
     let captures = -1;
-    if (isSharedSquare(to)) {
-      const target = theirs.indexOf(to);
+    if (isSharedSquare(to, rules)) {
+      // the same cell has a different square number on the opponent's route
+      const target = theirs.indexOf(opponentSquareAt(side, to, rules));
       if (target >= 0) {
         if (isSafeSquare(to, rules)) return;        // the safe centre can't be taken
         captures = target;
@@ -88,16 +112,16 @@ function applyMove(positions, side, move) {
   if (move.captures >= 0) next[opponentOf(side)][move.captures] = IN_TRAY;
   return next;
 }
-const allHome = (positions, side) => positions[side].every(square => square === HOME);
+const allHome = (positions, side, rules = currentRules) => positions[side].every(square => square === rules.home);
 
 // ---------- computer opponent: expectiminimax over the dice ----------
 // How a position is valued. Tuning the opponent's style means changing these, not the search.
 const SCORE = {
   perSquare: 1,            // progress along the route
   home: 22,                // a counter borne off
-  safeCentre: 4,           // holding the safe centre rose
+  safeRose: 4,             // holding a safe rose the opponent wants (the centre, in the classic rules)
   rosette: 1.5,            // sitting on any other rose
-  lastStretch: 1,          // squares 13–14, past all danger
+  lastStretch: 1,          // past the last shared square, out of danger
   riskPerSquare: 1,        // expected loss if captured scales with how far a counter has come…
   riskExtra: 2,            // …plus a little for the turn it costs
 };
@@ -106,28 +130,29 @@ const SEARCH_DEPTH = { easy: 1, medium: 2, hard: 4 };
 const EASY_RANDOM_MOVE_CHANCE = 0.4;
 const SCORE_TIE = 1e-9;
 
-// chance that some opposing counter lands exactly on `square` with its next roll
-function captureRisk(square, opposing) {
+// chance that some opposing counter lands exactly on `side`'s `square` with its next roll
+function captureRisk(positions, side, square, rules = currentRules) {
+  const theirSquare = opponentSquareAt(side, square, rules);
+  if (theirSquare === undefined) return 0;
   let risk = 0;
-  const behind = new Set();
-  for (const theirs of opposing) {
-    const gap = square - theirs;
-    if (gap >= 1 && gap <= MAX_ROLL && !behind.has(gap)) { behind.add(gap); risk += ROLL_CHANCE[gap]; }
+  const gaps = new Set();
+  for (const theirs of positions[opponentOf(side)]) {
+    const gap = theirSquare - theirs;
+    if (gap >= 1 && gap <= MAX_ROLL && !gaps.has(gap)) { gaps.add(gap); risk += ROLL_CHANCE[gap]; }
   }
   return Math.min(risk, 1);
 }
 function sideValue(positions, side, rules) {
-  const opposing = positions[opponentOf(side)];
   let value = 0;
   for (const square of positions[side]) {
-    if (square === HOME) { value += SCORE.home; continue; }
+    if (square === rules.home) { value += SCORE.home; continue; }
     if (square === IN_TRAY) continue;
     value += square * SCORE.perSquare;
-    if (isSafeSquare(square, rules)) value += SCORE.safeCentre;
-    else if (ROSETTES.has(square)) value += SCORE.rosette;
-    if (square > LAST_SHARED_SQUARE) value += SCORE.lastStretch;
-    if (isSharedSquare(square) && !isSafeSquare(square, rules))
-      value -= captureRisk(square, opposing) * (square * SCORE.riskPerSquare + SCORE.riskExtra);
+    if (isSafeSquare(square, rules)) value += SCORE.safeRose;
+    else if (isRose(square, rules)) value += SCORE.rosette;
+    if (square > rules.lastShared) value += SCORE.lastStretch;
+    if (isSharedSquare(square, rules) && !isSafeSquare(square, rules))
+      value -= captureRisk(positions, side, square, rules) * (square * SCORE.riskPerSquare + SCORE.riskExtra);
   }
   return value;
 }
@@ -154,7 +179,7 @@ function bestAfterRoll(positions, toMove, roll, depth, me, rules) {
 // the score once `side` has made `move`, looking `depth` turns ahead
 function scoreAfterMove(positions, side, move, depth, me, rules) {
   const next = applyMove(positions, side, move);
-  if (allHome(next, side)) return side === me ? WIN + depth : -WIN - depth;   // sooner wins score higher
+  if (allHome(next, side, rules)) return side === me ? WIN + depth : -WIN - depth;   // sooner wins score higher
   if (depth <= 1) return positionScore(next, me, rules);
   const nextToMove = rollsAgain(move, rules) ? side : opponentOf(side);
   return expectedOverRolls(next, nextToMove, depth - 1, me, rules);

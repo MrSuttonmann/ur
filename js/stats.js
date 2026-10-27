@@ -11,14 +11,14 @@ function createGameStats() {
   return { playMs: 0, bySide: SIDES.map(createSideStats), landings: {}, leader: null, leadChanges: 0 };
 }
 // total squares a side's counters still have to travel: the race
-const squaresToGo = (positions, side) => positions[side].reduce((total, square) => total + HOME - square, 0);
+const squaresToGo = (positions, side) => positions[side].reduce((total, square) => total + currentRules.home - square, 0);
 
 function recordMove(side, move, landsOnRose) {
   const stats = game.stats, mine = stats.bySide[side];
   mine.moves++; mine.squaresTravelled += move.to - move.from;
   if (move.captures >= 0) { mine.captures++; stats.bySide[opponentOf(side)].lost++; }
   if (landsOnRose) { mine.roses++; mine.roseChain++; mine.longestRoseChain = Math.max(mine.longestRoseChain, mine.roseChain); }
-  if (move.to === HOME) mine.home++;
+  if (move.to === currentRules.home) mine.home++;
   else { const key = cellKey(routeCell(side, move.to)); stats.landings[key] = (stats.landings[key] || 0) + 1; }
   // whoever has fewer squares left to travel is ahead in the race
   const sunToGo = squaresToGo(game.positions, SUN), moonToGo = squaresToGo(game.positions, MOON);
@@ -113,7 +113,7 @@ function heatmap(landings) {
     const picture = BOARD_PICTURES[row][column];
     if (!picture) { html += '<span class="hg"></span>'; continue; }
     const key = cellKey([row, column]), count = landings[key] || 0, share = count / most, rose = picture === 'ros';
-    html += `<span class="hc${rose ? ' rose' : ''}" style="--a:${(.06 + share * .84).toFixed(2)};color:${share > .55 ? 'var(--bone)' : 'var(--ink)'}" data-tip="${rowName[row]} square ${routeNumberByCell[key]}${rose ? ' (rose)' : ''}: ${count} landing${count === 1 ? '' : 's'}">${count || ''}</span>`;
+    html += `<span class="hc${rose ? ' rose' : ''}" style="--a:${(.06 + share * .84).toFixed(2)};color:${share > .55 ? 'var(--bone)' : 'var(--ink)'}" data-tip="${rowName[row]} row, ${squareLabel(key)}${rose ? ' (rose)' : ''}: ${count} landing${count === 1 ? '' : 's'}">${count || ''}</span>`;
   }
   return html + '</div><p class="cap">Where counters landed this game, both sides together. Darker squares saw more landings; ringed squares are roses.</p>';
 }

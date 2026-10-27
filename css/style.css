@@ -81,6 +81,38 @@ select, .btn {
 .tb-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .tb-group.tools { gap: 2px; }
 .field { display: inline-flex; align-items: center; gap: 8px; }
+/* setup strip: mode and Start game share the first row; opponent and variant fill the second */
+.toolbar .seg { order: 1; }
+#newgame { order: 2; margin-left: auto; }
+.tb-break { order: 3; flex-basis: 100%; height: 0; }
+#level-field { order: 4; }
+#variant-field { order: 5; }
+.toolbar .field { flex: 1 1 220px; }
+.toolbar .field select { flex: 1; min-width: 0; }
+
+/* the Variant button in the setup strip: the current variant, and an invitation to choose */
+.variant-btn { flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+.variant-btn .chooser { font-family: var(--f-note); font-style: italic; font-weight: 400; color: var(--vermilion); white-space: nowrap; }
+.variant-btn:disabled { opacity: .55; cursor: not-allowed; }
+.variant-btn:disabled .chooser { visibility: hidden; }
+
+/* the variant picker: one card per variant, with a picture of its board */
+.variant-cards { display: grid; gap: 10px; }
+.variant-card {
+  display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; padding: 10px 12px; width: 100%;
+  font: inherit; color: inherit; text-align: left; cursor: pointer; background: var(--paper);
+  border: 1.5px solid var(--ink-soft); border-radius: var(--hand);
+}
+.variant-card:hover { background: var(--paper-deep); }
+.variant-card[aria-checked="true"] { border-color: var(--ink); background: #fffaf0; box-shadow: 3px 3px 0 -1px var(--ochre); }
+.variant-card:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 3px; }
+.variant-card svg { width: 100%; height: auto; display: block; }
+.variant-card h3 { font-family: var(--f-display); font-weight: 400; font-size: 20px; margin: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.variant-card .tag { font-family: var(--f-note); font-style: italic; font-size: 13px; color: var(--ink-soft); }
+.variant-card .chosen { font-family: var(--f-note); font-style: italic; font-size: 13px; color: var(--vermilion); }
+.variant-card p { margin: 3px 0 0; font-size: 15px; line-height: 1.4; }
+.variant-card .facts { font-family: var(--f-note); font-style: italic; font-size: 13.5px; color: var(--ink-soft); }
+@media (max-width: 480px) { .variant-card { grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 10px; } .variant-card h3 { font-size: 18px; } .variant-card p { font-size: 14px; } }
 .field > span { font-family: var(--f-note); font-style: italic; font-size: 15px; color: var(--ink-soft); }
 /* the green call to start a game; between games only */
 .btn.start { color: #fffaf0; background: var(--green); border: 2px solid var(--ink); box-shadow: 2px 3px 0 var(--ink); }
@@ -158,6 +190,9 @@ dialog.confirm { width: min(440px, calc(100vw - 24px)); }
   opacity: 0; transition: opacity .2s; pointer-events: none;
 }
 .show-route .cell .num { opacity: 1; }
+/* where the two sides number a cell differently (Masters' route), each number wears its side's colour */
+.cell .num.num-sun { border-color: var(--c-sun); color: var(--c-sun); }
+.cell .num.num-moon { left: auto; right: -4px; border-color: var(--c-moon); color: var(--c-moon); }
 .slot { position: absolute; inset: 0; display: grid; place-items: center; }
 .cell.lastto::before {
   content: ""; position: absolute; inset: 2px; border-radius: 40%; pointer-events: none;
@@ -400,18 +435,6 @@ summary:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 4p
 .rules p { margin: 0 0 6px; }
 .variant-now { padding: 6px 12px; border: 1.5px dashed var(--vermilion); border-radius: var(--hand); }
 
-/* options: variant cards and a hand-drawn toggle */
-.variants { display: grid; gap: 8px; }
-.variant { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; cursor: pointer; border: 1.5px solid var(--ink-soft); border-radius: var(--hand); }
-.variant input { position: absolute; opacity: 0; pointer-events: none; }
-.variant b { font-family: var(--f-display); font-weight: 400; font-size: 18px; display: block; }
-.variant small { display: block; font-size: 14px; color: var(--ink-soft); line-height: 1.4; }
-.variant .dot { flex-shrink: 0; width: 16px; height: 16px; margin-top: 4px; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--bone); }
-.variant:has(input:checked) { border-color: var(--ink); background: var(--paper); box-shadow: 3px 3px 0 -1px var(--ochre); }
-.variant:has(input:checked) .dot { background: radial-gradient(circle, var(--vermilion) 0 4px, var(--bone) 4.5px); }
-.variant:has(input:focus-visible) { outline: 2px dashed var(--vermilion); outline-offset: 3px; }
-.variant b small.house { display: inline; margin-left: 6px; font-family: var(--f-note); font-style: italic; font-size: 13px; }
-
 /* footer: a quiet colophon under the game */
 .foot { margin-top: 18px; padding-inline: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 15px; color: var(--ink-soft); }
 .foot .flourish { width: min(240px, 70%); }
@@ -454,7 +477,8 @@ summary:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 4p
   /* setup strip: mode and New game share the first row, the opponent picker gets its own full-width row */
   .seg label { padding: 5px 10px; font-size: 14px; }
   #newgame { order: 2; padding: 5px 10px; font-size: 14px; }
-  .field { order: 3; flex: 1 1 100%; }
+  .toolbar .field { flex: 1 1 100%; }
+  .toolbar .field > span { min-width: 4.6em; }   /* line the two dropdowns up */
   .field select { flex: 1; min-width: 0; }
 }
 /* the narrowest phones: a little tighter still, so mode and Start game stay on one row */
@@ -464,7 +488,6 @@ summary:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 4p
   #newgame svg { width: 16px; height: 16px; }
 }
 
-.variant-note:not(:empty) { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--f-note); font-style: italic; }
 .opt { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
 .now-playing { margin: 6px 0 0; font-family: var(--f-note); font-style: italic; font-size: 14px; color: var(--ink-soft); }
 .opt-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; }

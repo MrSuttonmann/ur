@@ -14,7 +14,6 @@ const PICTURE_WASH = { ros: 'ochre', castle: 'rose', five: 'paper-deep', shield:
 const WASH_FILTERS = 4;                    // #wash0 to #wash3 vary the watercolour texture
 const ink = 'fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round';
 const paint = (colour, opacity = .8) => `fill:var(--${colour});fill-opacity:${opacity}`;
-const CENTRE_CELL = cellKey(routeCell(SUN, CENTRE));
 const isCentreCell = (row, column) => cellKey([row, column]) === CENTRE_CELL;
 
 function tileSVG(kind, seed) {
@@ -84,10 +83,6 @@ const dieSVG = (marked, seed) => `<svg class="die" viewBox="0 0 40 36">
   ${marked ? `<circle cx="20" cy="23" r="4.2" style="${paint('vermilion', 1)};stroke:var(--ink);stroke-width:1"/>` : '<circle cx="20" cy="23" r="1.3" style="fill:var(--ink)"/>'}</g></svg>`;
 
 // ---------- building the board ----------
-// route numbers: each private row belongs to one side, so every cell has one unambiguous number
-const routeNumberByCell = {};
-for (const side of SIDES) for (let square = 1; square <= LAST_SQUARE; square++) routeNumberByCell[cellKey(routeCell(side, square))] = square;
-
 const boardCells = {};
 const boardElement = $('board');
 let tileSeed = 0;
@@ -97,12 +92,10 @@ for (let row = 0; row < BOARD_ROWS; row++) for (let column = 0; column < BOARD_C
     if (column === GATE_COLUMN) boardElement.appendChild(gateLabel(row));
     continue;
   }
-  const key = cellKey([row, column]), centre = isCentreCell(row, column);
+  const key = cellKey([row, column]);
   const cell = document.createElement('div');
-  cell.className = 'cell' + (centre ? ' safe-sq' : '');
-  cell.title = (kind === 'ros' ? (centre ? 'Centre rose: roll again, and safe from capture' : 'Rose: roll again')
-    : 'Ordinary square (the picture is decoration only)') + ` · square ${routeNumberByCell[key]}`;
-  cell.innerHTML = tileSVG(kind, tileSeed++) + `<span class="num">${routeNumberByCell[key]}</span><div class="slot"></div>`;
+  cell.className = 'cell';
+  cell.innerHTML = tileSVG(kind, tileSeed++) + '<span class="num"></span><span class="num num-moon"></span><div class="slot"></div>';
   boardCells[key] = cell;
   boardElement.appendChild(cell);
 }
@@ -118,8 +111,32 @@ const keyTile = (kind, seed, safe) => `<span class="key-tile${safe ? ' safe-sq' 
 $('key').innerHTML = `
   <span class="key-title">Board key</span>
   <span class="key-item"><span class="key-icons">${keyTile('ros', 0)}</span><span><b>Rose</b><small>Land here to roll again</small></span></span>
-  <span class="key-item"><span class="key-icons" id="key-centre-tile">${keyTile('ros', 1, true)}</span><span><b>Centre rose</b><small id="key-centre">Roll again, and safe from capture</small></span></span>
+  <span class="key-item"><span class="key-icons" id="key-centre-tile">${keyTile('ros', 1, true)}</span><span><b id="key-centre-name">Centre rose</b><small id="key-centre">Roll again, and safe from capture</small></span></span>
   <span class="key-item"><span class="key-icons">${['castle', 'shield', 'crown', 'tree', 'five'].map((kind, i) => keyTile(kind, i)).join('')}</span><span><b>Ordinary squares</b><small>Pictures are decoration only</small></span></span>`;
+
+// ---------- labelling the board for the current rules ----------
+// Each cell's square number on each side's route; where the two differ (Masters' route), both are shown.
+const routeNumbersAt = key => ({ sun: currentRules.squareAt[SUN][key], moon: currentRules.squareAt[MOON][key] });
+function squareLabel(key) {
+  const { sun, moon } = routeNumbersAt(key);
+  if (sun && moon && sun !== moon) return `square ${sun} for the Sun, ${moon} for the Moon`;
+  return `square ${sun || moon}`;
+}
+// route numbers, hover text and the gold ring on safe roses
+function labelBoardSquares() {
+  for (const [key, cell] of Object.entries(boardCells)) {
+    const { sun, moon } = routeNumbersAt(key), differ = sun && moon && sun !== moon;
+    const [sunTag, moonTag] = cell.querySelectorAll('.num');
+    sunTag.textContent = sun || moon || '';
+    sunTag.classList.toggle('num-sun', !!differ);
+    moonTag.textContent = differ ? moon : '';
+    moonTag.hidden = !differ;
+    const square = sun || moon, rose = ROSE_CELLS.has(key), safe = rose && isSafeSquare(square);
+    cell.classList.toggle('safe-sq', safe);
+    cell.title = (rose ? (safe ? 'Rose: roll again, and safe from capture' : 'Rose: roll again')
+      : 'Ordinary square (the picture is decoration only)') + ` · ${squareLabel(key)}`;
+  }
+}
 
 // squares for the route diagram in the rules (a 30-unit grid with 26-unit squares)
 const DIAGRAM_PITCH = 30, DIAGRAM_SQUARE = 26, DIAGRAM_MARGIN = 4, DIAGRAM_GATE_X = 152;
@@ -127,10 +144,28 @@ $('route-cells').innerHTML = BOARD_PICTURES.flatMap((pictures, row) => pictures.
   const x = DIAGRAM_MARGIN + column * DIAGRAM_PITCH, y = DIAGRAM_MARGIN + row * DIAGRAM_PITCH;
   if (!kind) return column === GATE_COLUMN && row !== ROW.SHARED
     ? `<text x="${DIAGRAM_GATE_X}" y="${y + 16}" text-anchor="middle" style="font:italic 9px var(--f-note);fill:var(--ink-soft)">gate</text>` : '';
-  const rose = kind === 'ros', centre = isCentreCell(row, column), middle = DIAGRAM_SQUARE / 2;
-  return `<rect x="${x}" y="${y}" width="${DIAGRAM_SQUARE}" height="${DIAGRAM_SQUARE}" rx="4" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .55 : 1};stroke:${centre ? 'var(--ochre)' : 'var(--ink-soft)'};stroke-width:${centre ? 2.5 : 1}"/>`
+  const rose = kind === 'ros', middle = DIAGRAM_SQUARE / 2;
+  return `<rect class="${rose ? 'diagram-rose' : ''}" data-cell="${cellKey([row, column])}" x="${x}" y="${y}" width="${DIAGRAM_SQUARE}" height="${DIAGRAM_SQUARE}" rx="4" style="fill:var(--${rose ? 'ochre' : 'bone'});fill-opacity:${rose ? .55 : 1};stroke:var(--ink-soft);stroke-width:1"/>`
     + (rose ? `<circle cx="${x + middle}" cy="${y + middle}" r="5" style="fill:var(--vermilion);fill-opacity:.8"/>` : '');
 })).join('');
+// draw each side's route through the diagram, from its gate and back out; the two lines sit a little apart
+const DIAGRAM_LANE = { [SUN]: { dx: 3, dy: 4 }, [MOON]: { dx: -3, dy: -4 } };
+function drawRouteDiagram() {
+  const centreOf = ([row, column], side) => [DIAGRAM_MARGIN + column * DIAGRAM_PITCH + DIAGRAM_SQUARE / 2 + DIAGRAM_LANE[side].dx,
+    DIAGRAM_MARGIN + row * DIAGRAM_PITCH + DIAGRAM_SQUARE / 2 + DIAGRAM_LANE[side].dy];
+  for (const side of SIDES) {
+    const cells = currentRules.cells[side], first = cells[0], last = cells[cells.length - 1];
+    const points = [[first[0], first[1] + .75], ...cells, [last[0], last[1] - .9]].map(cell => centreOf(cell, side));
+    $('route-' + (side === SUN ? 'sun' : 'moon')).setAttribute('points', points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '));
+  }
+  // the safe roses get the gold ring in the diagram too
+  document.querySelectorAll('#route-cells .diagram-rose').forEach(rect => {
+    const key = rect.dataset.cell, square = currentRules.squareAt[SUN][key] || currentRules.squareAt[MOON][key];
+    const safe = isSafeSquare(square);
+    rect.style.stroke = safe ? 'var(--ochre)' : 'var(--ink-soft)';
+    rect.style.strokeWidth = safe ? 2.5 : 1;
+  });
+}
 
 // ---------- dice ----------
 // each die lives in a persistent slot so its tumble survives the face changes
@@ -166,7 +201,7 @@ function drawDice(dice, isFinal) {
 }
 
 // ---------- move preview: a ring on the landing square and an arrow to it ----------
-const landingElement = (side, move) => move.to === HOME ? homeTrayElement(side) : squareElement(side, move.to);
+const landingElement = (side, move) => move.to === currentRules.home ? homeTrayElement(side) : squareElement(side, move.to);
 function clearMovePreview() {
   document.querySelectorAll('.target').forEach(el => el.classList.remove('target', 'capture'));
   $('arrow-preview').setAttribute('hidden', '');
@@ -212,14 +247,14 @@ function drawArrow(path, fromEl, toEl) {
 // ---------- counters and trays ----------
 function createCounter(side, counter, move) {
   const square = game.positions[side][counter];
-  const label = `${SIDE_NAME[side]} piece ${square === IN_TRAY ? 'waiting' : square === HOME ? 'home' : 'on square ' + square}`;
+  const label = `${SIDE_NAME[side]} piece ${square === IN_TRAY ? 'waiting' : square === currentRules.home ? 'home' : 'on square ' + square}`;
   const el = document.createElement(move ? 'button' : 'div');
   el.className = `piece p${side}` + (move ? ' movable' : '');
   el.dataset.pid = side + '-' + counter;
   el.innerHTML = counterSVG(side, counter + side);
   if (move) {
     el.type = 'button';
-    el.setAttribute('aria-label', `${label}: move to ${move.to === HOME ? 'home' : 'square ' + move.to}${move.captures >= 0 ? ', capturing' : ''}`);
+    el.setAttribute('aria-label', `${label}: move to ${move.to === currentRules.home ? 'home' : 'square ' + move.to}${move.captures >= 0 ? ', capturing' : ''}`);
     el.addEventListener('click', () => { clearMovePreview(); makeMove(move); });
     el.addEventListener('pointerenter', () => showMovePreview(move));
     el.addEventListener('focus', () => showMovePreview(move));
@@ -235,7 +270,7 @@ function createCounter(side, counter, move) {
 function renderTray(side) {
   const tray = $('tray' + side), squares = game.positions[side];
   const waiting = squares.filter(square => square === IN_TRAY).length;
-  const home = squares.filter(square => square === HOME).length;
+  const home = squares.filter(square => square === currentRules.home).length;
   const active = game.phase !== 'over' && game.phase !== 'setup' && game.turn === side;
   const plays = game.mode === 'ai' ? ` <span class="side">${side === COMPUTER_SIDE ? 'plays' : 'play'} the ${SIDE_NAME[side]}</span>` : '';
   tray.classList.toggle('active', active);
@@ -293,7 +328,7 @@ function placeCounters() {
       el.setAttribute('aria-label', el.getAttribute('aria-label') + `. Key ${keyNumber}`);
     }
     if (square === IN_TRAY) trays[side].waiting.appendChild(el);
-    else if (square === HOME) trays[side].home.appendChild(el);
+    else if (square === currentRules.home) trays[side].home.appendChild(el);
     else {
       const cell = squareElement(side, square);
       cell.classList.add('occupied');
@@ -408,8 +443,11 @@ function renderSetupControls() {
   const locked = !isBetweenGames(), why = locked ? 'Start a new game to change this' : '';
   document.querySelectorAll('input[name=mode]').forEach(radio => { radio.disabled = locked; });
   $('level').disabled = locked;
+  $('open-variants').disabled = locked;
+  $('variant-name').textContent = VARIANTS[game.variant].name;   // in a game, the rules being played
   document.querySelector('.seg').title = why;
   $('level-field').title = why;
+  $('variant-field').title = why;
   $('newgame').classList.toggle('start', !locked);
   $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : 'Start game';
 }
@@ -420,5 +458,4 @@ function renderTally() {
   $('tally').innerHTML = game.mode === 'ai'
     ? `Wins: You <b>${record.w}</b> · ${opponentName()} <b>${record.l}</b>`
     : `Wins: Sun <b>${tally.sun}</b> · Moon <b>${tally.moon}</b>`;
-  if (game.variant !== 'classic') $('tally').innerHTML += ` · <i>${currentRules.name} rules</i>`;
 }

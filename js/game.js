@@ -128,7 +128,7 @@ function animateHops(side, move, done) {
   const stops = [];
   for (let square = move.from + 1; square <= move.to; square++) {
     let x, y, width;
-    if (square === HOME) {
+    if (square === currentRules.home) {
       const tray = homeTrayElement(side).getBoundingClientRect();
       width = cellWidth * .55; x = tray.right - width / 2; y = tray.top + tray.height / 2;
     } else {
@@ -195,7 +195,7 @@ function makeMove(move) {
 
 // once the hops have played: record the move, apply it, react to it, then end the turn or the game
 function completeMove(move) {
-  const side = game.turn, landsOnRose = ROSETTES.has(move.to), again = rollsAgain(move);
+  const side = game.turn, landsOnRose = isRose(move.to), again = rollsAgain(move);
   writeToLedger(`${playerName(side)} rolled ${game.roll}: ${describeMove(side, move, landsOnRose, again)}`);
   applyMoveToGame(side, move, landsOnRose);
   const finished = allHome(game.positions, side);
@@ -206,7 +206,7 @@ function completeMove(move) {
 }
 function describeMove(side, move, landsOnRose, again) {
   let text = move.from === IN_TRAY ? `entered a piece${move.to > 1 ? ' to ' + move.to : ''}`
-    : move.to === HOME ? 'brought a piece home' : `moved ${move.from} → ${move.to}`;
+    : move.to === currentRules.home ? 'brought a piece home' : `moved ${move.from} → ${move.to}`;
   if (move.captures >= 0) text += `, captured a ${SIDE_NAME[opponentOf(side)]} piece`;
   if (landsOnRose) text += ', landed on a rose and rolls again';
   else if (again) text += ' and rolls again';
@@ -216,22 +216,22 @@ function applyMoveToGame(side, move, landsOnRose) {
   pendingEffects = {
     moved: side + '-' + move.counter,
     captured: move.captures >= 0 ? opponentOf(side) + '-' + move.captures : null,
-    cell: move.to === HOME ? null : cellKey(routeCell(side, move.to)),
+    cell: move.to === currentRules.home ? null : cellKey(routeCell(side, move.to)),
     rose: landsOnRose,
   };
   if (move.captures >= 0) lastCapturedSide = opponentOf(side);
   game.positions = applyMove(game.positions, side, move);
-  game.lastLanding = move.to === HOME ? null : routeCell(side, move.to);
+  game.lastLanding = move.to === currentRules.home ? null : routeCell(side, move.to);
   recordMove(side, move, landsOnRose);
 }
 // sounds and the players' reactions
 function reactToMove(side, move, landsOnRose, finished) {
   if (finished) { speak(side, 'win', 300); speak(opponentOf(side), 'lose', 1500); }
   else if (move.captures >= 0) { speak(side, 'capture'); speak(opponentOf(side), 'captured', 900); }
-  else if (isSafeSquare(move.to, currentRules)) speak(side, 'centre', 0, .8);
-  else if (move.to === HOME) speak(side, 'home', 0, .6);
+  else if (move.to === currentRules.centre && isSafeSquare(move.to, currentRules)) speak(side, 'centre', 0, .8);
+  else if (move.to === currentRules.home) speak(side, 'home', 0, .6);
   else if (landsOnRose) speak(side, 'rose', 0, .5);
-  if (move.to === HOME) sfxHome();
+  if (move.to === currentRules.home) sfxHome();
   if (landsOnRose) sfxRose();
   if (finished) sfxFanfare(.5);
 }

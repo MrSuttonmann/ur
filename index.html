@@ -125,7 +125,14 @@
             <option value="hard">King (hard)</option>
           </select>
         </label>
+        <div class="field" id="variant-field">
+          <span id="variant-label">Variant</span>
+          <button class="btn variant-btn" id="open-variants" type="button" aria-haspopup="dialog" aria-labelledby="variant-label variant-name">
+            <span id="variant-name">Classic</span><span class="chooser" aria-hidden="true">Choose…</span>
+          </button>
+        </div>
         <button class="btn with-icon start" id="newgame" type="button"><span data-icon="play"></span><span class="lbl">Start game</span></button>
+        <span class="tb-break" aria-hidden="true"></span>
       </div>
     </div>
   </header>
@@ -211,10 +218,10 @@
           <marker id="ar-moon" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" style="fill:var(--c-moon)"/></marker>
         </defs>
         <g id="route-cells"></g>
-        <polyline points="130,77 17,77 17,51 227,51 227,77 170,77" style="fill:none;stroke:var(--c-sun);stroke-width:3;stroke-linejoin:round" marker-end="url(#ar-sun)"/>
-        <polyline points="130,17 17,17 17,43 227,43 227,17 170,17" style="fill:none;stroke:var(--c-moon);stroke-width:3;stroke-linejoin:round;stroke-dasharray:6 3" marker-end="url(#ar-moon)"/>
+        <polyline id="route-sun" style="fill:none;stroke:var(--c-sun);stroke-width:3;stroke-linejoin:round" marker-end="url(#ar-sun)"/>
+        <polyline id="route-moon" style="fill:none;stroke:var(--c-moon);stroke-width:3;stroke-linejoin:round;stroke-dasharray:6 3" marker-end="url(#ar-moon)"/>
       </svg>
-      <p><span class="sun">Sun</span> (solid line) uses the bottom row; <span class="moon">Moon</span> (dashed line) uses the top row. Both race along the middle row, which is where captures happen. Press <em>Route</em> at the top of the page to number every square from 1 to 14.</p>
+      <p><span class="sun">Sun</span> (solid line) uses the bottom row; <span class="moon">Moon</span> (dashed line) uses the top row. Both race along the middle row, which is where captures happen. Press <em>Route</em> at the top of the page to number every square along each side’s route.</p>
 
       <h4>Captures</h4>
       <ul>
@@ -242,6 +249,14 @@
         <li><b>Arrow keys</b> step through the counters that can move, showing where each would land; <b>Enter</b> moves the one you’re on.</li>
         <li><b>A</b>: Advise me, when playing the Squire or Knight.</li>
         <li><b>Tab</b> reaches every button, and <b>Esc</b> closes a window or a guide tip.</li>
+      </ul>
+
+      <h4>Variants</h4>
+      <p>Choose a variant with <b>Variant</b> before a game. Each one changes only what’s listed here; everything else follows the rules above.</p>
+      <ul>
+        <li><b>Masters’ route</b>, after games historian James Masters. The route is 16 squares. After seven squares of the middle row, counters climb into the opponent’s far corner (squares 12 and 13), come down the end of the middle row (14), and return to their own row (15 and 16) before leaving. Counters can be captured anywhere the two routes cross, which now includes the far end. The roses on squares 12 and 16 are shared, so like the centre rose they’re safe.</li>
+        <li><b>Quick</b> (a house rule): five counters each instead of seven.</li>
+        <li><b>Raiders</b> (a house rule): every capture earns another roll, and no rose is safe.</li>
       </ul>
 
       <p>These rules were reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in 177 BCE.</p>
@@ -299,11 +314,7 @@
       <button class="btn close" type="button" id="close-options" aria-label="Close options">Close</button>
     </div>
     <div class="rules">
-      <h4 style="margin-top:0">Rules</h4>
-      <div class="variants" id="variants" role="radiogroup" aria-label="Rule variant"></div>
-      <div class="variant-note" id="variant-note" aria-live="polite"></div>
-
-      <h4>Play</h4>
+      <h4 style="margin-top:0">Play</h4>
       <label class="opt" for="opt-auto">
         <input type="checkbox" class="toggle" id="opt-auto">
         <span><b>Auto-move</b><small>When a roll leaves only one legal move, play it for me.</small></span>
@@ -323,6 +334,17 @@
       <p>New to Ur, or teaching someone? The guided game is played against the Squire, with tips as each part of the rules comes up.</p>
       <button class="btn" type="button" id="replay-guide">Play the guided game</button>
     </div>
+  </div>
+</dialog>
+
+<dialog id="variants-dlg" class="stats" aria-labelledby="variants-title">
+  <div class="stats-inner">
+    <div class="stats-head">
+      <h2 id="variants-title">Choose a variant</h2>
+      <button class="btn close" type="button" id="close-variants" aria-label="Close variants">Close</button>
+    </div>
+    <div class="variant-cards" id="variant-cards" role="radiogroup" aria-labelledby="variants-title"></div>
+    <p class="cap">The full rules for each are under <b>Variants</b> in Rules.</p>
   </div>
 </dialog>
 
@@ -388,6 +410,7 @@
 <script src="js/guide.js"></script>
 <script src="js/newgame.js"></script>
 <script src="js/options.js"></script>
+<script src="js/variants.js"></script>
 <script src="js/controls.js"></script>
 <script src="js/modals.js"></script>
 <script src="js/keyboard.js"></script>

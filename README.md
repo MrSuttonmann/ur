@@ -4,7 +4,7 @@ The 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. 
 
 - **Vs computer:** three strengths (Squire, Knight, King). The computer looks ahead over every possible dice roll. **Advise me** shows what the King would play, and why: unlimited against the Squire, five times a game against the Knight.
 - **Two players:** pass-and-play on one device.
-- **Rules:** Irving Finkel's reconstruction from the British Museum tablet, plus two house variants (Quick and Raiders) in Options.
+- **Rules:** Irving Finkel's reconstruction from the British Museum tablet, James Masters' longer 16-square route, and two house variants (Quick and Raiders), chosen with Variant before a game.
 - **Guided first game:** new players get tips as each rule first comes up; it can be replayed from Options.
 - Animated counters and dice, sound effects made in the browser, and background music.
 - **Keyboard play:** R or Space to roll, number keys or arrows and Enter to move, A for advice.
@@ -37,7 +37,8 @@ python3 -m http.server 8000
 | `js/advice.js` | Advise me |
 | `js/guide.js` | The guided first game |
 | `js/newgame.js` | Starting games, the set-up board, confirming before a game is lost |
-| `js/options.js` | The Options window and which rules are in play |
+| `js/options.js` | The Options window |
+| `js/variants.js` | The variant picker and which rules are in play |
 | `js/controls.js` | Roll, Sound, Route, and the mode and opponent choices |
 | `js/modals.js` | The Rules, Strategy, Options and Stats windows |
 | `js/keyboard.js` | Keyboard play |

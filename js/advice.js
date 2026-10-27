@@ -16,7 +16,7 @@ const canAdvise = () => adviceOffered() && adviceLeft() > 0;
 // chance an opposing counter could land on this square next turn (0 off the shared row or on the safe centre)
 function dangerAt(positions, side, square) {
   if (!isSharedSquare(square) || isSafeSquare(square, currentRules)) return 0;
-  return captureRisk(square, positions[opponentOf(side)]);
+  return captureRisk(positions, side, square);
 }
 // "a", "a and b", "a, b and c"
 const joinAsList = items => items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
@@ -31,16 +31,17 @@ function giveAdvice() {
 }
 function explainMove(side, move) {
   const reasons = [];
-  if (move.to === HOME) reasons.push('brings a counter home');
+  if (move.to === currentRules.home) reasons.push('brings a counter home');
   if (move.captures >= 0) reasons.push(`captures their counter on square ${move.to}${move.to >= LONG_WAY_SQUARE ? ', which had come a long way' : ''}`);
-  if (isSafeSquare(move.to, currentRules)) reasons.push('takes the centre rose, so you roll again and it’s safe there');
-  else if (ROSETTES.has(move.to)) reasons.push('lands on a rose, so you roll again');
+  if (isSafeSquare(move.to, currentRules)) reasons.push(move.to === currentRules.centre
+    ? 'takes the centre rose, so you roll again and it’s safe there' : 'takes a contested rose, so you roll again and it’s safe there');
+  else if (isRose(move.to)) reasons.push('lands on a rose, so you roll again');
   else if (currentRules.captureRoll && move.captures >= 0) reasons.push('earns another roll for the capture');
   const dangerBefore = dangerAt(game.positions, side, move.from);
-  const dangerAfter = move.to === HOME ? 0 : dangerAt(applyMove(game.positions, side, move), side, move.to);
+  const dangerAfter = move.to === currentRules.home ? 0 : dangerAt(applyMove(game.positions, side, move), side, move.to);
   if (dangerBefore >= THREATENED && dangerAfter < dangerBefore) reasons.push('moves a threatened counter out of danger');
   if (!reasons.length) reasons.push(move.from === IN_TRAY ? 'brings a new counter into play' : 'leaves your counters safest overall');
-  const from = move.from === IN_TRAY ? 'from your tray' : 'on ' + move.from, to = move.to === HOME ? 'home' : 'to ' + move.to;
+  const from = move.from === IN_TRAY ? 'from your tray' : 'on ' + move.from, to = move.to === currentRules.home ? 'home' : 'to ' + move.to;
   let text = `Advice: move the counter ${from} ${to}. It ${joinAsList(reasons)}.`;
   if (dangerAfter > 0) text += ` It could be hit next turn (${Math.round(dangerAfter * 100)}% chance).`;
   return text;
