@@ -2,13 +2,17 @@
   The Royal Game of Ur: offline support.
   Copyright (C) 2026 MrSuttonmann. Licensed under the GNU AGPL-3.0 or later; see LICENSE.
 
-  The page is fetched fresh whenever there is a connection, so updates arrive straight away,
-  and served from the cache when there isn't. Icons and fonts come from the cache and refresh
-  in the background. Music is too big to download up front, so each track is saved the first
-  time it plays and then served from the cache, including the byte ranges audio players ask for.
+  The page, its scripts and its styles are fetched fresh whenever there is a connection, so an
+  update never mixes a new page with old scripts, and they're served from the cache when there
+  isn't one. Icons and fonts come from the cache and refresh in the background. Music is too big
+  to download up front, so each track is saved the first time it plays and then served from the
+  cache, including the byte ranges audio players ask for.
 */
-const CACHE = 'ur-v1';
-const SHELL = ['./', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+const CACHE = 'ur-v2';
+const CODE = ['css/style.css', 'js/rules.js', 'js/sound.js', 'js/game.js', 'js/stats.js', 'js/board.js',
+  'js/portraits.js', 'js/ui.js', 'js/music.js', 'js/main.js'];
+const SHELL = ['./', 'manifest.webmanifest', ...CODE,
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -25,6 +29,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (req.mode === 'navigate') e.respondWith(page(req));
+  else if (url.origin === location.origin && /\.(js|css)$/.test(url.pathname)) e.respondWith(fresh(req));
   else if (url.origin === location.origin && url.pathname.endsWith('.mp3')) e.respondWith(music(req, url.pathname));
   else if (url.origin === location.origin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') e.respondWith(cached(req));
 });
@@ -38,6 +43,18 @@ async function page(req) {
     return res;
   } catch (err) {
     return (await cache.match('./')) || Response.error();
+  }
+}
+
+// scripts and styles: network first, cache as the fallback
+async function fresh(req) {
+  const cache = await caches.open(CACHE);
+  try {
+    const res = await fetch(req);
+    if (res.ok) cache.put(req, res.clone());
+    return res;
+  } catch (err) {
+    return (await cache.match(req, { ignoreSearch: true })) || Response.error();
   }
 }
 

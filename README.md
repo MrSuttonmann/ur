@@ -19,6 +19,25 @@ It's a static site with no build step. You can open `index.html` directly, but o
 python3 -m http.server 8000
 ```
 
+## Project layout
+
+| Path | What it holds |
+|---|---|
+| `index.html` | The page markup, dialogs and SVG definitions |
+| `css/style.css` | All styles |
+| `js/rules.js` | Rule variants, board rules and the computer opponent |
+| `js/sound.js` | Synthesised sound effects |
+| `js/game.js` | Game state, turns, moves and their animations |
+| `js/stats.js` | Stats recording and the Stats window |
+| `js/board.js` | Drawing the board, counters, dice and move arrows; `render()` |
+| `js/portraits.js` | Player portraits, expressions and speech |
+| `js/ui.js` | Preferences, advice, the guided game, new game, options, modals, keyboard play, install |
+| `js/music.js` | Background music |
+| `js/main.js` | Start-up |
+| `sw.js`, `manifest.webmanifest`, `icons/` | Offline support and installing |
+
+The scripts are plain, non-module scripts loaded in that order and share one scope, so a file can use anything from the files before it.
+
 ## Deploy to Cloudflare Pages
 
 1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages → Connect to Git** and pick this repository.
