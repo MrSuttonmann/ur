@@ -22,34 +22,50 @@ function focusFirstMovable() {
 }
 
 const isRollKey = (e, tag) => e.key === 'r' || e.key === 'R' || (e.key === ' ' && !['BUTTON', 'SUMMARY'].includes(tag));
-const isAdviseKey = e => e.key === 'a' || e.key === 'A';
-const isUndoKey = e => e.key === 'u' || e.key === 'U';
+const isAdviseKey = (e) => e.key === 'a' || e.key === 'A';
+const isUndoKey = (e) => e.key === 'u' || e.key === 'U';
 const ARROW_STEP = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return;
-  const tag = e.target.tagName, typing = ['SELECT', 'INPUT', 'TEXTAREA'].includes(tag);
+  const tag = e.target.tagName,
+    typing = ['SELECT', 'INPUT', 'TEXTAREA'].includes(tag);
   if (!typing && e.key !== 'Shift') setKeyboardMode(true);
-  if (guideTipOpen && e.key === 'Escape') { closeGuideTip(); return; }
+  if (guideTipOpen && e.key === 'Escape') {
+    closeGuideTip();
+    return;
+  }
   if (typing) return;
   if (isRollKey(e, tag)) {
-    if (game.phase === 'roll' && !isComputer(game.turn)) { e.preventDefault(); rollDice(); }
+    if (game.phase === 'roll' && !isComputer(game.turn)) {
+      e.preventDefault();
+      rollDice();
+    }
     return;
   }
   if (isUndoKey(e)) {
-    if (canUndo()) { e.preventDefault(); undoMove(); }
+    if (canUndo()) {
+      e.preventDefault();
+      undoMove();
+    }
     return;
   }
   if (game.phase !== 'move' || isComputer(game.turn)) return;
-  const movable = [...document.querySelectorAll('.piece.movable[data-key]')].sort((a, b) => a.dataset.key - b.dataset.key);
+  const movable = [...document.querySelectorAll('.piece.movable[data-key]')].sort(
+    (a, b) => a.dataset.key - b.dataset.key,
+  );
   if (/^[1-9]$/.test(e.key)) {
     const counter = movable[+e.key - 1];
-    if (counter) { e.preventDefault(); counter.click(); }
+    if (counter) {
+      e.preventDefault();
+      counter.click();
+    }
   } else if (e.key in ARROW_STEP && movable.length) {
     e.preventDefault();
     const at = movable.indexOf(document.activeElement);
     movable[at < 0 ? 0 : (at + ARROW_STEP[e.key] + movable.length) % movable.length].focus();
   } else if (isAdviseKey(e) && canAdvise()) {
-    e.preventDefault(); giveAdvice();
+    e.preventDefault();
+    giveAdvice();
   }
 });

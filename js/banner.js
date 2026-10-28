@@ -4,9 +4,9 @@
 // and pops away again. A win brings trumpets and roses in bloom; a loss, wilted roses dropping their petals.
 // A click or Escape sends it away early. The animations are in css/banner.css.
 
-const BANNER_SHOW_MS = 3600;   // from popping up to starting to pop away
-const BANNER_EXIT_MS = 450;    // the pop-away animation's length in banner.css
-const LONG_TITLE = 12;         // longer titles are set smaller so they fit along the scroll
+const BANNER_SHOW_MS = 3600; // from popping up to starting to pop away
+const BANNER_EXIT_MS = 450; // the pop-away animation's length in banner.css
+const LONG_TITLE = 12; // longer titles are set smaller so they fit along the scroll
 let bannerTimer = null;
 
 function showEndBanner(winner) {
@@ -28,15 +28,24 @@ function hideEndBanner() {
   if (banner.hidden || banner.classList.contains('leaving')) return;
   clearTimeout(bannerTimer);
   banner.classList.add('leaving');
-  bannerTimer = setTimeout(() => { banner.hidden = true; banner.classList.remove('leaving'); }, prefersReducedMotion ? 0 : BANNER_EXIT_MS);
+  bannerTimer = setTimeout(
+    () => {
+      banner.hidden = true;
+      banner.classList.remove('leaving');
+    },
+    prefersReducedMotion ? 0 : BANNER_EXIT_MS,
+  );
 }
 $('end-banner').addEventListener('click', hideEndBanner);
-addEventListener('keydown', e => { if (e.key === 'Escape') hideEndBanner(); });
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideEndBanner();
+});
 
 // the scroll: a ribbon arching over the middle, its forked tails tucked behind each end, and the title along the curve
 function bannerScroll(title) {
-  const tail = 'M80 150 L14 160 L32 184 L14 208 L86 200 Z', fold = 'M50 180 L68 198 L68 176 Z';
-  const mirrored = path => `<path d="${path}" transform="translate(400 0) scale(-1 1)"`;
+  const tail = 'M80 150 L14 160 L32 184 L14 208 L86 200 Z',
+    fold = 'M50 180 L68 198 L68 176 Z';
+  const mirrored = (path) => `<path d="${path}" transform="translate(400 0) scale(-1 1)"`;
   return `<g class="scroll" filter="url(#ink)">
     <path d="${tail}" class="scroll-tail"/>${mirrored(tail)} class="scroll-tail"/>
     <path d="${fold}" class="scroll-fold"/>${mirrored(fold)} class="scroll-fold"/>
@@ -65,15 +74,27 @@ function bannerTrumpets() {
 
 // three roses that bloom in turn, and petals drifting down over the scroll
 function bannerRose(x, y) {
-  const petals = [0, 72, 144, 216, 288].map(angle => `<ellipse cx="0" cy="-8" rx="7" ry="9" transform="rotate(${angle})" class="banner-rose-petal"/>`).join('');
+  const petals = [0, 72, 144, 216, 288]
+    .map((angle) => `<ellipse cx="0" cy="-8" rx="7" ry="9" transform="rotate(${angle})" class="banner-rose-petal"/>`)
+    .join('');
   return `<g transform="translate(${x} ${y})"><g class="bloom">
     <path d="M-4 6 Q-22 14 -26 2 Q-14 -2 -4 6 Z M4 6 Q22 14 26 2 Q14 -2 4 6 Z" class="banner-rose-leaf"/>
     ${petals}<circle r="5" class="banner-rose-heart"/>
   </g></g>`;
 }
-const PETAL_STARTS = [[90, 40], [150, 20], [205, 32], [262, 18], [318, 42], [120, 64], [290, 70]];
+const PETAL_STARTS = [
+  [90, 40],
+  [150, 20],
+  [205, 32],
+  [262, 18],
+  [318, 42],
+  [120, 64],
+  [290, 70],
+];
 function bloomingRoses() {
-  const falling = PETAL_STARTS.map(([x, y]) => `<g transform="translate(${x} ${y})"><ellipse rx="4" ry="6" class="falling-petal"/></g>`).join('');
+  const falling = PETAL_STARTS.map(
+    ([x, y]) => `<g transform="translate(${x} ${y})"><ellipse rx="4" ry="6" class="falling-petal"/></g>`,
+  ).join('');
   return `<g class="banner-roses" filter="url(#ink)">${bannerRose(166, 222)}${bannerRose(234, 222)}${bannerRose(200, 206)}</g>
     <g class="banner-petals">${falling}</g>`;
 }

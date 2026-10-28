@@ -3,27 +3,92 @@
 /* The guided game’s tips, and the advised move. */
 
 /* the advised move: a red halo on the counter and a red dashed ring where it lands */
-.piece.advised { filter: drop-shadow(0 0 3px var(--vermilion)) drop-shadow(0 0 3px var(--vermilion)) var(--counter-shadow); }
-.cell.advised-target, .pool.advised-target { outline: 3px dashed var(--vermilion); outline-offset: 1px; border-radius: 7px; }
+.piece.advised {
+  filter: drop-shadow(0 0 3px var(--vermilion)) drop-shadow(0 0 3px var(--vermilion)) var(--counter-shadow);
+}
+.cell.advised-target,
+.pool.advised-target {
+  outline: 3px dashed var(--vermilion);
+  outline-offset: 1px;
+  border-radius: 7px;
+}
 
 /* guided game: a parchment tip pointing at the thing it explains */
 .coach {
-  position: absolute; z-index: 60; width: min(320px, calc(100vw - 32px)); padding: 12px 14px 10px;
-  background: #fffaf0; color: var(--ink); border: 2px solid var(--ink); border-radius: 12px 16px 10px 14px / 14px 10px 16px 12px;
-  box-shadow: 0 10px 24px -10px rgba(40,28,18,.6);
+  position: absolute;
+  z-index: 60;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px 10px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 12px 16px 10px 14px / 14px 10px 16px 12px;
+  box-shadow: 0 10px 24px -10px rgba(40, 28, 18, 0.6);
 }
 .coach::before {
-  content: ""; position: absolute; left: calc(var(--ax, 50%) - 8px); width: 14px; height: 14px; background: #fffaf0;
-  border: 2px solid var(--ink); transform: rotate(45deg);
+  content: '';
+  position: absolute;
+  left: calc(var(--ax, 50%) - 8px);
+  width: 14px;
+  height: 14px;
+  background: #fffaf0;
+  border: 2px solid var(--ink);
+  transform: rotate(45deg);
 }
-.coach[data-side="below"]::before { top: -9px; border-right: 0; border-bottom: 0; }
-.coach[data-side="above"]::before { bottom: -9px; border-left: 0; border-top: 0; }
-.coach p { margin: 0 0 10px; font-size: 16px; line-height: 1.45; }
+.coach[data-side='below']::before {
+  top: -9px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.coach[data-side='above']::before {
+  bottom: -9px;
+  border-left: 0;
+  border-top: 0;
+}
+.coach p {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.45;
+}
 /* advice: a smaller note that never blocks a click on the board beneath it */
-.advice-note { width: min(270px, calc(100vw - 32px)); padding: 8px 12px; pointer-events: none; z-index: 55; border-color: var(--vermilion); }
-.advice-note::before { border-color: var(--vermilion); }
-.advice-note p { margin: 0; font-size: 15px; line-height: 1.4; }
-.coach-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.linkish { font: inherit; font-family: var(--f-note); font-style: italic; font-size: 14px; color: var(--ink-soft); background: none; border: 0; padding: 2px; cursor: pointer; text-decoration: underline; }
-.linkish:focus-visible { outline: 2px dashed var(--vermilion); }
-.coach-focus { outline: 3px solid var(--ochre) !important; outline-offset: 3px; border-radius: 8px; }
+.advice-note {
+  width: min(270px, calc(100vw - 32px));
+  padding: 8px 12px;
+  pointer-events: none;
+  z-index: 55;
+  border-color: var(--vermilion);
+}
+.advice-note::before {
+  border-color: var(--vermilion);
+}
+.advice-note p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.coach-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.linkish {
+  font: inherit;
+  font-family: var(--f-note);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  padding: 2px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.linkish:focus-visible {
+  outline: 2px dashed var(--vermilion);
+}
+.coach-focus {
+  outline: 3px solid var(--ochre) !important;
+  outline-offset: 3px;
+  border-radius: 8px;
+}

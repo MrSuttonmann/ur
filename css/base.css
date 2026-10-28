@@ -1,12 +1,23 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
 /* base reset */
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0}
-img{max-width:100%}
-[hidden]{display:none!important}
+:root {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+body {
+  margin: 0;
+}
+img {
+  max-width: 100%;
+}
+[hidden] {
+  display: none !important;
+}
 /* the page's shared SVG filters, masks and clips: present, but taking no room */
-.svg-defs { position: absolute; }
+.svg-defs {
+  position: absolute;
+}
 
 /* Layout: one centred manuscript column. A painted board sits between two ink-ruled player trays; dice dock beneath; rules folded at the foot.
    Look: a single committed visual world (watercolour on laid paper), so it does not switch with the viewer theme. */
@@ -28,48 +39,96 @@ img{max-width:100%}
   --night: #1c2a52;
   --green: #4a7a37;
   --sunfire: #e9a52c;
-  --counter-shadow: drop-shadow(1px 3px 1.5px rgba(40,28,18,.6));   /* the shadow every counter casts on the board */
+  --counter-shadow: drop-shadow(1px 3px 1.5px rgba(40, 28, 18, 0.6)); /* the shadow every counter casts on the board */
 
-  --f-display: "Uncial Antiqua", "IM Fell English", Georgia, serif;
-  --f-body: "Alegreya", "IM Fell English", Georgia, serif;
-  --f-note: "IM Fell English", Georgia, serif;
+  --f-display: 'Uncial Antiqua', 'IM Fell English', Georgia, serif;
+  --f-body: 'Alegreya', 'IM Fell English', Georgia, serif;
+  --f-note: 'IM Fell English', Georgia, serif;
 
   --hand: 255px 14px 225px 16px / 16px 225px 14px 255px;
   --cell: clamp(34px, calc((100vw - 32px - 28px - 28px) / 8), 68px);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 body {
   background-color: var(--paper);
   background-image:
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .2 0 0 0 0 .1 0 0 0 .11 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
-    radial-gradient(ellipse 60% 40% at 8% 6%, rgba(214,165,64,.22), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 95% 30%, rgba(207,133,119,.16), transparent 70%),
-    radial-gradient(ellipse 70% 50% at 50% 105%, rgba(135,159,102,.2), transparent 70%);
+    radial-gradient(ellipse 60% 40% at 8% 6%, rgba(214, 165, 64, 0.22), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 95% 30%, rgba(207, 133, 119, 0.16), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 105%, rgba(135, 159, 102, 0.2), transparent 70%);
   background-attachment: scroll;
   color: var(--ink);
-  font-family: var(--f-body); font-size: 17px; line-height: 1.5;
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 22px 44px;
 }
 /* the animated background (js/backdrop.js) sits behind everything and never takes a click */
-.backdrop { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
 
 /* scrollbars (ledger and every modal): an inked rail with a rolled-parchment handle, like the scroll banners */
-.ledger .log::-webkit-scrollbar, .stats-inner::-webkit-scrollbar, .scroll-x::-webkit-scrollbar { width: 13px; height: 13px; }
-.ledger .log::-webkit-scrollbar-track, .stats-inner::-webkit-scrollbar-track { background: linear-gradient(90deg, transparent 5.5px, var(--ink-soft) 5.5px 7px, transparent 7px); }
-.stats-inner::-webkit-scrollbar-track { margin-block: 16px; }
-.scroll-x::-webkit-scrollbar-track { background: linear-gradient(180deg, transparent 5.5px, var(--ink-soft) 5.5px 7px, transparent 7px); }
-.ledger .log::-webkit-scrollbar-thumb, .stats-inner::-webkit-scrollbar-thumb, .scroll-x::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
-  border: 1.5px solid var(--ink); border-radius: 7px 5px 8px 4px / 9px 6px 8px 5px;
+.ledger .log::-webkit-scrollbar,
+.stats-inner::-webkit-scrollbar,
+.scroll-x::-webkit-scrollbar {
+  width: 13px;
+  height: 13px;
 }
-.scroll-x::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep)); }
-.ledger .log::-webkit-scrollbar-thumb:hover, .stats-inner::-webkit-scrollbar-thumb:hover { background: linear-gradient(90deg, var(--ochre), #f6dc9c 50%, var(--ochre)); }
-.scroll-x::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--ochre), #f6dc9c 50%, var(--ochre)); }
-.ledger .log::-webkit-scrollbar-button, .stats-inner::-webkit-scrollbar-button, .scroll-x::-webkit-scrollbar-button { display: none; }
+.ledger .log::-webkit-scrollbar-track,
+.stats-inner::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, transparent 5.5px, var(--ink-soft) 5.5px 7px, transparent 7px);
+}
+.stats-inner::-webkit-scrollbar-track {
+  margin-block: 16px;
+}
+.scroll-x::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, transparent 5.5px, var(--ink-soft) 5.5px 7px, transparent 7px);
+}
+.ledger .log::-webkit-scrollbar-thumb,
+.stats-inner::-webkit-scrollbar-thumb,
+.scroll-x::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
+  border: 1.5px solid var(--ink);
+  border-radius: 7px 5px 8px 4px / 9px 6px 8px 5px;
+}
+.scroll-x::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
+}
+.ledger .log::-webkit-scrollbar-thumb:hover,
+.stats-inner::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, var(--ochre), #f6dc9c 50%, var(--ochre));
+}
+.scroll-x::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--ochre), #f6dc9c 50%, var(--ochre));
+}
+.ledger .log::-webkit-scrollbar-button,
+.stats-inner::-webkit-scrollbar-button,
+.scroll-x::-webkit-scrollbar-button {
+  display: none;
+}
 @supports not selector(::-webkit-scrollbar) {
-  .ledger .log, .stats-inner, .scroll-x { scrollbar-width: thin; scrollbar-color: var(--ink-soft) transparent; }
+  .ledger .log,
+  .stats-inner,
+  .scroll-x {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink-soft) transparent;
+  }
 }

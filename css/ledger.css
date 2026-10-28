@@ -2,40 +2,105 @@
 
 /* The Scribe’s Ledger: the game’s move history. */
 
-.log .waiting { font-style: italic; }
+.log .waiting {
+  font-style: italic;
+}
 
-.under { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
-.log { list-style: none; margin: 0; padding: 0; font-family: var(--f-note); font-size: 15px; color: var(--ink-soft); display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.log li:first-child { color: var(--ink); }
+.under {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--f-note);
+  font-size: 15px;
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.log li:first-child {
+  color: var(--ink);
+}
 /* move history: a ruled parchment box with a scroll-banner label */
 .ledger {
-  position: relative; flex: 1 1 320px; min-width: 0; margin-top: 14px; padding: 22px 6px 10px 12px;
-  background: rgba(246,236,210,.7); border: 1.5px solid var(--ink-soft); border-radius: var(--hand);
+  position: relative;
+  flex: 1 1 320px;
+  min-width: 0;
+  margin-top: 14px;
+  padding: 22px 6px 10px 12px;
+  background: rgba(246, 236, 210, 0.7);
+  border: 1.5px solid var(--ink-soft);
+  border-radius: var(--hand);
 }
 /* the whole game's history; six ruled lines show, the rest scroll. The rules scroll with the text */
 .ledger .log {
-  gap: 0; max-height: calc(23px * 6); overflow-y: auto; overscroll-behavior: contain;
-  list-style: none; padding: 0 8px 0 0;
-  background-image: repeating-linear-gradient(180deg, transparent 0 22px, rgba(110,88,64,.13) 22px 23px);
+  gap: 0;
+  max-height: calc(23px * 6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  padding: 0 8px 0 0;
+  background-image: repeating-linear-gradient(180deg, transparent 0 22px, rgba(110, 88, 64, 0.13) 22px 23px);
   background-attachment: local;
 }
 /* hanging move numbers; top-aligned so the smaller digits never make a line taller than its rule */
-.ledger .log li { line-height: 23px; padding-left: 2.4em; }
-.ledger .log .n { display: inline-block; width: 2em; margin-left: -2.4em; margin-right: .4em; text-align: right; vertical-align: top; font-size: 13px; color: var(--vermilion); font-variant-numeric: tabular-nums; }
-.ledger .log:focus-visible { outline: 2px dashed var(--vermilion); outline-offset: 3px; border-radius: 4px; }
+.ledger .log li {
+  line-height: 23px;
+  padding-left: 2.4em;
+}
+.ledger .log .n {
+  display: inline-block;
+  width: 2em;
+  margin-left: -2.4em;
+  margin-right: 0.4em;
+  text-align: right;
+  vertical-align: top;
+  font-size: 13px;
+  color: var(--vermilion);
+  font-variant-numeric: tabular-nums;
+}
+.ledger .log:focus-visible {
+  outline: 2px dashed var(--vermilion);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
 
 .ledger-label {
-  position: absolute; top: -14px; left: 18px; transform: rotate(-2deg);
-  font-family: var(--f-display); font-size: 16px; color: var(--vermilion); white-space: nowrap;
+  position: absolute;
+  top: -14px;
+  left: 18px;
+  transform: rotate(-2deg);
+  font-family: var(--f-display);
+  font-size: 16px;
+  color: var(--vermilion);
+  white-space: nowrap;
   padding: 3px 14px 2px;
   background: linear-gradient(180deg, var(--bone) 0%, #fffaf0 45%, var(--paper-deep) 100%);
-  border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
-  box-shadow: 0 3px 6px -2px rgba(40,28,18,.4);
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  box-shadow: 0 3px 6px -2px rgba(40, 28, 18, 0.4);
 }
-.ledger-label::before, .ledger-label::after {
-  content: ""; position: absolute; top: -5px; bottom: -5px; width: 9px;
-  border: 1.5px solid var(--ink); border-radius: 6px;
+.ledger-label::before,
+.ledger-label::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 9px;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
   background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
 }
-.ledger-label::before { left: -6px; }
-.ledger-label::after { right: -6px; }
+.ledger-label::before {
+  left: -6px;
+}
+.ledger-label::after {
+  right: -6px;
+}

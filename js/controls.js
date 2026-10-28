@@ -8,11 +8,20 @@ $('roll').addEventListener('click', () => {
 });
 
 // mode and opponent only change between games, and then just update the waiting board
-document.querySelectorAll('input[name=mode]').forEach(radio => radio.addEventListener('change', () => { if (isBetweenGames()) showSetupBoard(); }));
-$('level').addEventListener('change', e => { if (isBetweenGames()) { game.level = e.target.value; render(); } });
+document.querySelectorAll('input[name=mode]').forEach((radio) =>
+  radio.addEventListener('change', () => {
+    if (isBetweenGames()) showSetupBoard();
+  }),
+);
+$('level').addEventListener('change', (e) => {
+  if (isBetweenGames()) {
+    game.level = e.target.value;
+    render();
+  }
+});
 
 // Route numbers every square along each side's route
-$('route').addEventListener('click', e => {
+$('route').addEventListener('click', (e) => {
   const showing = boardElement.classList.toggle('show-route');
   e.currentTarget.setAttribute('aria-pressed', String(showing));
 });
@@ -27,7 +36,9 @@ function drawSoundButton() {
 }
 $('sound').addEventListener('click', () => {
   muted = !muted;
-  try { localStorage.setItem('ur-muted', muted ? '1' : '0'); } catch (e) {}
+  try {
+    localStorage.setItem('ur-muted', muted ? '1' : '0');
+  } catch (e) {}
   drawSoundButton();
   if (!muted) sfxDice();
 });

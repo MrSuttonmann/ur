@@ -3,13 +3,14 @@
 // Danger shading, against the Squire: on your turn, each square on your route is washed red by the chance
 // that one of the Squire's counters could land there with his next roll. Safe roses and your own rows never are.
 
-const showsDanger = () => isLearnerGame() && !game.guided && !isComputer(game.turn) && ['roll', 'rolling', 'move'].includes(game.phase);
-const percent = chance => `${Math.round(chance * 100)}%`;
+const showsDanger = () =>
+  isLearnerGame() && !game.guided && !isComputer(game.turn) && ['roll', 'rolling', 'move'].includes(game.phase);
+const percent = (chance) => `${Math.round(chance * 100)}%`;
 
 // a square that a route passes twice (doubling back) is as dangerous as its riskier visit
 function dangerAtCell(key) {
   const squares = currentRules.squaresAt[HUMAN_SIDE][key] || [];
-  return Math.max(0, ...squares.map(square => dangerAt(game.positions, HUMAN_SIDE, square)));
+  return Math.max(0, ...squares.map((square) => dangerAt(game.positions, HUMAN_SIDE, square)));
 }
 
 function renderDanger() {

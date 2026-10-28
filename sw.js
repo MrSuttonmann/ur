@@ -10,30 +10,95 @@
   cache, including the byte ranges audio players ask for.
 */
 const CACHE = 'ur-v9';
-const CODE = ['css/base.css', 'css/header.css', 'css/controls.css', 'css/variants.css', 'css/dialogs.css', 'css/board.css', 'css/pieces.css', 'css/dock.css', 'css/ledger.css', 'css/rules.css', 'css/footer.css', 'css/guide.css', 'css/stats.css', 'css/drawings.css', 'css/portraits.css', 'css/banner.css', 'css/honours.css', 'js/rules.js', 'js/sound.js', 'js/game.js', 'js/stats.js', 'js/honours.js', 'js/board.js', 'js/speech.js', 'js/portraits.js', 'js/banner.js', 'js/card.js', 'js/prefs.js', 'js/backdrop.js', 'js/icons.js', 'js/bubbles.js', 'js/advice.js', 'js/danger.js', 'js/undo.js', 'js/guide.js', 'js/newgame.js', 'js/options.js', 'js/variants.js', 'js/controls.js', 'js/modals.js', 'js/keyboard.js', 'js/install.js', 'js/music.js', 'js/main.js'];
-const SHELL = ['./', 'manifest.webmanifest', ...CODE,
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+const CODE = [
+  'css/base.css',
+  'css/header.css',
+  'css/controls.css',
+  'css/variants.css',
+  'css/dialogs.css',
+  'css/board.css',
+  'css/pieces.css',
+  'css/dock.css',
+  'css/ledger.css',
+  'css/rules.css',
+  'css/footer.css',
+  'css/guide.css',
+  'css/stats.css',
+  'css/drawings.css',
+  'css/portraits.css',
+  'css/banner.css',
+  'css/honours.css',
+  'js/rules.js',
+  'js/sound.js',
+  'js/game.js',
+  'js/stats.js',
+  'js/honours.js',
+  'js/board.js',
+  'js/speech.js',
+  'js/portraits.js',
+  'js/banner.js',
+  'js/card.js',
+  'js/prefs.js',
+  'js/backdrop.js',
+  'js/icons.js',
+  'js/bubbles.js',
+  'js/advice.js',
+  'js/danger.js',
+  'js/undo.js',
+  'js/guide.js',
+  'js/newgame.js',
+  'js/options.js',
+  'js/variants.js',
+  'js/controls.js',
+  'js/modals.js',
+  'js/keyboard.js',
+  'js/install.js',
+  'js/music.js',
+  'js/main.js',
+];
+const SHELL = [
+  './',
+  'manifest.webmanifest',
+  ...CODE,
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/icon-maskable-512.png',
+  'icons/apple-touch-icon.png',
+];
 
 // the offline copy is fetched straight from the server, never from the browser's cache, so it's all one version
-const fromServer = path => new Request(path, { cache: 'reload' });
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(fromServer))).then(() => self.skipWaiting()));
+const fromServer = (path) => new Request(path, { cache: 'reload' });
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) => c.addAll(SHELL.map(fromServer)))
+      .then(() => self.skipWaiting()),
+  );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  );
 });
 
-self.addEventListener('fetch', e => {
+self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (req.mode === 'navigate') e.respondWith(page(req));
   else if (url.origin === location.origin && /\.(js|css)$/.test(url.pathname)) e.respondWith(fresh(req));
   else if (url.origin === location.origin && url.pathname.endsWith('.mp3')) e.respondWith(music(req, url.pathname));
-  else if (url.origin === location.origin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') e.respondWith(cached(req));
+  else if (
+    url.origin === location.origin ||
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com'
+  )
+    e.respondWith(cached(req));
 });
 
 // the page: network first, cache as the fallback
@@ -64,10 +129,12 @@ async function fresh(req) {
 async function cached(req) {
   const cache = await caches.open(CACHE);
   const hit = await cache.match(req);
-  const refresh = fetch(req).then(res => {
-    if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
-    return res;
-  }).catch(() => hit || Response.error());
+  const refresh = fetch(req)
+    .then((res) => {
+      if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
+      return res;
+    })
+    .catch(() => hit || Response.error());
   return hit || refresh;
 }
 
@@ -76,14 +143,19 @@ async function music(req, path) {
   const cache = await caches.open(CACHE);
   const whole = await cache.match(path);
   if (!whole) {
-    fetch(path).then(res => { if (res.status === 200) return cache.put(path, res); }).catch(() => {});
+    fetch(path)
+      .then((res) => {
+        if (res.status === 200) return cache.put(path, res);
+      })
+      .catch(() => {});
     return fetch(req);
   }
   const range = req.headers.get('range');
   if (!range) return whole;
   const buf = await whole.arrayBuffer();
   const m = /bytes=(\d*)-(\d*)/.exec(range) || [];
-  const start = m[1] ? +m[1] : 0, end = m[2] ? Math.min(+m[2], buf.byteLength - 1) : buf.byteLength - 1;
+  const start = m[1] ? +m[1] : 0,
+    end = m[2] ? Math.min(+m[2], buf.byteLength - 1) : buf.byteLength - 1;
   return new Response(buf.slice(start, end + 1), {
     status: 206,
     headers: {

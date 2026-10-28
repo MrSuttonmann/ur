@@ -1,0 +1,4 @@
+# local notes and generated files
+.remember/
+package-lock.json
+dist/

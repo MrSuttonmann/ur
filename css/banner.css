@@ -4,92 +4,312 @@
    A win brings trumpets and blooming roses; a loss, a faded scroll and wilted roses dropping their petals. */
 
 .end-banner {
-  position: fixed; left: 50%; top: 42%; z-index: 80; width: min(460px, calc(100vw - 32px));
-  transform: translate(-50%, -50%); cursor: pointer;
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  z-index: 80;
+  width: min(460px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+  cursor: pointer;
 }
 /* a soft parchment glow behind the banner lifts it off the busy board */
 .end-banner::before {
-  content: ""; position: absolute; inset: 4% -6% 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255,250,240,.92), rgba(255,250,240,.6) 60%, rgba(255,250,240,0));
-  animation: banner-glow .6s ease-out both;
+  content: '';
+  position: absolute;
+  inset: 4% -6% 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 250, 240, 0.92),
+    rgba(255, 250, 240, 0.6) 60%,
+    rgba(255, 250, 240, 0)
+  );
+  animation: banner-glow 0.6s ease-out both;
 }
-.end-banner.leaving::before { animation: banner-glow-away .45s ease-in both; }
-@keyframes banner-glow { from { opacity: 0; } }
-@keyframes banner-glow-away { to { opacity: 0; } }
+.end-banner.leaving::before {
+  animation: banner-glow-away 0.45s ease-in both;
+}
+@keyframes banner-glow {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes banner-glow-away {
+  to {
+    opacity: 0;
+  }
+}
 .end-banner svg {
-  display: block; width: 100%; height: auto; overflow: visible;
-  filter: drop-shadow(0 12px 16px rgba(40,28,18,.45));
-  animation: banner-pop .6s cubic-bezier(.2, 1.6, .4, 1) both;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 12px 16px rgba(40, 28, 18, 0.45));
+  animation: banner-pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
-.end-banner.lost svg { animation-name: banner-sag; animation-timing-function: cubic-bezier(.3, 1.3, .5, 1); }
-.end-banner.leaving svg { animation: banner-away .45s ease-in both; }
-@keyframes banner-pop { from { transform: scale(.2) rotate(-8deg); opacity: 0; } }
-@keyframes banner-sag { from { transform: translateY(-60px) scale(.6) rotate(4deg); opacity: 0; } 70% { transform: rotate(-2deg); } }
-@keyframes banner-away { to { transform: scale(.25) rotate(6deg); opacity: 0; } }
+.end-banner.lost svg {
+  animation-name: banner-sag;
+  animation-timing-function: cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.end-banner.leaving svg {
+  animation: banner-away 0.45s ease-in both;
+}
+@keyframes banner-pop {
+  from {
+    transform: scale(0.2) rotate(-8deg);
+    opacity: 0;
+  }
+}
+@keyframes banner-sag {
+  from {
+    transform: translateY(-60px) scale(0.6) rotate(4deg);
+    opacity: 0;
+  }
+  70% {
+    transform: rotate(-2deg);
+  }
+}
+@keyframes banner-away {
+  to {
+    transform: scale(0.25) rotate(6deg);
+    opacity: 0;
+  }
+}
 
 /* the scroll: a parchment ribbon with darker tails folded behind it, and the title along its curve */
-.scroll-band { fill: #fffaf0; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
-.scroll-tail { fill: var(--paper-deep); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
-.scroll-fold { fill: var(--ink-soft); stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
-.scroll-rule { fill: none; stroke: var(--ochre); stroke-width: 1.4; }
-.scroll-title { font-family: var(--f-display); font-size: 36px; fill: var(--vermilion); }
-.scroll-title.long { font-size: 24px; }
-.lost .scroll-band { fill: var(--paper-deep); }
-.lost .scroll-tail { fill: #cdb98b; }
-.lost .scroll-rule { stroke: var(--ink-soft); }
-.lost .scroll-title { fill: var(--ink-soft); }
+.scroll-band {
+  fill: #fffaf0;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.scroll-tail {
+  fill: var(--paper-deep);
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.scroll-fold {
+  fill: var(--ink-soft);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.scroll-rule {
+  fill: none;
+  stroke: var(--ochre);
+  stroke-width: 1.4;
+}
+.scroll-title {
+  font-family: var(--f-display);
+  font-size: 36px;
+  fill: var(--vermilion);
+}
+.scroll-title.long {
+  font-size: 24px;
+}
+.lost .scroll-band {
+  fill: var(--paper-deep);
+}
+.lost .scroll-tail {
+  fill: #cdb98b;
+}
+.lost .scroll-rule {
+  stroke: var(--ink-soft);
+}
+.lost .scroll-title {
+  fill: var(--ink-soft);
+}
 
 /* trumpets: gold, with a vermilion pennant bearing a sun; they swing up into place, then toot */
-.trumpet-brass { fill: var(--ochre); stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; }
-.trumpet-mouth { fill: none; stroke: var(--ink); stroke-width: 3; }
-.trumpet-pennant { fill: var(--vermilion); stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
-.trumpet-pennant-sun { fill: var(--sunfire); stroke: var(--ink); stroke-width: 1.2; }
-.trumpet-swing { animation: trumpet-raise .6s .2s cubic-bezier(.3, 1.5, .5, 1) both, trumpet-toot .32s .9s ease-in-out 4 alternate; }
-@keyframes trumpet-raise { from { transform: rotate(35deg); opacity: 0; } }
-@keyframes trumpet-toot { to { transform: rotate(-4deg); } }
+.trumpet-brass {
+  fill: var(--ochre);
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.trumpet-mouth {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.trumpet-pennant {
+  fill: var(--vermilion);
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.trumpet-pennant-sun {
+  fill: var(--sunfire);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.trumpet-swing {
+  animation:
+    trumpet-raise 0.6s 0.2s cubic-bezier(0.3, 1.5, 0.5, 1) both,
+    trumpet-toot 0.32s 0.9s ease-in-out 4 alternate;
+}
+@keyframes trumpet-raise {
+  from {
+    transform: rotate(35deg);
+    opacity: 0;
+  }
+}
+@keyframes trumpet-toot {
+  to {
+    transform: rotate(-4deg);
+  }
+}
 
 /* roses in bloom, one after another, and petals drifting down past the scroll */
-.banner-rose-petal { fill: var(--vermilion); stroke: var(--ink); stroke-width: 1.2; }
-.banner-rose-heart { fill: var(--ochre); stroke: var(--ink); stroke-width: 1.2; }
-.banner-rose-leaf { fill: var(--sage); stroke: var(--ink); stroke-width: 1.2; }
-.bloom { transform-box: fill-box; transform-origin: center; animation: bloom .55s .45s cubic-bezier(.3, 1.7, .5, 1) both; }
-.banner-roses > :nth-child(2) .bloom { animation-delay: .6s; }
-.banner-roses > :nth-child(3) .bloom { animation-delay: .75s; }
-@keyframes bloom { from { transform: scale(0) rotate(-90deg); } }
-.falling-petal { fill: var(--vermilion); fill-opacity: .85; animation: petal-fall 2.2s .6s ease-in both; }
-.banner-petals > :nth-child(2n) .falling-petal { fill: var(--rose); animation-duration: 2.6s; }
-.banner-petals > :nth-child(3n) .falling-petal { animation-delay: .9s; }
-.banner-petals > :nth-child(4n) .falling-petal { animation-delay: 1.2s; }
+.banner-rose-petal {
+  fill: var(--vermilion);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.banner-rose-heart {
+  fill: var(--ochre);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.banner-rose-leaf {
+  fill: var(--sage);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.bloom {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bloom 0.55s 0.45s cubic-bezier(0.3, 1.7, 0.5, 1) both;
+}
+.banner-roses > :nth-child(2) .bloom {
+  animation-delay: 0.6s;
+}
+.banner-roses > :nth-child(3) .bloom {
+  animation-delay: 0.75s;
+}
+@keyframes bloom {
+  from {
+    transform: scale(0) rotate(-90deg);
+  }
+}
+.falling-petal {
+  fill: var(--vermilion);
+  fill-opacity: 0.85;
+  animation: petal-fall 2.2s 0.6s ease-in both;
+}
+.banner-petals > :nth-child(2n) .falling-petal {
+  fill: var(--rose);
+  animation-duration: 2.6s;
+}
+.banner-petals > :nth-child(3n) .falling-petal {
+  animation-delay: 0.9s;
+}
+.banner-petals > :nth-child(4n) .falling-petal {
+  animation-delay: 1.2s;
+}
 @keyframes petal-fall {
-  from { transform: translate(0, -20px) rotate(0); opacity: 0; }
-  15% { opacity: 1; }
-  50% { transform: translate(14px, 90px) rotate(160deg); }
-  to { transform: translate(-6px, 220px) rotate(320deg); opacity: 0; }
+  from {
+    transform: translate(0, -20px) rotate(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(14px, 90px) rotate(160deg);
+  }
+  to {
+    transform: translate(-6px, 220px) rotate(320deg);
+    opacity: 0;
+  }
 }
 
 /* wilted roses: dusty brown on bent stems; the heads droop over, and dried petals fall away */
-.wilted-stem { fill: none; stroke: #6f6a3e; stroke-width: 3; stroke-linecap: round; }
-.wilted-leaf { fill: #8f8a5a; stroke: var(--ink); stroke-width: 1.1; }
-.wilted-petal { fill: #94655a; stroke: var(--ink); stroke-width: 1.1; }
-.wilted-sepal { fill: #8f8a5a; stroke: var(--ink); stroke-width: 1.1; stroke-linejoin: round; }
-.wilted-crease { fill: none; stroke: var(--ink); stroke-width: 1; stroke-linecap: round; }
-.droop { animation: droop 1.3s .5s cubic-bezier(.4, 1.4, .6, 1) both; }
-.wilted-roses > :nth-child(2) .droop { animation-delay: .7s; }
-.wilted-roses > :nth-child(3) .droop { animation-delay: .9s; }
-@keyframes droop { from { transform: rotate(-160deg); } }
-.dry-petal { fill: #94655a; stroke: var(--ink); stroke-width: 1; animation: dry-petal-fall 2s 1.3s ease-in both; }
-.wilted-roses > :nth-child(2) .dry-petal { animation-delay: 1.6s; }
-.wilted-roses > :nth-child(3) .dry-petal { animation-delay: 1.9s; }
+.wilted-stem {
+  fill: none;
+  stroke: #6f6a3e;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.wilted-leaf {
+  fill: #8f8a5a;
+  stroke: var(--ink);
+  stroke-width: 1.1;
+}
+.wilted-petal {
+  fill: #94655a;
+  stroke: var(--ink);
+  stroke-width: 1.1;
+}
+.wilted-sepal {
+  fill: #8f8a5a;
+  stroke: var(--ink);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.wilted-crease {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+.droop {
+  animation: droop 1.3s 0.5s cubic-bezier(0.4, 1.4, 0.6, 1) both;
+}
+.wilted-roses > :nth-child(2) .droop {
+  animation-delay: 0.7s;
+}
+.wilted-roses > :nth-child(3) .droop {
+  animation-delay: 0.9s;
+}
+@keyframes droop {
+  from {
+    transform: rotate(-160deg);
+  }
+}
+.dry-petal {
+  fill: #94655a;
+  stroke: var(--ink);
+  stroke-width: 1;
+  animation: dry-petal-fall 2s 1.3s ease-in both;
+}
+.wilted-roses > :nth-child(2) .dry-petal {
+  animation-delay: 1.6s;
+}
+.wilted-roses > :nth-child(3) .dry-petal {
+  animation-delay: 1.9s;
+}
 @keyframes dry-petal-fall {
-  from { transform: translate(0, 0) rotate(0); opacity: 0; }
-  10% { opacity: 1; }
-  40% { transform: translate(8px, 14px) rotate(50deg); }
-  70% { transform: translate(-4px, 26px) rotate(-20deg); }
-  to { transform: translate(6px, 40px) rotate(70deg); opacity: 0; }
+  from {
+    transform: translate(0, 0) rotate(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  40% {
+    transform: translate(8px, 14px) rotate(50deg);
+  }
+  70% {
+    transform: translate(-4px, 26px) rotate(-20deg);
+  }
+  to {
+    transform: translate(6px, 40px) rotate(70deg);
+    opacity: 0;
+  }
 }
 
 /* without motion: no popping, swinging or falling; the banner simply shows and goes */
 @media (prefers-reduced-motion: reduce) {
-  .end-banner::before, .end-banner svg, .end-banner svg * { animation: none !important; }
-  .banner-petals, .dry-petal { display: none; }
+  .end-banner::before,
+  .end-banner svg,
+  .end-banner svg * {
+    animation: none !important;
+  }
+  .banner-petals,
+  .dry-petal {
+    display: none;
+  }
 }

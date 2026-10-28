@@ -15,441 +15,723 @@
   The music (the files in music/) is not covered by this licence; see the README.
 -->
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="The Royal Game of Ur, the 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. Play the computer or a friend on one device.">
-<!-- link previews when the page is shared -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="The Royal Game of Ur">
-<meta property="og:description" content="Play the 4,600-year-old race game from ancient Mesopotamia on a hand-painted board, against the computer or a friend.">
-<meta property="og:url" content="https://ur.littleberrylodge.co.uk/">
-<meta property="og:image" content="https://ur.littleberrylodge.co.uk/og-image.jpg">
-<link rel="canonical" href="https://ur.littleberrylodge.co.uk/">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The hand-painted Royal Game of Ur board with Sun and Moon counters in play">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f3e7c9">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Ur">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='6' fill='%23d6a540' stroke='%233b2a1b' stroke-width='2'/%3E%3Cg fill='%23b6432a' stroke='%233b2a1b' stroke-width='1.2'%3E%3Ccircle cx='20' cy='12' r='6.4'/%3E%3Ccircle cx='27.6' cy='17.5' r='6.4'/%3E%3Ccircle cx='24.7' cy='26.5' r='6.4'/%3E%3Ccircle cx='15.3' cy='26.5' r='6.4'/%3E%3Ccircle cx='12.4' cy='17.5' r='6.4'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='5' fill='%23f6ecd2' stroke='%233b2a1b' stroke-width='1.2'/%3E%3C/svg%3E">
-<title>Royal Game of Ur</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap">
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/header.css">
-<link rel="stylesheet" href="css/controls.css">
-<link rel="stylesheet" href="css/variants.css">
-<link rel="stylesheet" href="css/dialogs.css">
-<link rel="stylesheet" href="css/board.css">
-<link rel="stylesheet" href="css/pieces.css">
-<link rel="stylesheet" href="css/dock.css">
-<link rel="stylesheet" href="css/ledger.css">
-<link rel="stylesheet" href="css/rules.css">
-<link rel="stylesheet" href="css/footer.css">
-<link rel="stylesheet" href="css/guide.css">
-<link rel="stylesheet" href="css/stats.css">
-<link rel="stylesheet" href="css/drawings.css">
-<link rel="stylesheet" href="css/portraits.css">
-<link rel="stylesheet" href="css/banner.css">
-<link rel="stylesheet" href="css/honours.css">
-</head>
-<body>
-<canvas class="backdrop" id="backdrop" aria-hidden="true"></canvas>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="The Royal Game of Ur, the 4,600-year-old Mesopotamian race game, on a hand-painted watercolour board. Play the computer or a friend on one device."
+    />
+    <!-- link previews when the page is shared -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The Royal Game of Ur" />
+    <meta
+      property="og:description"
+      content="Play the 4,600-year-old race game from ancient Mesopotamia on a hand-painted board, against the computer or a friend."
+    />
+    <meta property="og:url" content="https://ur.littleberrylodge.co.uk/" />
+    <meta property="og:image" content="https://ur.littleberrylodge.co.uk/og-image.jpg" />
+    <link rel="canonical" href="https://ur.littleberrylodge.co.uk/" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The hand-painted Royal Game of Ur board with Sun and Moon counters in play"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#f3e7c9" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Ur" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='6' fill='%23d6a540' stroke='%233b2a1b' stroke-width='2'/%3E%3Cg fill='%23b6432a' stroke='%233b2a1b' stroke-width='1.2'%3E%3Ccircle cx='20' cy='12' r='6.4'/%3E%3Ccircle cx='27.6' cy='17.5' r='6.4'/%3E%3Ccircle cx='24.7' cy='26.5' r='6.4'/%3E%3Ccircle cx='15.3' cy='26.5' r='6.4'/%3E%3Ccircle cx='12.4' cy='17.5' r='6.4'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='5' fill='%23f6ecd2' stroke='%233b2a1b' stroke-width='1.2'/%3E%3C/svg%3E"
+    />
+    <title>Royal Game of Ur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/header.css" />
+    <link rel="stylesheet" href="css/controls.css" />
+    <link rel="stylesheet" href="css/variants.css" />
+    <link rel="stylesheet" href="css/dialogs.css" />
+    <link rel="stylesheet" href="css/board.css" />
+    <link rel="stylesheet" href="css/pieces.css" />
+    <link rel="stylesheet" href="css/dock.css" />
+    <link rel="stylesheet" href="css/ledger.css" />
+    <link rel="stylesheet" href="css/rules.css" />
+    <link rel="stylesheet" href="css/footer.css" />
+    <link rel="stylesheet" href="css/guide.css" />
+    <link rel="stylesheet" href="css/stats.css" />
+    <link rel="stylesheet" href="css/drawings.css" />
+    <link rel="stylesheet" href="css/portraits.css" />
+    <link rel="stylesheet" href="css/banner.css" />
+    <link rel="stylesheet" href="css/honours.css" />
+  </head>
+  <body>
+    <canvas class="backdrop" id="backdrop" aria-hidden="true"></canvas>
 
-<svg class="svg-defs" width="0" height="0" aria-hidden="true">
-  <defs>
-    <!-- cuts the bite out of the Moon counter's crescent -->
-    <mask id="moonmask" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40">
-      <rect width="40" height="40" fill="#fff"/>
-      <circle cx="23" cy="17" r="8.4" fill="#000"/>
-    </mask>
-    <!-- portraits: the bust is clipped to the medallion; the crescent behind the Moon side -->
-    <clipPath id="portrait-clip-sun"><circle cx="60" cy="60" r="45"/></clipPath>
-    <clipPath id="portrait-clip-moon"><circle cx="60" cy="60" r="52.5"/></clipPath>
-    <mask id="portrait-moon" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120">
-      <rect width="120" height="120" fill="#fff"/><circle cx="42" cy="29" r="13" fill="#000"/>
-    </mask>
-    <!-- wobbly ink line -->
-    <filter id="ink" x="-10%" y="-10%" width="120%" height="120%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="4" result="t"/>
-      <feDisplacementMap in="SourceGraphic" in2="t" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <!-- watercolour washes: blotchy edge + uneven pigment, four seeds so tiles differ -->
-    <filter id="wash0" x="-15%" y="-15%" width="130%" height="130%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="3" seed="3" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="11" result="g"/>
-      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
-      <feComposite in="d" in2="ga" operator="in"/>
-    </filter>
-    <filter id="wash1" x="-15%" y="-15%" width="130%" height="130%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="21" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="2" seed="5" result="g"/>
-      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
-      <feComposite in="d" in2="ga" operator="in"/>
-    </filter>
-    <filter id="wash2" x="-15%" y="-15%" width="130%" height="130%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="37" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.14" numOctaves="2" seed="17" result="g"/>
-      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
-      <feComposite in="d" in2="ga" operator="in"/>
-    </filter>
-    <filter id="wash3" x="-15%" y="-15%" width="130%" height="130%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.065" numOctaves="3" seed="52" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="29" result="g"/>
-      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga"/>
-      <feComposite in="d" in2="ga" operator="in"/>
-    </filter>
-  </defs>
-</svg>
+    <svg class="svg-defs" width="0" height="0" aria-hidden="true">
+      <defs>
+        <!-- cuts the bite out of the Moon counter's crescent -->
+        <mask id="moonmask" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40">
+          <rect width="40" height="40" fill="#fff" />
+          <circle cx="23" cy="17" r="8.4" fill="#000" />
+        </mask>
+        <!-- portraits: the bust is clipped to the medallion; the crescent behind the Moon side -->
+        <clipPath id="portrait-clip-sun"><circle cx="60" cy="60" r="45" /></clipPath>
+        <clipPath id="portrait-clip-moon"><circle cx="60" cy="60" r="52.5" /></clipPath>
+        <mask id="portrait-moon" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120">
+          <rect width="120" height="120" fill="#fff" />
+          <circle cx="42" cy="29" r="13" fill="#000" />
+        </mask>
+        <!-- wobbly ink line -->
+        <filter id="ink" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="4" result="t" />
+          <feDisplacementMap in="SourceGraphic" in2="t" scale="1.8" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <!-- watercolour washes: blotchy edge + uneven pigment, four seeds so tiles differ -->
+        <filter id="wash0" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="3" seed="3" result="n" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale="5"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="d"
+          />
+          <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="11" result="g" />
+          <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga" />
+          <feComposite in="d" in2="ga" operator="in" />
+        </filter>
+        <filter id="wash1" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="21" result="n" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale="5"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="d"
+          />
+          <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="2" seed="5" result="g" />
+          <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga" />
+          <feComposite in="d" in2="ga" operator="in" />
+        </filter>
+        <filter id="wash2" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="37" result="n" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale="5"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="d"
+          />
+          <feTurbulence type="fractalNoise" baseFrequency="0.14" numOctaves="2" seed="17" result="g" />
+          <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga" />
+          <feComposite in="d" in2="ga" operator="in" />
+        </filter>
+        <filter id="wash3" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.065" numOctaves="3" seed="52" result="n" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale="5"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="d"
+          />
+          <feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="29" result="g" />
+          <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.45" result="ga" />
+          <feComposite in="d" in2="ga" operator="in" />
+        </filter>
+      </defs>
+    </svg>
 
-<div class="wrap">
-  <header>
-    <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
-    <h1><span class="cap">T</span>he Royal Game of Ur</h1>
-    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" class="flourish-line" filter="url(#ink)"/><circle cx="118" cy="8" r="2.4" class="flourish-dot"/></svg>
-    <div class="head-row">
-      <p class="tally" id="tally"></p>
-      <div class="tb-group tools" role="group" aria-label="Help and settings">
-        <button class="icon-btn" id="open-rules" type="button" aria-haspopup="dialog"><span data-icon="book"></span>Rules</button>
-        <button class="icon-btn" id="open-tactics" type="button" aria-haspopup="dialog"><span data-icon="swords"></span>Strategy</button>
-        <button class="icon-btn" id="open-stats" type="button" aria-haspopup="dialog"><span data-icon="tally"></span>Stats</button>
-        <button class="icon-btn" id="route" type="button" aria-pressed="false" title="Number every square along each side's route"><span data-icon="route"></span>Route</button>
-        <button class="icon-btn" id="sound" type="button" aria-pressed="true"><span data-icon="bell"></span><span class="lbl">Sound</span></button>
-        <button class="icon-btn" id="music" type="button" aria-pressed="true"><span data-icon="music"></span><span class="lbl">Music</span></button>
-        <button class="icon-btn" id="open-options" type="button" aria-haspopup="dialog"><span data-icon="key"></span>Options</button>
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
+        <h1><span class="cap">T</span>he Royal Game of Ur</h1>
+        <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true">
+          <path
+            d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1"
+            class="flourish-line"
+            filter="url(#ink)"
+          />
+          <circle cx="118" cy="8" r="2.4" class="flourish-dot" />
+        </svg>
+        <div class="head-row">
+          <p class="tally" id="tally"></p>
+          <div class="tb-group tools" role="group" aria-label="Help and settings">
+            <button class="icon-btn" id="open-rules" type="button" aria-haspopup="dialog">
+              <span data-icon="book"></span>Rules
+            </button>
+            <button class="icon-btn" id="open-tactics" type="button" aria-haspopup="dialog">
+              <span data-icon="swords"></span>Strategy
+            </button>
+            <button class="icon-btn" id="open-stats" type="button" aria-haspopup="dialog">
+              <span data-icon="tally"></span>Stats
+            </button>
+            <button
+              class="icon-btn"
+              id="route"
+              type="button"
+              aria-pressed="false"
+              title="Number every square along each side's route"
+            >
+              <span data-icon="route"></span>Route
+            </button>
+            <button class="icon-btn" id="sound" type="button" aria-pressed="true">
+              <span data-icon="bell"></span><span class="lbl">Sound</span>
+            </button>
+            <button class="icon-btn" id="music" type="button" aria-pressed="true">
+              <span data-icon="music"></span><span class="lbl">Music</span>
+            </button>
+            <button class="icon-btn" id="open-options" type="button" aria-haspopup="dialog">
+              <span data-icon="key"></span>Options
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="tb-group" role="group" aria-label="Game setup">
+            <div class="seg" role="radiogroup" aria-label="Mode">
+              <input type="radio" name="mode" id="mode-ai" value="ai" checked /><label for="mode-ai">Vs computer</label>
+              <input type="radio" name="mode" id="mode-local" value="local" /><label for="mode-local"
+                >Two players</label
+              >
+            </div>
+            <label class="field" id="level-field" for="level">
+              <span>Opponent</span>
+              <select id="level">
+                <option value="easy">Squire (easy)</option>
+                <option value="medium" selected>Knight (medium)</option>
+                <option value="hard">King (hard)</option>
+              </select>
+            </label>
+            <div class="field" id="variant-field">
+              <span id="variant-label">Variant</span>
+              <button
+                class="btn variant-btn"
+                id="open-variants"
+                type="button"
+                aria-haspopup="dialog"
+                aria-labelledby="variant-label variant-name"
+              >
+                <span id="variant-name">Classic</span><span class="chooser" aria-hidden="true">Choose…</span>
+              </button>
+            </div>
+            <button class="btn with-icon start" id="newgame" type="button">
+              <span data-icon="play"></span><span class="lbl">Start game</span>
+            </button>
+            <span class="tb-break" aria-hidden="true"></span>
+          </div>
+        </div>
+      </header>
+
+      <section class="game" id="game" aria-label="Game">
+        <div class="portrait" id="portrait1" aria-hidden="true">
+          <div class="medal" id="medal1"></div>
+          <div class="pname" id="pname1"></div>
+          <div class="speech" id="speech1" hidden></div>
+        </div>
+        <div class="portrait" id="portrait0" aria-hidden="true">
+          <div class="medal" id="medal0"></div>
+          <div class="pname" id="pname0"></div>
+          <div class="speech" id="speech0" hidden></div>
+        </div>
+        <div class="tray tray-moon" id="tray1"></div>
+        <div class="slab"><div class="board" id="board"></div></div>
+        <div class="tray tray-sun" id="tray0"></div>
+
+        <div class="dock">
+          <div class="dice idle" id="dice" aria-hidden="true"></div>
+          <div class="total" id="total" aria-hidden="true">–</div>
+          <div class="act">
+            <button class="roll" id="roll" type="button">Roll</button>
+            <button class="advise swapped" id="advise" type="button" disabled>
+              <span data-icon="owl"></span>Advise<span class="me">&nbsp;me</span
+              ><span class="left" id="advice-left" hidden></span>
+            </button>
+          </div>
+          <button class="undo" id="undo" type="button" hidden aria-keyshortcuts="U">
+            <span data-icon="undo"></span>Undo
+          </button>
+          <div class="status" id="status" aria-live="polite"></div>
+        </div>
+
+        <div class="key" id="key" aria-label="Board key"></div>
+
+        <div class="under">
+          <section class="ledger" aria-labelledby="ledger-label">
+            <span class="ledger-label" id="ledger-label">The Scribe’s Ledger</span>
+            <ol class="log" id="log" tabindex="0" aria-label="Move history, newest first"></ol>
+          </section>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true">
+          <path
+            d="M14 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M14 9 c-4 5 -10 3 -10 -1 c0 -4 6 -5 8 -1 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1"
+            class="flourish-line"
+            filter="url(#ink)"
+          />
+          <circle cx="130" cy="8" r="2.4" class="flourish-dot" />
+        </svg>
+        <p class="foot-title">The Royal Game of Ur</p>
+        <p>
+          First played in the city of Ur around 2600 BCE, and across the Middle East for some three thousand years. The
+          classic rules here follow Irving Finkel’s reading of a Babylonian tablet from 177 BCE.
+          <a href="https://www.britishmuseum.org/collection/object/W_1928-1009-378" target="_blank" rel="noopener"
+            >See the original board at the British Museum</a
+          >, or
+          <a href="https://en.wikipedia.org/wiki/Royal_Game_of_Ur" target="_blank" rel="noopener"
+            >read the game’s history on Wikipedia</a
+          >.
+        </p>
+        <div class="foot-btns">
+          <a class="brand-btn gh" href="https://github.com/MrSuttonmann/ur" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+              />
+            </svg>
+            <span>View on GitHub</span>
+          </a>
+          <a class="brand-btn bmc" href="https://buymeacoffee.com/MrSuttonmann" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <g filter="url(#ink)">
+                <path
+                  d="M8 2.8 C7 4 9 5 8 6.4 M11.5 2.4 C10.5 3.7 12.5 4.6 11.5 6.2 M15 2.8 C14 4 16 5 15 6.4"
+                  class="coffee-steam"
+                />
+                <path
+                  d="M4.5 8.5 H18.5 L17 20 C16.9 21 16.2 21.6 15.2 21.6 H7.8 C6.8 21.6 6.1 21 6 20 Z"
+                  class="coffee-cup"
+                />
+                <path d="M5.2 12 H17.9 L17.4 16 H5.7 Z" class="coffee" />
+                <path d="M18.3 10.5 C21.5 10.3 21.5 15.2 17.6 15" class="coffee-cup-handle" />
+              </g>
+            </svg>
+            <span>Buy me a coffee</span>
+          </a>
+        </div>
+        <dl class="colophon">
+          <div>
+            <dt>Music</dt>
+            <dd>
+              “Village Consort”, “Folk Round” and “Lord of the Land” by Kevin MacLeod,
+              <a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>. Licensed under
+              <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener"
+                >Creative Commons: By Attribution 4.0</a
+              >.
+            </dd>
+          </div>
+          <div>
+            <dt>Licence</dt>
+            <dd>
+              This game is free software under the
+              <a href="https://github.com/MrSuttonmann/ur/blob/main/LICENSE" target="_blank" rel="noopener"
+                >GNU AGPL-3.0</a
+              >. You’re welcome to study, change and share it.
+            </dd>
+          </div>
+          <div>
+            <dt>Your data</dt>
+            <dd>Your stats and settings are saved in this browser only, and never sent anywhere.</dd>
+          </div>
+        </dl>
+      </footer>
+
+      <dialog id="rules-dlg" class="stats" aria-labelledby="rules-title">
+        <div class="stats-inner">
+          <div class="stats-head">
+            <h2 id="rules-title">How to Play</h2>
+            <button class="btn close" type="button" id="close-rules" aria-label="Close how to play">Close</button>
+          </div>
+          <div class="rules">
+            <p class="variant-now" id="variant-now" hidden></p>
+            <h4 class="first-heading">The goal</h4>
+            <p>Each side has seven counters. Be the first to move all seven along your route and off the board.</p>
+
+            <h4>Your turn</h4>
+            <ul>
+              <li>Roll the four dice and count the red tips. That number, from 0 to 4, is your move.</li>
+              <li>
+                Pick one counter and move it exactly that many squares along your route. A new counter enters from your
+                tray, so a roll of 1 puts it on your first square.
+              </li>
+              <li>If you roll 0, or no counter can move the full amount, your turn passes.</li>
+            </ul>
+
+            <h4>Your route</h4>
+            <p>
+              Counters enter at your gate, travel four squares along your own row, cross the whole shared middle row,
+              then come back two squares in your own row and leave by the gate.
+            </p>
+            <svg class="route" viewBox="0 0 248 94" role="img" aria-labelledby="route-desc">
+              <desc id="route-desc">
+                Board diagram. The Sun's counters start at the gap in the bottom row, move left to the end, go up and
+                right along the whole middle row, come down and move left two squares, then leave. The Moon does the
+                same along the top row.
+              </desc>
+              <defs>
+                <marker
+                  id="ar-sun"
+                  viewBox="0 0 10 10"
+                  refX="7"
+                  refY="5"
+                  markerWidth="5"
+                  markerHeight="5"
+                  orient="auto"
+                >
+                  <path d="M0 0 L10 5 L0 10 Z" class="route-arrowhead-sun" />
+                </marker>
+                <marker
+                  id="ar-moon"
+                  viewBox="0 0 10 10"
+                  refX="7"
+                  refY="5"
+                  markerWidth="5"
+                  markerHeight="5"
+                  orient="auto"
+                >
+                  <path d="M0 0 L10 5 L0 10 Z" class="route-arrowhead-moon" />
+                </marker>
+              </defs>
+              <g id="route-cells"></g>
+              <polyline id="route-sun" class="route-line route-line-sun" marker-end="url(#ar-sun)" />
+              <polyline id="route-moon" class="route-line route-line-moon" marker-end="url(#ar-moon)" />
+            </svg>
+            <p>
+              <span class="sun">Sun</span> (solid line) uses the bottom row; <span class="moon">Moon</span> (dashed
+              line) uses the top row. Both race along the middle row, which is where captures happen. Press
+              <em>Route</em> at the top of the page to number every square along each side’s route.
+            </p>
+
+            <h4>Captures</h4>
+            <ul>
+              <li>You can't land on one of your own counters.</li>
+              <li>
+                Landing on an opponent's counter in the middle row knocks it back to their tray, and it must start
+                again.
+              </li>
+              <li>Your own row is private, so counters there are always safe.</li>
+            </ul>
+
+            <h4>Roses</h4>
+            <ul>
+              <li>Landing on any rose gives you another roll straight away.</li>
+              <li>
+                The centre rose, ringed in gold, is a safe square. A counter on it can't be captured, so an opponent
+                can't land there while you hold it.
+              </li>
+            </ul>
+
+            <h4>Bringing counters home</h4>
+            <p>
+              A counter leaves the board one step after its last square, and it needs the exact roll. From your last
+              square you need a 1; from the square before it you need a 2.
+            </p>
+
+            <h4>The other pictures</h4>
+            <p>
+              The castles, shields, crowns, trees and dots are decoration only and have no effect on play. The original
+              board from Ur was also covered in patterned squares, and only the rosettes have a known rule.
+            </p>
+
+            <h4>Playing with the keyboard</h4>
+            <ul>
+              <li><b>R</b> or <b>Space</b>: roll the dice.</li>
+              <li>
+                <b>1</b>, <b>2</b>, <b>3</b>…: move the counter with that number. Numbers appear on the counters that
+                can move once you start using the keyboard; 1 is the one furthest along.
+              </li>
+              <li>
+                <b>Arrow keys</b> step through the counters that can move, showing where each would land;
+                <b>Enter</b> moves the one you’re on.
+              </li>
+              <li><b>A</b>: Advise me, when playing the Squire or Knight.</li>
+              <li><b>Tab</b> reaches every button, and <b>Esc</b> closes a window or a guide tip.</li>
+            </ul>
+
+            <h4>Variants</h4>
+            <p>
+              Choose a variant with <b>Variant</b> before a game. Each one changes only what’s listed here; everything
+              else follows the rules above.
+            </p>
+            <ul>
+              <li>
+                <b>Masters’ route</b>, after games historian James Masters. The route is 16 squares. After seven squares
+                of the middle row, counters climb into the opponent’s far corner (squares 12 and 13), come down the end
+                of the middle row (14), and return to their own row (15 and 16) before leaving. Counters can be captured
+                anywhere the two routes cross, which now includes the far end. The roses on squares 12 and 16 are
+                shared, so like the centre rose they’re safe.
+              </li>
+              <li>
+                <b>Murray’s route</b>, after games historian H. J. R. Murray. The route is 27 squares: Masters’ route as
+                far as square 16, then back down the whole middle row (17 to 23) and along your own row (24 to 27),
+                leaving the board where you came in. The middle row is crossed twice, so its squares carry two numbers,
+                such as 8/20. Roses come every fourth square, and the shared ones are safe.
+              </li>
+              <li>
+                <b>Doubling back</b>, the route drawn on Wikipedia. The route is 20 squares. Counters enter on the
+                corner rose of their own row (square 1) and move towards the bridge (to 4), go up the middle row (5 to
+                8), round the far end through their own row first (9 and 10), the end of the middle row (11) and the
+                opponent’s row (12 and 13), then back down the whole middle row (14 to 20) and off its end. Roses come
+                every fourth square, and the shared ones are safe.
+              </li>
+              <li><b>Quick</b> (a house rule): five counters each instead of seven.</li>
+              <li><b>Raiders</b> (a house rule): every capture earns another roll, and no rose is safe.</li>
+            </ul>
+
+            <p>
+              These rules were reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in
+              177 BCE.
+            </p>
+            <p class="odds-intro">Odds of each roll with four tetrahedral dice:</p>
+            <div class="odds" id="odds"></div>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog id="tactics-dlg" class="stats" aria-labelledby="tactics-title">
+        <div class="stats-inner">
+          <div class="stats-head">
+            <h2 id="tactics-title">Strategy</h2>
+            <button class="btn close" type="button" id="close-tactics" aria-label="Close strategy">Close</button>
+          </div>
+          <div class="rules">
+            <p>
+              Ur is a game of luck, but good choices add up over a game. These ideas are the same ones the King weighs
+              on every move. Square numbers count along your route from 1 to 14; press <em>Route</em> to see them on the
+              board.
+            </p>
+
+            <h4>Hold the centre rose</h4>
+            <p>
+              Square 8 is the strongest square on the board. Landing there gives you another roll, it can't be captured,
+              and while you sit on it your opponent can't land there either. That blocks one of their best squares and
+              makes their counters harder to move safely. Getting a counter onto it early and keeping it there is often
+              worth more than racing ahead.
+            </p>
+
+            <h4>Set up rose landings</h4>
+            <ul>
+              <li>The roses are on squares 4, 8 and 14. Each landing is a free extra turn.</li>
+              <li>
+                2 is the most likely roll (6 in 16), so a counter two squares before a rose has the best chance of
+                reaching it next turn.
+              </li>
+              <li>
+                Entering a new counter with a 4 lands it straight on your first rose, square 4, and earns another roll.
+              </li>
+            </ul>
+
+            <h4>Get through the danger zone quickly</h4>
+            <p>
+              Squares 5 to 12 (except the centre rose) are shared, and any opposing counter up to four squares behind
+              can capture you there. How likely that is depends on the gap:
+            </p>
+            <div class="odds" id="danger-odds"></div>
+            <p>
+              Two squares ahead of an enemy is the worst place to stop; four ahead is fairly safe. Squares 1 to 4 and 13
+              to 14 are your own and always safe, so a counter waiting on square 4 threatens anything that enters the
+              middle row ahead of it.
+            </p>
+
+            <h4>Capture the counters that have come furthest</h4>
+            <p>
+              A capture sends a counter back to the start, so knocking off one on square 12 costs your opponent twelve
+              squares of progress, while one on square 5 costs only five. When you have a choice, hit the most advanced
+              counter. The same goes in reverse: protect your own far-travelled counters first.
+            </p>
+
+            <h4>Keep your options open</h4>
+            <ul>
+              <li>
+                Having two or three counters on the board means most rolls give you a useful move, so you pass fewer
+                turns.
+              </li>
+              <li>Too many counters in the middle row at once leaves more of them open to capture. Spread the risk.</li>
+              <li>
+                Your own counters block each other, so avoid lining them up where a common roll would need to land on
+                one.
+              </li>
+            </ul>
+
+            <h4>Plan your exits</h4>
+            <p>
+              A counter needs the exact roll to leave. From square 13 that is a 2, the most likely roll; from square 14
+              it is a 1. Square 14 is also a rose, so landing on it earns an extra roll, but a counter parked there can
+              be slow to get home. Don't let several counters queue at the end waiting for the same number.
+            </p>
+          </div>
+        </div>
+      </dialog>
+    </div>
+
+    <dialog id="options-dlg" class="stats" aria-labelledby="options-title">
+      <div class="stats-inner">
+        <div class="stats-head">
+          <h2 id="options-title">Options</h2>
+          <button class="btn close" type="button" id="close-options" aria-label="Close options">Close</button>
+        </div>
+        <div class="rules">
+          <h4 class="first-heading">Play</h4>
+          <label class="opt" for="opt-auto">
+            <input type="checkbox" class="toggle" id="opt-auto" />
+            <span><b>Auto-move</b><small>When a roll leaves only one legal move, play it for me.</small></span>
+          </label>
+
+          <div class="opt-range">
+            <label for="opt-vol"><b>Music volume</b></label>
+            <input type="range" id="opt-vol" min="0" max="100" step="5" />
+          </div>
+          <p class="now-playing" id="now-playing" aria-live="polite"></p>
+
+          <div class="opt-range">
+            <label for="opt-backdrop"><b>Background</b></label>
+            <select id="opt-backdrop"></select>
+          </div>
+
+          <h4>App</h4>
+          <p id="install-text">
+            Install the game to play it from your home screen or desktop, even with no connection.
+          </p>
+          <button class="btn" type="button" id="install-btn" hidden>Install the game</button>
+
+          <h4>Guided game</h4>
+          <p>
+            New to Ur, or teaching someone? The guided game is played against the Squire, with tips as each part of the
+            rules comes up.
+          </p>
+          <button class="btn" type="button" id="replay-guide">Play the guided game</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="variants-dlg" class="stats" aria-labelledby="variants-title">
+      <div class="stats-inner">
+        <div class="stats-head">
+          <h2 id="variants-title">Choose a variant</h2>
+          <button class="btn close" type="button" id="close-variants" aria-label="Close variants">Close</button>
+        </div>
+        <div class="variant-cards" id="variant-cards" role="radiogroup" aria-labelledby="variants-title"></div>
+        <p class="cap">The full rules for each are under <b>Variants</b> in Rules.</p>
+      </div>
+    </dialog>
+
+    <dialog id="confirm-dlg" class="stats confirm" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+      <div class="stats-inner">
+        <h2 id="confirm-title">Start a new game?</h2>
+        <p id="confirm-text">The game in progress will be lost.</p>
+        <div class="confirm-actions">
+          <button class="btn" type="button" id="confirm-no">Keep playing</button>
+          <button class="btn start" type="button" id="confirm-yes">Start a new game</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div class="end-banner" id="end-banner" hidden aria-hidden="true"></div>
+    <div class="honour-note" id="honour-note" role="status" hidden></div>
+    <svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
+      <defs>
+        <marker
+          id="head-ink"
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerUnits="userSpaceOnUse"
+          markerWidth="20"
+          markerHeight="20"
+          orient="auto"
+        >
+          <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" class="move-arrowhead" />
+        </marker>
+        <marker
+          id="head-red"
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerUnits="userSpaceOnUse"
+          markerWidth="18"
+          markerHeight="18"
+          orient="auto"
+        >
+          <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" class="move-arrowhead" />
+        </marker>
+      </defs>
+      <path class="move-arrow advice" id="arrow-advice" marker-end="url(#head-red)" hidden />
+      <path class="move-arrow" id="arrow-preview" marker-end="url(#head-ink)" hidden />
+    </svg>
+
+    <div class="coach advice-note" id="advice-note" role="status" hidden><p id="advice-text"></p></div>
+
+    <div class="coach" id="coach" role="dialog" aria-labelledby="coach-text" hidden>
+      <p id="coach-text"></p>
+      <div class="coach-actions">
+        <button class="btn" type="button" id="coach-ok">Got it</button>
+        <button class="linkish" type="button" id="coach-skip">Skip the guide</button>
       </div>
     </div>
-    <div class="toolbar">
-      <div class="tb-group" role="group" aria-label="Game setup">
-        <div class="seg" role="radiogroup" aria-label="Mode">
-          <input type="radio" name="mode" id="mode-ai" value="ai" checked><label for="mode-ai">Vs computer</label>
-          <input type="radio" name="mode" id="mode-local" value="local"><label for="mode-local">Two players</label>
+
+    <dialog id="stats" class="stats" aria-labelledby="stats-title">
+      <div class="stats-inner">
+        <div class="stats-head">
+          <h2 id="stats-title">The Chronicle</h2>
+          <button class="btn close" type="button" id="close-stats" aria-label="Close stats">Close</button>
         </div>
-        <label class="field" id="level-field" for="level">
-          <span>Opponent</span>
-          <select id="level">
-            <option value="easy">Squire (easy)</option>
-            <option value="medium" selected>Knight (medium)</option>
-            <option value="hard">King (hard)</option>
-          </select>
-        </label>
-        <div class="field" id="variant-field">
-          <span id="variant-label">Variant</span>
-          <button class="btn variant-btn" id="open-variants" type="button" aria-haspopup="dialog" aria-labelledby="variant-label variant-name">
-            <span id="variant-name">Classic</span><span class="chooser" aria-hidden="true">Choose…</span>
+        <div class="stats-tabs" role="tablist">
+          <button type="button" role="tab" data-tab="game" aria-selected="true" aria-controls="stats-body">
+            This game
+          </button>
+          <button type="button" role="tab" data-tab="life" aria-selected="false" aria-controls="stats-body">
+            All time
+          </button>
+          <button type="button" role="tab" data-tab="honours" aria-selected="false" aria-controls="stats-body">
+            Honours
           </button>
         </div>
-        <button class="btn with-icon start" id="newgame" type="button"><span data-icon="play"></span><span class="lbl">Start game</span></button>
-        <span class="tb-break" aria-hidden="true"></span>
+        <div id="stats-body" role="tabpanel"></div>
       </div>
-    </div>
-  </header>
+      <div class="tip" id="tip" hidden></div>
+    </dialog>
 
-  <section class="game" id="game" aria-label="Game">
-    <div class="portrait" id="portrait1" aria-hidden="true"><div class="medal" id="medal1"></div><div class="pname" id="pname1"></div><div class="speech" id="speech1" hidden></div></div>
-    <div class="portrait" id="portrait0" aria-hidden="true"><div class="medal" id="medal0"></div><div class="pname" id="pname0"></div><div class="speech" id="speech0" hidden></div></div>
-    <div class="tray tray-moon" id="tray1"></div>
-    <div class="slab"><div class="board" id="board"></div></div>
-    <div class="tray tray-sun" id="tray0"></div>
-
-    <div class="dock">
-      <div class="dice idle" id="dice" aria-hidden="true"></div>
-      <div class="total" id="total" aria-hidden="true">–</div>
-      <div class="act">
-        <button class="roll" id="roll" type="button">Roll</button>
-        <button class="advise swapped" id="advise" type="button" disabled><span data-icon="owl"></span>Advise<span class="me">&nbsp;me</span><span class="left" id="advice-left" hidden></span></button>
-      </div>
-      <button class="undo" id="undo" type="button" hidden aria-keyshortcuts="U"><span data-icon="undo"></span>Undo</button>
-      <div class="status" id="status" aria-live="polite"></div>
-    </div>
-
-    <div class="key" id="key" aria-label="Board key"></div>
-
-    <div class="under">
-      <section class="ledger" aria-labelledby="ledger-label">
-        <span class="ledger-label" id="ledger-label">The Scribe’s Ledger</span>
-        <ol class="log" id="log" tabindex="0" aria-label="Move history, newest first"></ol>
-      </section>
-    </div>
-  </section>
-
-  <footer class="foot">
-    <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true"><path d="M14 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M14 9 c-4 5 -10 3 -10 -1 c0 -4 6 -5 8 -1 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1" class="flourish-line" filter="url(#ink)"/><circle cx="130" cy="8" r="2.4" class="flourish-dot"/></svg>
-    <p class="foot-title">The Royal Game of Ur</p>
-    <p>First played in the city of Ur around 2600 BCE, and across the Middle East for some three thousand years. The classic rules here follow Irving Finkel’s reading of a Babylonian tablet from 177 BCE. <a href="https://www.britishmuseum.org/collection/object/W_1928-1009-378" target="_blank" rel="noopener">See the original board at the British Museum</a>, or <a href="https://en.wikipedia.org/wiki/Royal_Game_of_Ur" target="_blank" rel="noopener">read the game’s history on Wikipedia</a>.</p>
-    <div class="foot-btns">
-      <a class="brand-btn gh" href="https://github.com/MrSuttonmann/ur" target="_blank" rel="noopener">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        <span>View on GitHub</span>
-      </a>
-      <a class="brand-btn bmc" href="https://buymeacoffee.com/MrSuttonmann" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">
-          <path d="M8 2.8 C7 4 9 5 8 6.4 M11.5 2.4 C10.5 3.7 12.5 4.6 11.5 6.2 M15 2.8 C14 4 16 5 15 6.4" class="coffee-steam"/>
-          <path d="M4.5 8.5 H18.5 L17 20 C16.9 21 16.2 21.6 15.2 21.6 H7.8 C6.8 21.6 6.1 21 6 20 Z" class="coffee-cup"/>
-          <path d="M5.2 12 H17.9 L17.4 16 H5.7 Z" class="coffee"/>
-          <path d="M18.3 10.5 C21.5 10.3 21.5 15.2 17.6 15" class="coffee-cup-handle"/>
-        </g></svg>
-        <span>Buy me a coffee</span>
-      </a>
-    </div>
-    <dl class="colophon">
-      <div><dt>Music</dt><dd>“Village Consort”, “Folk Round” and “Lord of the Land” by Kevin MacLeod, <a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons: By Attribution 4.0</a>.</dd></div>
-      <div><dt>Licence</dt><dd>This game is free software under the <a href="https://github.com/MrSuttonmann/ur/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL-3.0</a>. You’re welcome to study, change and share it.</dd></div>
-      <div><dt>Your data</dt><dd>Your stats and settings are saved in this browser only, and never sent anywhere.</dd></div>
-    </dl>
-  </footer>
-
-  <dialog id="rules-dlg" class="stats" aria-labelledby="rules-title">
-   <div class="stats-inner">
-    <div class="stats-head">
-      <h2 id="rules-title">How to Play</h2>
-      <button class="btn close" type="button" id="close-rules" aria-label="Close how to play">Close</button>
-    </div>
-    <div class="rules">
-      <p class="variant-now" id="variant-now" hidden></p>
-      <h4 class="first-heading">The goal</h4>
-      <p>Each side has seven counters. Be the first to move all seven along your route and off the board.</p>
-
-      <h4>Your turn</h4>
-      <ul>
-        <li>Roll the four dice and count the red tips. That number, from 0 to 4, is your move.</li>
-        <li>Pick one counter and move it exactly that many squares along your route. A new counter enters from your tray, so a roll of 1 puts it on your first square.</li>
-        <li>If you roll 0, or no counter can move the full amount, your turn passes.</li>
-      </ul>
-
-      <h4>Your route</h4>
-      <p>Counters enter at your gate, travel four squares along your own row, cross the whole shared middle row, then come back two squares in your own row and leave by the gate.</p>
-      <svg class="route" viewBox="0 0 248 94" role="img" aria-labelledby="route-desc">
-        <desc id="route-desc">Board diagram. The Sun's counters start at the gap in the bottom row, move left to the end, go up and right along the whole middle row, come down and move left two squares, then leave. The Moon does the same along the top row.</desc>
-        <defs>
-          <marker id="ar-sun" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="route-arrowhead-sun"/></marker>
-          <marker id="ar-moon" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="route-arrowhead-moon"/></marker>
-        </defs>
-        <g id="route-cells"></g>
-        <polyline id="route-sun" class="route-line route-line-sun" marker-end="url(#ar-sun)"/>
-        <polyline id="route-moon" class="route-line route-line-moon" marker-end="url(#ar-moon)"/>
-      </svg>
-      <p><span class="sun">Sun</span> (solid line) uses the bottom row; <span class="moon">Moon</span> (dashed line) uses the top row. Both race along the middle row, which is where captures happen. Press <em>Route</em> at the top of the page to number every square along each side’s route.</p>
-
-      <h4>Captures</h4>
-      <ul>
-        <li>You can't land on one of your own counters.</li>
-        <li>Landing on an opponent's counter in the middle row knocks it back to their tray, and it must start again.</li>
-        <li>Your own row is private, so counters there are always safe.</li>
-      </ul>
-
-      <h4>Roses</h4>
-      <ul>
-        <li>Landing on any rose gives you another roll straight away.</li>
-        <li>The centre rose, ringed in gold, is a safe square. A counter on it can't be captured, so an opponent can't land there while you hold it.</li>
-      </ul>
-
-      <h4>Bringing counters home</h4>
-      <p>A counter leaves the board one step after its last square, and it needs the exact roll. From your last square you need a 1; from the square before it you need a 2.</p>
-
-      <h4>The other pictures</h4>
-      <p>The castles, shields, crowns, trees and dots are decoration only and have no effect on play. The original board from Ur was also covered in patterned squares, and only the rosettes have a known rule.</p>
-
-      <h4>Playing with the keyboard</h4>
-      <ul>
-        <li><b>R</b> or <b>Space</b>: roll the dice.</li>
-        <li><b>1</b>, <b>2</b>, <b>3</b>…: move the counter with that number. Numbers appear on the counters that can move once you start using the keyboard; 1 is the one furthest along.</li>
-        <li><b>Arrow keys</b> step through the counters that can move, showing where each would land; <b>Enter</b> moves the one you’re on.</li>
-        <li><b>A</b>: Advise me, when playing the Squire or Knight.</li>
-        <li><b>Tab</b> reaches every button, and <b>Esc</b> closes a window or a guide tip.</li>
-      </ul>
-
-      <h4>Variants</h4>
-      <p>Choose a variant with <b>Variant</b> before a game. Each one changes only what’s listed here; everything else follows the rules above.</p>
-      <ul>
-        <li><b>Masters’ route</b>, after games historian James Masters. The route is 16 squares. After seven squares of the middle row, counters climb into the opponent’s far corner (squares 12 and 13), come down the end of the middle row (14), and return to their own row (15 and 16) before leaving. Counters can be captured anywhere the two routes cross, which now includes the far end. The roses on squares 12 and 16 are shared, so like the centre rose they’re safe.</li>
-        <li><b>Murray’s route</b>, after games historian H. J. R. Murray. The route is 27 squares: Masters’ route as far as square 16, then back down the whole middle row (17 to 23) and along your own row (24 to 27), leaving the board where you came in. The middle row is crossed twice, so its squares carry two numbers, such as 8/20. Roses come every fourth square, and the shared ones are safe.</li>
-        <li><b>Doubling back</b>, the route drawn on Wikipedia. The route is 20 squares. Counters enter on the corner rose of their own row (square 1) and move towards the bridge (to 4), go up the middle row (5 to 8), round the far end through their own row first (9 and 10), the end of the middle row (11) and the opponent’s row (12 and 13), then back down the whole middle row (14 to 20) and off its end. Roses come every fourth square, and the shared ones are safe.</li>
-        <li><b>Quick</b> (a house rule): five counters each instead of seven.</li>
-        <li><b>Raiders</b> (a house rule): every capture earns another roll, and no rose is safe.</li>
-      </ul>
-
-      <p>These rules were reconstructed by Irving Finkel of the British Museum from a cuneiform tablet written in 177 BCE.</p>
-      <p class="odds-intro">Odds of each roll with four tetrahedral dice:</p>
-      <div class="odds" id="odds"></div>
-    </div>
-   </div>
-  </dialog>
-
-  <dialog id="tactics-dlg" class="stats" aria-labelledby="tactics-title">
-   <div class="stats-inner">
-    <div class="stats-head">
-      <h2 id="tactics-title">Strategy</h2>
-      <button class="btn close" type="button" id="close-tactics" aria-label="Close strategy">Close</button>
-    </div>
-    <div class="rules">
-      <p>Ur is a game of luck, but good choices add up over a game. These ideas are the same ones the King weighs on every move. Square numbers count along your route from 1 to 14; press <em>Route</em> to see them on the board.</p>
-
-      <h4>Hold the centre rose</h4>
-      <p>Square 8 is the strongest square on the board. Landing there gives you another roll, it can't be captured, and while you sit on it your opponent can't land there either. That blocks one of their best squares and makes their counters harder to move safely. Getting a counter onto it early and keeping it there is often worth more than racing ahead.</p>
-
-      <h4>Set up rose landings</h4>
-      <ul>
-        <li>The roses are on squares 4, 8 and 14. Each landing is a free extra turn.</li>
-        <li>2 is the most likely roll (6 in 16), so a counter two squares before a rose has the best chance of reaching it next turn.</li>
-        <li>Entering a new counter with a 4 lands it straight on your first rose, square 4, and earns another roll.</li>
-      </ul>
-
-      <h4>Get through the danger zone quickly</h4>
-      <p>Squares 5 to 12 (except the centre rose) are shared, and any opposing counter up to four squares behind can capture you there. How likely that is depends on the gap:</p>
-      <div class="odds" id="danger-odds"></div>
-      <p>Two squares ahead of an enemy is the worst place to stop; four ahead is fairly safe. Squares 1 to 4 and 13 to 14 are your own and always safe, so a counter waiting on square 4 threatens anything that enters the middle row ahead of it.</p>
-
-      <h4>Capture the counters that have come furthest</h4>
-      <p>A capture sends a counter back to the start, so knocking off one on square 12 costs your opponent twelve squares of progress, while one on square 5 costs only five. When you have a choice, hit the most advanced counter. The same goes in reverse: protect your own far-travelled counters first.</p>
-
-      <h4>Keep your options open</h4>
-      <ul>
-        <li>Having two or three counters on the board means most rolls give you a useful move, so you pass fewer turns.</li>
-        <li>Too many counters in the middle row at once leaves more of them open to capture. Spread the risk.</li>
-        <li>Your own counters block each other, so avoid lining them up where a common roll would need to land on one.</li>
-      </ul>
-
-      <h4>Plan your exits</h4>
-      <p>A counter needs the exact roll to leave. From square 13 that is a 2, the most likely roll; from square 14 it is a 1. Square 14 is also a rose, so landing on it earns an extra roll, but a counter parked there can be slow to get home. Don't let several counters queue at the end waiting for the same number.</p>
-    </div>
-   </div>
-  </dialog>
-</div>
-
-<dialog id="options-dlg" class="stats" aria-labelledby="options-title">
-  <div class="stats-inner">
-    <div class="stats-head">
-      <h2 id="options-title">Options</h2>
-      <button class="btn close" type="button" id="close-options" aria-label="Close options">Close</button>
-    </div>
-    <div class="rules">
-      <h4 class="first-heading">Play</h4>
-      <label class="opt" for="opt-auto">
-        <input type="checkbox" class="toggle" id="opt-auto">
-        <span><b>Auto-move</b><small>When a roll leaves only one legal move, play it for me.</small></span>
-      </label>
-
-      <div class="opt-range">
-        <label for="opt-vol"><b>Music volume</b></label>
-        <input type="range" id="opt-vol" min="0" max="100" step="5">
-      </div>
-      <p class="now-playing" id="now-playing" aria-live="polite"></p>
-
-      <div class="opt-range">
-        <label for="opt-backdrop"><b>Background</b></label>
-        <select id="opt-backdrop"></select>
-      </div>
-
-      <h4>App</h4>
-      <p id="install-text">Install the game to play it from your home screen or desktop, even with no connection.</p>
-      <button class="btn" type="button" id="install-btn" hidden>Install the game</button>
-
-      <h4>Guided game</h4>
-      <p>New to Ur, or teaching someone? The guided game is played against the Squire, with tips as each part of the rules comes up.</p>
-      <button class="btn" type="button" id="replay-guide">Play the guided game</button>
-    </div>
-  </div>
-</dialog>
-
-<dialog id="variants-dlg" class="stats" aria-labelledby="variants-title">
-  <div class="stats-inner">
-    <div class="stats-head">
-      <h2 id="variants-title">Choose a variant</h2>
-      <button class="btn close" type="button" id="close-variants" aria-label="Close variants">Close</button>
-    </div>
-    <div class="variant-cards" id="variant-cards" role="radiogroup" aria-labelledby="variants-title"></div>
-    <p class="cap">The full rules for each are under <b>Variants</b> in Rules.</p>
-  </div>
-</dialog>
-
-<dialog id="confirm-dlg" class="stats confirm" aria-labelledby="confirm-title" aria-describedby="confirm-text">
-  <div class="stats-inner">
-    <h2 id="confirm-title">Start a new game?</h2>
-    <p id="confirm-text">The game in progress will be lost.</p>
-    <div class="confirm-actions">
-      <button class="btn" type="button" id="confirm-no">Keep playing</button>
-      <button class="btn start" type="button" id="confirm-yes">Start a new game</button>
-    </div>
-  </div>
-</dialog>
-
-<div class="end-banner" id="end-banner" hidden aria-hidden="true"></div>
-<div class="honour-note" id="honour-note" role="status" hidden></div>
-<svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
-  <defs>
-    <marker id="head-ink" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="20" markerHeight="20" orient="auto">
-      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" class="move-arrowhead"/>
-    </marker>
-    <marker id="head-red" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" orient="auto">
-      <path d="M1 1.2 L9 5 L1 8.8 L3 5 Z" class="move-arrowhead"/>
-    </marker>
-  </defs>
-  <path class="move-arrow advice" id="arrow-advice" marker-end="url(#head-red)" hidden/>
-  <path class="move-arrow" id="arrow-preview" marker-end="url(#head-ink)" hidden/>
-</svg>
-
-<div class="coach advice-note" id="advice-note" role="status" hidden><p id="advice-text"></p></div>
-
-<div class="coach" id="coach" role="dialog" aria-labelledby="coach-text" hidden>
-  <p id="coach-text"></p>
-  <div class="coach-actions">
-    <button class="btn" type="button" id="coach-ok">Got it</button>
-    <button class="linkish" type="button" id="coach-skip">Skip the guide</button>
-  </div>
-</div>
-
-<dialog id="stats" class="stats" aria-labelledby="stats-title">
-  <div class="stats-inner">
-    <div class="stats-head">
-      <h2 id="stats-title">The Chronicle</h2>
-      <button class="btn close" type="button" id="close-stats" aria-label="Close stats">Close</button>
-    </div>
-    <div class="stats-tabs" role="tablist">
-      <button type="button" role="tab" data-tab="game" aria-selected="true" aria-controls="stats-body">This game</button>
-      <button type="button" role="tab" data-tab="life" aria-selected="false" aria-controls="stats-body">All time</button>
-      <button type="button" role="tab" data-tab="honours" aria-selected="false" aria-controls="stats-body">Honours</button>
-    </div>
-    <div id="stats-body" role="tabpanel"></div>
-  </div>
-  <div class="tip" id="tip" hidden></div>
-</dialog>
-
-<script src="js/rules.js"></script>
-<script src="js/sound.js"></script>
-<script src="js/game.js"></script>
-<script src="js/stats.js"></script>
-<script src="js/honours.js"></script>
-<script src="js/board.js"></script>
-<script src="js/speech.js"></script>
-<script src="js/portraits.js"></script>
-<script src="js/banner.js"></script>
-<script src="js/card.js"></script>
-<script src="js/prefs.js"></script>
-<script src="js/backdrop.js"></script>
-<script src="js/icons.js"></script>
-<script src="js/bubbles.js"></script>
-<script src="js/advice.js"></script>
-<script src="js/danger.js"></script>
-<script src="js/undo.js"></script>
-<script src="js/guide.js"></script>
-<script src="js/newgame.js"></script>
-<script src="js/options.js"></script>
-<script src="js/variants.js"></script>
-<script src="js/controls.js"></script>
-<script src="js/modals.js"></script>
-<script src="js/keyboard.js"></script>
-<script src="js/install.js"></script>
-<script src="js/music.js"></script>
-<script src="js/main.js"></script>
-</body>
+    <script src="js/rules.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/honours.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/portraits.js"></script>
+    <script src="js/banner.js"></script>
+    <script src="js/card.js"></script>
+    <script src="js/prefs.js"></script>
+    <script src="js/backdrop.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/bubbles.js"></script>
+    <script src="js/advice.js"></script>
+    <script src="js/danger.js"></script>
+    <script src="js/undo.js"></script>
+    <script src="js/guide.js"></script>
+    <script src="js/newgame.js"></script>
+    <script src="js/options.js"></script>
+    <script src="js/variants.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/keyboard.js"></script>
+    <script src="js/install.js"></script>
+    <script src="js/music.js"></script>
+    <script src="js/main.js"></script>
+  </body>
 </html>

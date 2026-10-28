@@ -3,28 +3,119 @@
 /* The variant picker. */
 
 /* the variant picker: one card per variant, with a picture of its board */
-.variant-cards { display: grid; gap: 10px; }
-.variant-card {
-  display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; padding: 10px 12px; width: 100%;
-  font: inherit; color: inherit; text-align: left; cursor: pointer; background: var(--paper);
-  border: 1.5px solid var(--ink-soft); border-radius: var(--hand);
+.variant-cards {
+  display: grid;
+  gap: 10px;
 }
-.variant-card:hover { background: var(--paper-deep); }
-.variant-card[aria-checked="true"] { border-color: var(--ink); background: #fffaf0; box-shadow: 3px 3px 0 -1px var(--ochre); }
-.variant-card:focus-visible { outline: 2.5px dashed var(--vermilion); outline-offset: 3px; }
-.variant-card svg { width: 100%; height: auto; display: block; }
-.variant-card h3 { font-family: var(--f-display); font-weight: 400; font-size: 20px; margin: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.variant-card .tag { font-family: var(--f-note); font-style: italic; font-size: 13px; color: var(--ink-soft); }
-.variant-card .chosen { font-family: var(--f-note); font-style: italic; font-size: 13px; color: var(--vermilion); }
-.variant-card p { margin: 3px 0 0; font-size: 15px; line-height: 1.4; }
-.variant-card .facts { font-family: var(--f-note); font-style: italic; font-size: 13.5px; color: var(--ink-soft); }
-@media (max-width: 480px) { .variant-card { grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 10px; } .variant-card h3 { font-size: 18px; } .variant-card p { font-size: 14px; } }
+.variant-card {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--paper);
+  border: 1.5px solid var(--ink-soft);
+  border-radius: var(--hand);
+}
+.variant-card:hover {
+  background: var(--paper-deep);
+}
+.variant-card[aria-checked='true'] {
+  border-color: var(--ink);
+  background: #fffaf0;
+  box-shadow: 3px 3px 0 -1px var(--ochre);
+}
+.variant-card:focus-visible {
+  outline: 2.5px dashed var(--vermilion);
+  outline-offset: 3px;
+}
+.variant-card svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.variant-card h3 {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 20px;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.variant-card .tag {
+  font-family: var(--f-note);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.variant-card .chosen {
+  font-family: var(--f-note);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--vermilion);
+}
+.variant-card p {
+  margin: 3px 0 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.variant-card .facts {
+  font-family: var(--f-note);
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+@media (max-width: 480px) {
+  .variant-card {
+    grid-template-columns: 96px 1fr;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  .variant-card h3 {
+    font-size: 18px;
+  }
+  .variant-card p {
+    font-size: 14px;
+  }
+}
 /* each card's little board: plain and rose squares (safe ones ringed in gold), both routes, and a row of counters */
-.thumb-square { fill: var(--bone); stroke: var(--ink-soft); stroke-width: .8; }
-.thumb-square.thumb-rose { fill: var(--ochre); fill-opacity: .6; }
-.thumb-square.safe-sq { stroke: var(--ochre); stroke-width: 2; }
-.thumb-rose-dot { fill: var(--vermilion); }
-.thumb-route { fill: none; stroke-width: 1.8; stroke-linejoin: round; }
-.thumb-route-sun { stroke: var(--c-sun); }
-.thumb-route-moon { stroke: var(--c-moon); stroke-dasharray: 3 2; }
-.thumb-counter { fill: var(--sunfire); stroke: var(--ink); stroke-width: .8; }
+.thumb-square {
+  fill: var(--bone);
+  stroke: var(--ink-soft);
+  stroke-width: 0.8;
+}
+.thumb-square.thumb-rose {
+  fill: var(--ochre);
+  fill-opacity: 0.6;
+}
+.thumb-square.safe-sq {
+  stroke: var(--ochre);
+  stroke-width: 2;
+}
+.thumb-rose-dot {
+  fill: var(--vermilion);
+}
+.thumb-route {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.thumb-route-sun {
+  stroke: var(--c-sun);
+}
+.thumb-route-moon {
+  stroke: var(--c-moon);
+  stroke-dasharray: 3 2;
+}
+.thumb-counter {
+  fill: var(--sunfire);
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}

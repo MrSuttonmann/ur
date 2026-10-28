@@ -1,0 +1,2 @@
+# Keep line endings as LF everywhere, as Prettier writes them, even on Windows checkouts.
+* text=auto eol=lf

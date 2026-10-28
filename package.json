@@ -1,0 +1,16 @@
+{
+  "name": "royal-game-of-ur",
+  "private": true,
+  "description": "The Royal Game of Ur, played in the browser.",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "html-minifier-terser": "7.2.0",
+    "prettier": "3.6.2"
+  }
+}

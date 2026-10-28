@@ -40,5 +40,7 @@ const ICONS = {
   undo: `<path d="M8.5 5.5 L4 10 L8.5 14.5" class="ink-line"/><path d="M4.5 10 H14 C17.5 10 20 12.5 20 15.5 C20 18.5 17.5 20 14.5 20 H10" class="ink-line"/>`,
   share: `<path d="M8.5 9.5 H6 V20.5 H18 V9.5 H15.5" class="ink-line"/><path d="M12 15 V3.5 M8.3 7.2 L12 3.5 L15.7 7.2" class="ink-line"/>`,
 };
-const iconSVG = name => `<svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">${ICONS[name]}</g></svg>`;
-document.querySelectorAll('[data-icon]').forEach(slot => { slot.innerHTML = iconSVG(slot.dataset.icon); });
+const iconSVG = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true"><g filter="url(#ink)">${ICONS[name]}</g></svg>`;
+document.querySelectorAll('[data-icon]').forEach((slot) => {
+  slot.innerHTML = iconSVG(slot.dataset.icon);
+});

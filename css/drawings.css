@@ -2,76 +2,276 @@
 
 /* ---------- the drawings: board tiles, counters, dice, icons and portraits (inline SVG built in the scripts) ---------- */
 /* the hand-inked outline every drawing shares; parts that need a heavier or finer line say so below */
-.ink-line { fill: none; stroke: var(--ink); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.ink-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* board tiles: a watercolour wash in the picture's colour, an inked border, then the picture */
-.tile-ros, .tile-tree { --wash: var(--ochre); }
-.tile-castle { --wash: var(--rose); }
-.tile-five { --wash: var(--paper-deep); }
-.tile-shield { --wash: var(--woad); }
-.tile-crown { --wash: var(--sage); }
-.tile-wash { fill: var(--wash); fill-opacity: .78; }
-.tile-wash-edge { fill: none; stroke: var(--wash); stroke-opacity: .6; stroke-width: 2.2; }
-.ink-line.tile-border { stroke-width: 1.5; }
-.rose-leaf { fill: var(--sage); fill-opacity: .9; }
-.rose-petal { fill: var(--vermilion); fill-opacity: .85; stroke: var(--ink); stroke-width: 1.1; }
-.rose-heart { fill: var(--ochre); stroke: var(--ink); stroke-width: 1.1; }
-.rose-stamen { fill: var(--ink); }
-.castle-wall { fill: var(--bone); fill-opacity: .9; }
-.castle-flag { fill: var(--vermilion); fill-opacity: .9; }
-.shield-field { fill: var(--bone); fill-opacity: .9; }
-.shield-chevron { fill: var(--vermilion); fill-opacity: .75; }
-.crown-gold { fill: var(--ochre); fill-opacity: .95; }
-.crown-jewel { fill: var(--vermilion); stroke: var(--ink); stroke-width: .8; }
-.tree-trunk { fill: var(--ink-soft); fill-opacity: .7; }
-.tree-leaves { fill: var(--sage); fill-opacity: .9; }
-.tree-fruit { fill: var(--vermilion); fill-opacity: .9; }
-.five-spot { fill: var(--woad); fill-opacity: .8; stroke: var(--ink); stroke-width: 1; }
-.five-spot-centre { fill: var(--bone); }
+.tile-ros,
+.tile-tree {
+  --wash: var(--ochre);
+}
+.tile-castle {
+  --wash: var(--rose);
+}
+.tile-five {
+  --wash: var(--paper-deep);
+}
+.tile-shield {
+  --wash: var(--woad);
+}
+.tile-crown {
+  --wash: var(--sage);
+}
+.tile-wash {
+  fill: var(--wash);
+  fill-opacity: 0.78;
+}
+.tile-wash-edge {
+  fill: none;
+  stroke: var(--wash);
+  stroke-opacity: 0.6;
+  stroke-width: 2.2;
+}
+.ink-line.tile-border {
+  stroke-width: 1.5;
+}
+.rose-leaf {
+  fill: var(--sage);
+  fill-opacity: 0.9;
+}
+.rose-petal {
+  fill: var(--vermilion);
+  fill-opacity: 0.85;
+  stroke: var(--ink);
+  stroke-width: 1.1;
+}
+.rose-heart {
+  fill: var(--ochre);
+  stroke: var(--ink);
+  stroke-width: 1.1;
+}
+.rose-stamen {
+  fill: var(--ink);
+}
+.castle-wall {
+  fill: var(--bone);
+  fill-opacity: 0.9;
+}
+.castle-flag {
+  fill: var(--vermilion);
+  fill-opacity: 0.9;
+}
+.shield-field {
+  fill: var(--bone);
+  fill-opacity: 0.9;
+}
+.shield-chevron {
+  fill: var(--vermilion);
+  fill-opacity: 0.75;
+}
+.crown-gold {
+  fill: var(--ochre);
+  fill-opacity: 0.95;
+}
+.crown-jewel {
+  fill: var(--vermilion);
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}
+.tree-trunk {
+  fill: var(--ink-soft);
+  fill-opacity: 0.7;
+}
+.tree-leaves {
+  fill: var(--sage);
+  fill-opacity: 0.9;
+}
+.tree-fruit {
+  fill: var(--vermilion);
+  fill-opacity: 0.9;
+}
+.five-spot {
+  fill: var(--woad);
+  fill-opacity: 0.8;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.five-spot-centre {
+  fill: var(--bone);
+}
 
 /* counters: a bone rim around a sunfire or night face, washed with texture, and the side's emblem */
-.counter-rim { fill: var(--bone); }
-.counter-sun .counter-face { fill: var(--sunfire); }
-.counter-moon .counter-face { fill: var(--night); }
-.counter-wash { fill-opacity: .55; }
-.counter-sun .counter-wash { fill: var(--ochre); }
-.counter-moon .counter-wash { fill: var(--woad); }
-.ink-line.counter-edge { stroke-width: 2.2; }
-.ink-line.counter-inner-edge { stroke-width: 1; }
-.ink-line.sun-ray { stroke-width: 1.4; }
-.sun-face { fill: var(--bone); stroke: var(--ink); stroke-width: 1.2; }
-.ink-line.sun-eyes { stroke-width: 1.8; }
-.moon-crescent, .moon-star { fill: #fffaf0; }
+.counter-rim {
+  fill: var(--bone);
+}
+.counter-sun .counter-face {
+  fill: var(--sunfire);
+}
+.counter-moon .counter-face {
+  fill: var(--night);
+}
+.counter-wash {
+  fill-opacity: 0.55;
+}
+.counter-sun .counter-wash {
+  fill: var(--ochre);
+}
+.counter-moon .counter-wash {
+  fill: var(--woad);
+}
+.ink-line.counter-edge {
+  stroke-width: 2.2;
+}
+.ink-line.counter-inner-edge {
+  stroke-width: 1;
+}
+.ink-line.sun-ray {
+  stroke-width: 1.4;
+}
+.sun-face {
+  fill: var(--bone);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.ink-line.sun-eyes {
+  stroke-width: 1.8;
+}
+.moon-crescent,
+.moon-star {
+  fill: #fffaf0;
+}
 
 /* dice: a pale top, a shaded front, and the tip painted red when it's marked */
-.die-face { fill: var(--bone); }
-.die-shade { fill: var(--paper-deep); fill-opacity: .9; }
-.ink-line.die-edges { stroke-width: 1.4; }
-.die-mark { fill: var(--vermilion); stroke: var(--ink); stroke-width: 1; }
-.die-tip { fill: var(--ink); }
+.die-face {
+  fill: var(--bone);
+}
+.die-shade {
+  fill: var(--paper-deep);
+  fill-opacity: 0.9;
+}
+.ink-line.die-edges {
+  stroke-width: 1.4;
+}
+.die-mark {
+  fill: var(--vermilion);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.die-tip {
+  fill: var(--ink);
+}
 
 /* toolbar icons; a red stroke strikes through Sound and Music when they're off (and the tally's fifth mark) */
-.icon-strike { fill: none; stroke: var(--vermilion); stroke-width: 2.2; stroke-linecap: round; }
-.play-arrow { fill: var(--bone); stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
-.book-pages { fill: var(--bone); }
-.book-ribbon { fill: var(--vermilion); fill-opacity: .9; stroke: var(--ink); stroke-width: 1; }
-.ink-line.sword-blade { stroke-width: 1.9; }
-.ink-line.sword-guard { stroke-width: 2; }
-.sword-grip { fill: none; stroke: var(--vermilion); stroke-width: 2.6; stroke-linecap: round; }
-.sword-pommel { fill: var(--ochre); stroke: var(--ink); stroke-width: 1; }
-.route-trail { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: .1 3.2; }
-.ink-line.route-trail-head { stroke-width: 1.6; }
-.route-trail-start { fill: var(--vermilion); fill-opacity: .9; stroke: var(--ink); stroke-width: 1; }
-.owl-feathers { fill: var(--ochre); fill-opacity: .9; }
-.owl-eye { fill: var(--bone); stroke: var(--ink); stroke-width: 1.1; }
-.owl-pupil { fill: var(--ink); }
-.owl-beak { fill: var(--vermilion); stroke: var(--ink); stroke-width: .8; }
-.key-bow { fill: var(--ochre); fill-opacity: .9; stroke: var(--ink); stroke-width: 1.4; }
-.key-bow-hole { fill: var(--bone); stroke: var(--ink); stroke-width: 1; }
-.ink-line.key-shaft { stroke-width: 1.8; }
-.ink-line.music-stems { stroke-width: 1.7; }
-.music-note { fill: var(--vermilion); fill-opacity: .95; stroke: var(--ink); stroke-width: 1.2; }
-.music-note.silenced { fill: var(--paper-deep); }
-.ink-line.tally-marks { stroke-width: 1.9; }
-.bell-metal { fill: var(--ochre); fill-opacity: .95; }
-.bell-metal.silenced { fill: var(--paper-deep); fill-opacity: .9; }
+.icon-strike {
+  fill: none;
+  stroke: var(--vermilion);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.play-arrow {
+  fill: var(--bone);
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.book-pages {
+  fill: var(--bone);
+}
+.book-ribbon {
+  fill: var(--vermilion);
+  fill-opacity: 0.9;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.ink-line.sword-blade {
+  stroke-width: 1.9;
+}
+.ink-line.sword-guard {
+  stroke-width: 2;
+}
+.sword-grip {
+  fill: none;
+  stroke: var(--vermilion);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.sword-pommel {
+  fill: var(--ochre);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.route-trail {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 3.2;
+}
+.ink-line.route-trail-head {
+  stroke-width: 1.6;
+}
+.route-trail-start {
+  fill: var(--vermilion);
+  fill-opacity: 0.9;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.owl-feathers {
+  fill: var(--ochre);
+  fill-opacity: 0.9;
+}
+.owl-eye {
+  fill: var(--bone);
+  stroke: var(--ink);
+  stroke-width: 1.1;
+}
+.owl-pupil {
+  fill: var(--ink);
+}
+.owl-beak {
+  fill: var(--vermilion);
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}
+.key-bow {
+  fill: var(--ochre);
+  fill-opacity: 0.9;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+.key-bow-hole {
+  fill: var(--bone);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.ink-line.key-shaft {
+  stroke-width: 1.8;
+}
+.ink-line.music-stems {
+  stroke-width: 1.7;
+}
+.music-note {
+  fill: var(--vermilion);
+  fill-opacity: 0.95;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.music-note.silenced {
+  fill: var(--paper-deep);
+}
+.ink-line.tally-marks {
+  stroke-width: 1.9;
+}
+.bell-metal {
+  fill: var(--ochre);
+  fill-opacity: 0.95;
+}
+.bell-metal.silenced {
+  fill: var(--paper-deep);
+  fill-opacity: 0.9;
+}
