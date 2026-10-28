@@ -108,7 +108,7 @@ async function page(req) {
     const res = await fetch(req);
     if (res.ok) cache.put('./', res.clone());
     return res;
-  } catch (err) {
+  } catch {
     return (await cache.match('./')) || Response.error();
   }
 }
@@ -120,7 +120,7 @@ async function fresh(req) {
     const res = await fetch(req, { cache: 'no-cache' });
     if (res.ok) cache.put(req, res.clone());
     return res;
-  } catch (err) {
+  } catch {
     return (await cache.match(req, { ignoreSearch: true })) || Response.error();
   }
 }

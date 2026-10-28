@@ -27,6 +27,7 @@ Run `npm install` once, then:
 | ---------------------- | -------------------------------------------------------------------- |
 | `npm run format`       | Tidies every file with Prettier                                      |
 | `npm run format:check` | Lists any file Prettier would change                                 |
+| `npm run lint`         | Checks the code with ESLint                                          |
 | `npm run build`        | Copies the site into `dist/`, minifying the scripts, styles and page |
 
 ## Project layout
