@@ -34,6 +34,7 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
     undos: 0, // moves you took back
     names: [null, null], // online, the players' names from the room: [host, friend]
     roomGameId: null, // online, the room's id for this game (not the page's own gameId counter)
+    seat: null, // online, the side this device plays, kept with the game after the page lets go of its room
     endedBy: null, // online, how the game ended: 'win', or 'forfeit' when a player left it
     rematch: [false, false], // online, which players have asked for a rematch
     roomClosed: false, // online, the room has closed: a player has left it
@@ -42,9 +43,9 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
 const isOnline = () => game.mode === 'online';
 const isComputer = (side) => game.mode === 'ai' && side === COMPUTER_SIDE;
 // the side this device plays: online, its seat in the room; otherwise the Sun, as against the computer
-const mySide = () => (isOnline() ? online.seat : HUMAN_SIDE);
+const mySide = () => (isOnline() ? game.seat : HUMAN_SIDE);
 // whether this device rolls and moves for a side: not the computer's, and online only its own seat's
-const canAct = (side) => !isComputer(side) && (!isOnline() || side === online.seat);
+const canAct = (side) => !isComputer(side) && (!isOnline() || side === mySide());
 // against the Squire the game helps you learn: it shades the squares in danger and lets you take back a move
 const LEARNER_LEVEL = 'easy';
 const isLearnerGame = () => game.mode === 'ai' && game.level === LEARNER_LEVEL;
@@ -377,10 +378,10 @@ function finishGame(winner) {
     recordGame(winner);
     game.newHonours = awardHonours(winner);
   }
+  prepareResultCard(); // first, so the status shows its Share result button
   render();
   showEndBanner(winner);
   announceHonours(game.newHonours);
-  prepareResultCard();
 }
 
 function endTurn(again) {

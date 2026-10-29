@@ -207,10 +207,13 @@ onRoomState((message) => {
     }
     // the other player left during or after a game: the board shows its end at once (a forfeit as your win),
     // and the page lets go of the room
-    online.queue.push(message);
-    catchUpWithRoom();
-    disconnectRoom();
-    setLinkRoom(null);
+    try {
+      online.queue.push(message);
+      catchUpWithRoom();
+    } finally {
+      disconnectRoom();
+      setLinkRoom(null);
+    }
     return;
   }
   queueRoomMessage(message); // the board plays out the room's states in order

@@ -205,9 +205,12 @@ async function drawResultCard() {
 // straight after a tap, not after waiting for a drawing. The words are settled then too, so changing the
 // opponent before sharing can't change who the words say you played.
 let resultCard = null; // a promise of { file, text }, or null
+let resultCardGame = null; // the game (by the page's gameId) the card is for
+const hasResultCard = () => resultCardGame === gameId;
 const nextTask = () => new Promise((resolve) => setTimeout(resolve));
 function prepareResultCard() {
   const forGame = gameId;
+  resultCardGame = gameId;
   const text = resultSentence();
   resultCard = nextTask() // after the end banner has had its first frame
     .then(() => (forGame === gameId ? drawResultCard() : null))

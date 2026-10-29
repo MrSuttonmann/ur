@@ -622,8 +622,9 @@ function renderStatus() {
   const whoseCounter = isInPlay()
     ? `<span class="turn-counter" aria-hidden="true">${counterSVG(game.turn, game.turn)}</span>`
     : '';
+  // a finished game's card, unless it was recorded before this page saw it (on a reload, say)
   const share =
-    game.phase === 'over'
+    game.phase === 'over' && hasResultCard()
       ? `<button class="btn with-icon share-result" id="share-result" type="button">${iconSVG('share')}Share result</button>`
       : '';
   status.innerHTML = `<strong>${whoseCounter}${escapeHtml(headline)}</strong><span>${escapeHtml(hint)}</span>${share}`;

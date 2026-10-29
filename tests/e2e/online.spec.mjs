@@ -586,6 +586,48 @@ test('leaving mid-game forfeits', async ({ openDevice }) => {
   await expect(visitor.locator('#room-note-text')).toContainText('has ended');
 });
 
+for (const [leaver, stayer, leaverName, stayerSide] of [
+  ['friend', 'host', 'Ann', SUN_SIDE],
+  ['host', 'friend', 'Ted', MOON_SIDE],
+]) {
+  test(`after the ${leaver} leaves, the ${stayer}’s board stays theirs`, async ({ openDevice }) => {
+    const devices = await startOnlineGame(openDevice);
+    const leaving = devices[leaver],
+      staying = devices[stayer];
+    await leaving.locator('label[for=mode-ai]').click();
+    await leaving.locator('#confirm-yes').click();
+    await expect(staying.locator('#status')).toContainText(`${leaverName} has left the game.`);
+    await expect.poll(() => staying.evaluate(() => online.roomId)).toBeNull();
+    // anything that redraws the board later still shows it from the stayer's side
+    const after = await staying.evaluate(() => {
+      render();
+      return {
+        side: mySide(),
+        status: $('status').textContent,
+        title: resultTitle(),
+        subtitle: resultSubtitle(),
+        turned: $('game').classList.contains('view-moon'),
+      };
+    });
+    expect(after.side).toBe(stayerSide);
+    expect(after.status).toContain(`${leaverName} has left the game.`);
+    expect(after.title).toBe('Victory!');
+    expect(after.subtitle).toContain(`against ${leaverName}`);
+    expect(after.turned).toBe(stayerSide === MOON_SIDE);
+    await expect(staying.locator('#share-result')).toBeVisible();
+  });
+}
+
+test('a finished game seen again after a reload offers no card to share', async ({ openDevice }) => {
+  const { friend, pages } = await startOnlineGame(openDevice);
+  await playToSunWin(pages);
+  await expect(friend.locator('#share-result')).toBeVisible();
+  await friend.reload();
+  await expect.poll(() => modeAndPhase(friend)).toEqual(['online', 'over']);
+  await expect(friend.locator('#status')).toContainText('Ted triumphs!');
+  await expect(friend.locator('#share-result')).toHaveCount(0);
+});
+
 test('keeping playing stays in the game', async ({ openDevice }) => {
   const { friend, pages } = await startOnlineGame(openDevice);
   await friend.locator('label[for=mode-ai]').click();

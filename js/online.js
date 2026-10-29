@@ -352,6 +352,7 @@ function adoptRoomState(view) {
     stats: view.stats,
     names: view.names,
     roomGameId: view.gameId,
+    seat: view.you,
     endedBy: view.endedBy,
     rematch: view.rematch,
     roomClosed: view.phase === 'closed',
@@ -403,7 +404,7 @@ function leaveOnlineGame() {
   const newest = (online.queue.at(-1) || playing || { state: online.view }).state;
   if (isOnline() && newest && newest.gameId === game.roomGameId) {
     if (newest.phase === 'roll' || newest.phase === 'move')
-      recordOnlineGame({ ...newest, winner: opponentOf(online.seat), endedBy: 'forfeit' });
+      recordOnlineGame({ ...newest, winner: opponentOf(mySide()), endedBy: 'forfeit' });
     else if (newest.phase === 'over') recordOnlineGame(newest);
   }
   leaveRoom();
