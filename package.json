@@ -35,7 +35,7 @@
     "prettier": "3.9.10",
     "stylelint": "16.24.0",
     "stylelint-config-standard": "39.0.0",
-    "typescript": "5.9.2"
+    "typescript": "7.0.2"
   },
   "lint-staged": {
     "*.{js,mjs}": [
