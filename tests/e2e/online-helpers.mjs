@@ -5,7 +5,7 @@
 
 import { test as base, expect, openGame } from './helpers.mjs';
 
-export const ONLINE_URL = 'http://localhost:8787';
+export const ONLINE_URL = 'http://localhost:8788'; // the tests' own Worker (see playwright.config.mjs)
 
 // a new room hosted by `name`; resolves to {id, key, seat}
 export async function createRoomViaApi(request, name, variant) {

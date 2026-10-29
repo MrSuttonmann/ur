@@ -13,7 +13,7 @@ const modeAndPhase = (page) => page.evaluate(() => [game.mode, game.phase]);
 test('host invites, friend joins, host starts', async ({ openDevice }) => {
   const host = await openDevice('/');
   const link = await inviteFriend(host, 'Ted');
-  expect(link).toMatch(/^http:\/\/localhost:8787\/#g=[23456789A-HJKMNP-Z]{6}$/);
+  expect(link).toMatch(/^http:\/\/localhost:8788\/#g=[23456789A-HJKMNP-Z]{6}$/);
   await expect(host.locator('#invite-qr svg')).toBeVisible();
   await expect(host.locator('#seat0')).toHaveText('Ted');
   await expect(host.locator('#invite-start')).toBeDisabled();

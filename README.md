@@ -44,6 +44,8 @@ Run `npm install` once (and `npx playwright install chromium` for the browser te
 | `npm run build`        | Builds the site into `dist/`: the stylesheets joined into one file and the scripts into another, in the page's order, and everything minified |
 | `npm run lighthouse`   | Builds, then audits `dist/` with Lighthouse; reports go in `.lighthouseci/`                                                                   |
 
+The online browser tests run a Worker of their own at `http://localhost:8788`, with its rooms kept apart in `.wrangler/e2e-state`, so a running `npm run dev` is never mistaken for it.
+
 Committing runs Prettier, ESLint, Stylelint and html-validate on the staged files. GitHub Actions runs the checks, the tests and Lighthouse on every push and pull request, and Dependabot proposes updates to the tools.
 
 ## Project layout

@@ -8,6 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const SOURCE_PORT = 4173;
 const BUILT_SITE_PORT = 4174;
+const WORKER_PORT = 8788; // keep in step with ONLINE_URL in tests/e2e/online-helpers.mjs
 const PORT = Number(process.env.PORT || (process.env.SITE_ROOT ? BUILT_SITE_PORT : SOURCE_PORT));
 const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env.CI);
@@ -34,10 +35,11 @@ export default defineConfig({
       url: BASE_URL,
       reuseExistingServer: !CI,
     },
-    // the online tests' Worker and rooms, run locally with the test hooks on
+    // The online tests' Worker and rooms, run locally with the test hooks on. It has a port and rooms of its own,
+    // so a running `npm run dev` (on 8787, without the hooks) is never reused, nor its rooms shared.
     {
-      command: 'npm run build && npx wrangler dev --env e2e --port 8787',
-      url: 'http://localhost:8787',
+      command: `npm run build && npx wrangler dev --env e2e --port ${WORKER_PORT} --persist-to .wrangler/e2e-state`,
+      url: `http://localhost:${WORKER_PORT}`,
       reuseExistingServer: !CI,
       timeout: 120_000,
     },
