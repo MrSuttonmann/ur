@@ -10,6 +10,7 @@ const prefs = {
   music: true,
   musicVol: DEFAULT_MUSIC_VOLUME,
   backdrop: DEFAULT_BACKDROP,
+  name: '', // the name last given for online play
 };
 try {
   Object.assign(prefs, JSON.parse(localStorage.getItem('ur-prefs')) || {});

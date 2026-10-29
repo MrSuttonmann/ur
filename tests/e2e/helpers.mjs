@@ -43,12 +43,12 @@ function seedStorage({ prefs, newPlayer }) {
   }
 }
 
-// open the game on its set-up board, with the given preferences and random seed; a new player hasn't seen
-// the guided first game
-export async function openGame(page, { prefs = {}, seed = DEFAULT_SEED, newPlayer = false } = {}) {
+// open the game on its set-up board (or at `url`, such as an invite link), with the given preferences and random
+// seed; a new player hasn't seen the guided first game
+export async function openGame(page, { prefs = {}, seed = DEFAULT_SEED, newPlayer = false, url = '/' } = {}) {
   await page.addInitScript(installSeededRandom, seed);
   await page.addInitScript(seedStorage, { prefs: { ...BASE_PREFS, ...prefs }, newPlayer });
-  await page.goto('/');
+  await page.goto(url);
   await waitForBoot(page);
 }
 

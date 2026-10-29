@@ -467,7 +467,7 @@ function renderTray(side) {
     tray.innerHTML = `
     <div class="tray-name"></div><div class="tray-count"></div><div class="pool wait"></div><div class="pool home"></div>`;
   tray.querySelector('.tray-name').innerHTML =
-    `${playerName(side)}${plays}${active ? ` <span class="chip">${turnTag(side)}</span>` : ''}`;
+    `${escapeHtml(playerName(side))}${plays}${active ? ` <span class="chip">${turnTag(side)}</span>` : ''}`;
   tray.querySelector('.tray-count').textContent = `${waiting} waiting · ${home} of ${squares.length} home`;
   return { waiting: tray.querySelector('.wait'), home: tray.querySelector('.home') };
 }
@@ -614,7 +614,7 @@ function renderStatus() {
     game.phase === 'over'
       ? `<button class="btn with-icon share-result" id="share-result" type="button">${iconSVG('share')}Share result</button>`
       : '';
-  status.innerHTML = `<strong>${whoseCounter}${headline}</strong><span>${hint}</span>${share}`;
+  status.innerHTML = `<strong>${whoseCounter}${escapeHtml(headline)}</strong><span>${escapeHtml(hint)}</span>${share}`;
 }
 function statusText() {
   const who = playerName(game.turn),
@@ -625,7 +625,9 @@ function statusText() {
         'Ready when you are',
         game.mode === 'ai'
           ? 'Choose your opponent, then press Start game.'
-          : 'Press Start game when you’re both ready.',
+          : isOnline()
+            ? 'Give your name, then press Invite a friend.'
+            : 'Press Start game when you’re both ready.',
       ];
     case 'over': {
       const headline =
@@ -697,7 +699,7 @@ function renderLedger() {
     scrolledTo = log.scrollTop,
     heightBefore = log.scrollHeight;
   log.innerHTML = game.log.length
-    ? game.log.map((line, i) => `<li><span class="n">${game.log.length - i}.</span>${line}</li>`).join('')
+    ? game.log.map((line, i) => `<li><span class="n">${game.log.length - i}.</span>${escapeHtml(line)}</li>`).join('')
     : '<li class="waiting">The scribe awaits the first move.</li>';
   if (scrolledTo > 2) log.scrollTop = scrolledTo + log.scrollHeight - heightBefore;
 }
@@ -705,19 +707,21 @@ function renderLedger() {
 // mode and opponent can only change between games; the button invites a start, or offers a new game mid-game
 function renderSetupControls() {
   $('level-field').hidden = game.mode !== 'ai';
+  $('name-field').hidden = !isOnline();
   const locked = !isBetweenGames(),
     why = locked ? 'Start a new game to change this' : '';
   document.querySelectorAll('input[name=mode]').forEach((/** @type {HTMLInputElement} */ radio) => {
     radio.disabled = locked;
   });
   $('level').disabled = locked;
+  $('player-name').disabled = locked;
   $('open-variants').disabled = locked;
   $('variant-name').textContent = VARIANTS[game.variant].name; // in a game, the rules being played
   document.querySelector('.seg').title = why;
   $('level-field').title = why;
   $('variant-field').title = why;
   $('newgame').classList.toggle('start', !locked);
-  $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : 'Start game';
+  $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : isOnline() ? 'Invite a friend' : 'Start game';
 }
 
 // your record against the chosen opponent, or the Sun and Moon tally in two-player games

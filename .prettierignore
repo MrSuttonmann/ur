@@ -6,3 +6,5 @@ test-results/
 playwright-report/
 .lighthouseci/
 worker/generated/
+# vendored as published
+js/qrcode.js

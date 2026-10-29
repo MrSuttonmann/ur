@@ -7,9 +7,10 @@
   isn't one. "Fresh" means checked with the server every time: the browser's own cache may hold
   scripts for hours, and a new page running old scripts breaks the game. Icons and fonts come from the cache and refresh in the background. Music is too big
   to download up front, so each track is saved the first time it plays and then served from the
-  cache, including the byte ranges audio players ask for.
+  cache, including the byte ranges audio players ask for. Online play's room API (/api/) is never
+  cached or answered here.
 */
-const CACHE = 'ur-v11';
+const CACHE = 'ur-v12';
 const CODE = [
   'css/fonts.css',
   'css/base.css',
@@ -30,6 +31,7 @@ const CODE = [
   'css/banner.css',
   'css/honours.css',
   'css/splash.css',
+  'css/lobby.css',
   'js/rules.js',
   'js/turns.js',
   'js/sound.js',
@@ -57,6 +59,9 @@ const CODE = [
   'js/keyboard.js',
   'js/install.js',
   'js/music.js',
+  'js/qrcode.js',
+  'js/online.js',
+  'js/lobby.js',
   'js/main.js',
 ];
 const SHELL = [
@@ -101,6 +106,8 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // online play's room API and sockets always go straight to the network, untouched
+  if (url.origin === location.origin && url.pathname.startsWith('/api/')) return;
   if (req.mode === 'navigate') e.respondWith(page(req));
   else if (url.origin === location.origin && /\.(js|css)$/.test(url.pathname)) e.respondWith(fresh(req));
   else if (url.origin === location.origin && url.pathname.endsWith('.mp3')) e.respondWith(music(req, url.pathname));

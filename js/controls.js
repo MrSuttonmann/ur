@@ -10,7 +10,9 @@ $('roll').addEventListener('click', () => {
 // mode and opponent only change between games, and then just update the waiting board
 document.querySelectorAll('input[name=mode]').forEach((radio) =>
   radio.addEventListener('change', () => {
-    if (isBetweenGames()) showSetupBoard();
+    if (!isBetweenGames()) return;
+    showSetupBoard();
+    if (isOnline() && !$('player-name').value) $('player-name').focus(); // online starts with your name
   }),
 );
 $('level').addEventListener('change', (e) => {

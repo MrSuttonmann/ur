@@ -32,21 +32,30 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
     stats: createGameStats(),
     newHonours: [], // honours the game earned, once it's over
     undos: 0, // moves you took back
+    names: [null, null], // online, the players' names from the room: [host, friend]
+    gameId: null, // online, the room's id for this game
   };
 }
+const isOnline = () => game.mode === 'online';
 const isComputer = (side) => game.mode === 'ai' && side === COMPUTER_SIDE;
 // against the Squire the game helps you learn: it shades the squares in danger and lets you take back a move
 const LEARNER_LEVEL = 'easy';
 const isLearnerGame = () => game.mode === 'ai' && game.level === LEARNER_LEVEL;
 
-// against the computer, the Moon side goes by the opponent's name
+// against the computer, the Moon side goes by the opponent's name; online, each side by its player's name
 const OPPONENT_NAME = { easy: 'The Squire', medium: 'Sir Knight', hard: 'The King' };
-const playerName = (side) =>
-  game.mode !== 'ai' ? SIDE_NAME[side] : side === COMPUTER_SIDE ? OPPONENT_NAME[game.level] || 'Computer' : 'You';
+function playerName(side) {
+  if (isOnline()) return game.names[side] || SIDE_NAME[side];
+  if (game.mode !== 'ai') return SIDE_NAME[side];
+  return side === COMPUTER_SIDE ? OPPONENT_NAME[game.level] || 'Computer' : 'You';
+}
 // the same name mid-sentence: "the Squire" rather than "The Squire"
 const playerNameMidSentence = (side) => playerName(side).replace(/^The /, 'the ');
 const opponentName = () => playerName(COMPUTER_SIDE);
 const opponentNameMidSentence = () => playerNameMidSentence(COMPUTER_SIDE);
+// text made safe to put into HTML, for players' names (which online come from another person)
+const escapeHtml = (text) =>
+  String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 let tally = { you: 0, computer: 0, sun: 0, moon: 0 };
 try {

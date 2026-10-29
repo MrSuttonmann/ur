@@ -81,6 +81,7 @@
     <link rel="stylesheet" href="css/banner.css" />
     <link rel="stylesheet" href="css/honours.css" />
     <link rel="stylesheet" href="css/splash.css" />
+    <link rel="stylesheet" href="css/lobby.css" />
   </head>
   <body>
     <canvas class="backdrop" id="backdrop" aria-hidden="true"></canvas>
@@ -215,7 +216,12 @@
               <input type="radio" name="mode" id="mode-local" value="local" /><label for="mode-local"
                 >Two players</label
               >
+              <input type="radio" name="mode" id="mode-online" value="online" /><label for="mode-online">Online</label>
             </div>
+            <label class="field" id="name-field" hidden>
+              <span>Your name</span>
+              <input type="text" id="player-name" maxlength="20" autocomplete="nickname" spellcheck="false" />
+            </label>
             <label class="field" id="level-field">
               <span>Opponent</span>
               <select id="level">
@@ -679,6 +685,100 @@
       </div>
     </dialog>
 
+    <dialog id="invite-dlg" class="stats lobby" aria-labelledby="invite-title">
+      <div class="stats-inner">
+        <h2 id="invite-title">Invite a friend</h2>
+        <p class="lobby-lead">
+          Your friend can scan this code with their phone’s camera, or you can send them the link.
+        </p>
+        <div class="invite-qr" id="invite-qr" role="img" aria-label="QR code for the invite link"></div>
+        <input class="invite-link" id="invite-link" type="text" readonly aria-label="Invite link" />
+        <div class="lobby-buttons">
+          <button class="btn" type="button" id="invite-copy"><span class="lbl">Copy link</span></button>
+          <button class="btn with-icon" type="button" id="invite-share" hidden>
+            <span data-icon="share"></span>Share…
+          </button>
+        </div>
+        <ul class="seats" aria-label="Players">
+          <li class="seat">
+            <span class="seat-counter" data-side="0" aria-hidden="true"></span
+            ><span class="seat-name" id="seat0"></span>
+          </li>
+          <li class="seat">
+            <span class="seat-counter" data-side="1" aria-hidden="true"></span
+            ><span class="seat-name" id="seat1"></span>
+          </li>
+        </ul>
+        <div class="confirm-actions">
+          <button class="btn" type="button" id="invite-cancel">Cancel invite</button>
+          <button class="btn start" type="button" id="invite-start" disabled>Start game</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="join-dlg" class="stats splash lobby" aria-labelledby="join-host">
+      <div class="stats-inner">
+        <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
+        <h2 id="join-host" class="lobby-title">You’re invited to play the Royal Game of Ur</h2>
+        <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true">
+          <path
+            d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1"
+            class="flourish-line"
+            filter="url(#ink)"
+          />
+          <circle cx="130" cy="8" r="2.4" class="flourish-dot" />
+        </svg>
+        <form class="join-form" id="join-form" novalidate>
+          <p class="join-rules" id="join-rules"></p>
+          <label class="field">
+            <span>Your name</span>
+            <input type="text" id="join-name" maxlength="20" autocomplete="nickname" spellcheck="false" />
+          </label>
+          <p class="lobby-error" id="join-error" role="alert" hidden></p>
+          <button class="btn start" type="submit" id="join-go">Join</button>
+        </form>
+        <div class="join-wait" id="join-wait" hidden>
+          <ul class="seats" aria-label="Players">
+            <li class="seat">
+              <span class="seat-counter" data-side="0" aria-hidden="true"></span
+              ><span class="seat-name" id="wait-seat0"></span>
+            </li>
+            <li class="seat">
+              <span class="seat-counter" data-side="1" aria-hidden="true"></span
+              ><span class="seat-name" id="wait-seat1"></span><span class="seat-you">(you)</span>
+            </li>
+          </ul>
+          <p class="lobby-lead" id="join-wait-text" role="status"></p>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog
+      id="room-note-dlg"
+      class="stats confirm"
+      aria-labelledby="room-note-title"
+      aria-describedby="room-note-text"
+    >
+      <div class="stats-inner">
+        <h2 id="room-note-title">The game has ended</h2>
+        <p id="room-note-text"></p>
+        <div class="confirm-actions">
+          <button class="btn start" type="button" id="room-note-own">Start your own game</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="rejoin-dlg" class="stats confirm" aria-labelledby="rejoin-title" aria-describedby="rejoin-text">
+      <div class="stats-inner">
+        <h2 id="rejoin-title">Welcome back</h2>
+        <p id="rejoin-text"></p>
+        <div class="confirm-actions">
+          <button class="btn" type="button" id="rejoin-no">Not now</button>
+          <button class="btn start" type="button" id="rejoin-yes">Rejoin</button>
+        </div>
+      </div>
+    </dialog>
+
     <div class="end-banner" id="end-banner" hidden aria-hidden="true"></div>
     <div class="honour-note" id="honour-note" role="status" hidden></div>
     <svg class="arrow-layer" id="arrow-layer" aria-hidden="true">
@@ -771,6 +871,9 @@
     <script src="js/keyboard.js"></script>
     <script src="js/install.js"></script>
     <script src="js/music.js"></script>
+    <script src="js/qrcode.js"></script>
+    <script src="js/online.js"></script>
+    <script src="js/lobby.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

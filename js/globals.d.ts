@@ -22,6 +22,16 @@ interface ParentNode {
   querySelectorAll<E extends HTMLElement = HTMLElement>(selectors: string): NodeListOf<E>;
 }
 
+/** js/qrcode.js, the vendored qrcode-generator: a QR code for the text added, at the given error correction */
+declare function qrcode(
+  typeNumber: number,
+  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H',
+): {
+  addData(data: string): void;
+  make(): void;
+  createSvgTag(options: { cellSize?: number; margin?: number; scalable?: boolean }): string;
+};
+
 interface Element {
   /** a counter's running glide across the board, cancelled before another starts */
   glide?: Animation;

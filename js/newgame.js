@@ -69,7 +69,8 @@ $('confirm-dlg').addEventListener('close', () => {
   afterConfirming = null;
 });
 $('newgame').addEventListener('click', () => {
-  if (isBetweenGames()) startGame();
+  if (isBetweenGames() && isOnline()) startInviting();
+  else if (isBetweenGames()) startGame();
   else confirmAbandonGame(showSetupBoard);
 });
 

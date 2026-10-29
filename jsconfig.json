@@ -7,5 +7,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": false
   },
-  "include": ["js/*.js", "js/*.d.ts"]
+  "include": ["js/*.js", "js/*.d.ts"],
+  "exclude": ["js/qrcode.js"]
 }
