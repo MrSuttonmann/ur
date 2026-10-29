@@ -234,6 +234,12 @@ function runIntent(room, seat, intent, now, rng, testHooks) {
       if (room.rematch[opponentOf(seat)]) return { event: beginGame(room, rng) };
       return { event: { kind: 'rematch-offer', seat } };
     case 'leave':
+      // a friend leaving the lobby frees their seat for someone else; the host can still invite them by link
+      if (room.phase === 'lobby' && seat === 1) {
+        room.seats[1] = null;
+        room.connected[1] = false;
+        return { event: { kind: 'left', seat, forfeit: false } };
+      }
       settleClock(room, now);
       if (playing) {
         room.winner = opponentOf(seat);

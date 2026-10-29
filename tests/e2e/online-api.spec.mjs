@@ -99,7 +99,9 @@ test('a second socket for a seat replaces the first', async ({ request }) => {
   second.close();
 });
 
-test('a socket acts for its own seat: nonsense is refused and leaving ends the room', async ({ request }) => {
+test('a socket acts for its own seat: nonsense is refused, and leaving frees the lobby seat or ends the room', async ({
+  request,
+}) => {
   const room = await createRoomViaApi(request, 'Ennigaldi', 'classic');
   const friend = await joinViaApi(request, room.id, 'Nabonidus');
   const host = new WebSocket(socketUrl(room.id, room.key));
@@ -108,11 +110,27 @@ test('a socket acts for its own seat: nonsense is refused and leaving ends the r
   const refused = messageWhere(host, (message) => message.type === 'error');
   host.send('not json');
   expect(await refused).toEqual({ type: 'error', code: 'bad-message' });
-  const left = messageWhere(host, (message) => message.event?.kind === 'left');
-  const closed = Promise.all([closeCode(host), closeCode(guest)]);
+
+  // the friend leaving the lobby frees their seat: only their socket is ended, and the link still works
+  const friendLeft = messageWhere(host, (message) => message.event?.kind === 'left');
+  const guestClosed = closeCode(guest);
   guest.send(JSON.stringify({ t: 'leave', seat: 0 }));
-  expect((await left).event).toEqual({ kind: 'left', seat: 1, forfeit: false });
-  expect(await closed).toEqual([4001, 4001]);
+  expect(await friendLeft).toMatchObject({
+    event: { kind: 'left', seat: 1, forfeit: false },
+    state: { phase: 'lobby', names: ['Ennigaldi', null] },
+  });
+  expect(await guestClosed).toBe(4001);
+  expect(host.readyState).toBe(WebSocket.OPEN);
+  expect(await (await request.get(`/api/rooms/${room.id}`)).json()).toMatchObject({ status: 'open' });
+  const refusedSeat = await request.get(`/api/rooms/${room.id}/ws?key=${friend.key}`, {
+    headers: { Upgrade: 'websocket' },
+  });
+  expect(refusedSeat.status()).toBe(403);
+
+  // the host leaving the lobby ends the room
+  const hostClosed = closeCode(host);
+  host.send(JSON.stringify({ t: 'leave' }));
+  expect(await hostClosed).toBe(4001);
   expect(await (await request.get(`/api/rooms/${room.id}`)).json()).toMatchObject({ status: 'closed' });
 });
 

@@ -316,6 +316,37 @@ test('leaving between games closes the room without a winner change', () => {
   assert.equal(lobby.phase, 'closed');
 });
 
+test('the friend leaving the lobby frees their seat and keeps the room open', () => {
+  const room = newRoom();
+  joinRoom(room, 'Bea', FRIEND_KEY, 1500);
+  setConnected(room, 1, true, 1600);
+  const seq = room.seq;
+  const { event } = applyIntent(room, 1, { t: 'leave' }, 2000, SUN_FIRST);
+  assert.deepEqual(event, { kind: 'left', seat: 1, forfeit: false });
+  assert.equal(room.phase, 'lobby');
+  assert.equal(room.seats[1], null);
+  assert.equal(room.connected[1], false);
+  assert.equal(room.seq, seq + 1);
+  assert.equal(room.touched, 2000);
+  assert.equal(seatForKey(room, FRIEND_KEY), null);
+  assert.equal(inviteInfo(room).status, 'open');
+  assert.deepEqual(applyIntent(room, 0, { t: 'start' }, 2100, SUN_FIRST), { error: 'not-ready' });
+  // the link still works for someone else
+  assert.equal(joinRoom(room, 'Cy', 'c'.repeat(32), 2200).room.seats[1].name, 'Cy');
+});
+
+test('the host leaving the lobby still closes the room, with a friend seated or not', () => {
+  const room = newRoom();
+  joinRoom(room, 'Bea', FRIEND_KEY, 1500);
+  assert.deepEqual(applyIntent(room, 0, { t: 'leave' }, 2000, SUN_FIRST).event, {
+    kind: 'left',
+    seat: 0,
+    forfeit: false,
+  });
+  assert.equal(room.phase, 'closed');
+  assert.equal(room.seats[1].name, 'Bea');
+});
+
 test('seq rises by one on every accepted intent and not on a refused one', () => {
   const room = startedRoom();
   const seq = room.seq;

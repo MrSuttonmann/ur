@@ -119,6 +119,8 @@ class Room extends DurableObject {
     await this.save();
     this.broadcast(outcome.event);
     if (this.room.phase === 'closed') this.closeAll();
+    // a friend who left the lobby has no seat now: only their socket is ended
+    else if (outcome.event.kind === 'left') this.closeAll(String(outcome.event.seat));
   }
 
   async webSocketClose(socket) {
@@ -168,8 +170,9 @@ class Room extends DurableObject {
     }
   }
 
-  closeAll() {
-    for (const socket of this.ctx.getWebSockets()) if (isOpen(socket)) socket.close(CLOSE_ENDED, 'closed');
+  // every socket, or one seat's (by its tag)
+  closeAll(tag = undefined) {
+    for (const socket of this.ctx.getWebSockets(tag)) if (isOpen(socket)) socket.close(CLOSE_ENDED, 'closed');
   }
 }
 
