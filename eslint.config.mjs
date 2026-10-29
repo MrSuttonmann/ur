@@ -62,6 +62,10 @@ export default [
     languageOptions: { sourceType: 'module', globals: globals.node },
   },
   {
+    files: ['worker/**/*.mjs'],
+    languageOptions: { sourceType: 'module', globals: { ...globals.worker, WebSocketPair: 'readonly' } },
+  },
+  {
     // the browser tests hand functions to the page, where the browser's and the game's names are in scope
     files: ['tests/e2e/**/*.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser, ...sharedScriptNames() } },
