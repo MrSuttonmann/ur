@@ -2,6 +2,7 @@
 
 // End-to-end tests: the game served as a static site, played in headless Chromium. They play the source, or,
 // with SITE_ROOT=dist, the built site as it's deployed (on its own port, so a running source server isn't reused).
+// The online tests also need the Worker, built and run by `wrangler dev`.
 
 import { defineConfig, devices } from '@playwright/test';
 
@@ -27,9 +28,18 @@ export default defineConfig({
     launchOptions: { args: ['--mute-audio'] }, // the game plays music
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    command: `node tests/serve.mjs ${PORT}`,
-    url: BASE_URL,
-    reuseExistingServer: !CI,
-  },
+  webServer: [
+    {
+      command: `node tests/serve.mjs ${PORT}`,
+      url: BASE_URL,
+      reuseExistingServer: !CI,
+    },
+    // the online tests' Worker and rooms, run locally with the test hooks on
+    {
+      command: 'npm run build && npx wrangler dev --env e2e --port 8787',
+      url: 'http://localhost:8787',
+      reuseExistingServer: !CI,
+      timeout: 120_000,
+    },
+  ],
 });

@@ -32,7 +32,7 @@ function sharedScriptNames() {
 }
 
 export default [
-  { ignores: ['dist/', 'node_modules/', '.remember/', 'worker/generated/'] },
+  { ignores: ['dist/', 'node_modules/', '.remember/', '.wrangler/', 'worker/generated/'] },
   js.configs.recommended,
   {
     rules: {

@@ -17,6 +17,7 @@
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
     "build:shared": "node scripts/shared-module.mjs",
     "build": "npm run build:shared && node scripts/build.mjs",
+    "dev": "npm run build && wrangler dev",
     "lighthouse": "npm run build && lhci autorun",
     "prepare": "husky"
   },
@@ -36,7 +37,8 @@
     "prettier": "3.9.10",
     "stylelint": "16.24.0",
     "stylelint-config-standard": "39.0.0",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "wrangler": "4.155.0"
   },
   "lint-staged": {
     "*.{js,mjs}": [
