@@ -199,6 +199,11 @@ $('join-dlg').addEventListener('cancel', (e) => {
   if (!$('join-wait').hidden) e.preventDefault();
   else setLinkRoom(null);
 });
+// Cancel turns the invite down, as Esc does: nothing was joined, so there's nothing to leave
+$('join-cancel').addEventListener('click', () => {
+  setLinkRoom(null);
+  $('join-dlg').close();
+});
 // leaving the waiting room gives up the seat, so the host can invite someone else on the same link
 $('join-leave').addEventListener('click', () => {
   leaveRoom();

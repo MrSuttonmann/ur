@@ -738,7 +738,10 @@
             <input type="text" id="join-name" maxlength="20" autocomplete="nickname" spellcheck="false" />
           </label>
           <p class="lobby-error" id="join-error" role="alert" hidden></p>
-          <button class="btn start" type="submit" id="join-go">Join</button>
+          <div class="confirm-actions">
+            <button class="btn" type="button" id="join-cancel">Cancel</button>
+            <button class="btn start" type="submit" id="join-go">Join</button>
+          </div>
         </form>
         <div class="join-wait" id="join-wait" hidden>
           <ul class="seats" aria-label="Players">

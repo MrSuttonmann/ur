@@ -151,6 +151,29 @@ test('scanning an invite’s QR code in the code window joins the game', async (
   await expect(host.locator('#seat1')).toHaveText('Ann');
 });
 
+test('an invite can be turned down with Cancel, from the link or a scanned code', async ({ openDevice }) => {
+  const host = await openDevice('/');
+  const link = await inviteFriend(host, 'Ted');
+  const friend = await openDevice(linkPath(link));
+  const turnedDown = async () => {
+    await expect(friend.locator('#join-dlg')).toBeHidden();
+    expect(await friend.evaluate(() => location.hash)).toBe('');
+    expect(await friend.evaluate(() => localStorage.getItem('ur-seats-v1') || '{}')).toBe('{}');
+  };
+  await expect(friend.locator('#join-dlg')).toContainText('Ted has invited you');
+  await friend.locator('#join-cancel').click();
+  await turnedDown();
+
+  await friend.locator('label[for=mode-online]').click();
+  await friend.locator('#join-code').click();
+  await fakeCamera(friend, { text: link });
+  await friend.locator('#code-scan').click();
+  await expect(friend.locator('#join-dlg')).toContainText('Ted has invited you');
+  await friend.locator('#join-cancel').click();
+  await turnedDown();
+  await expect(host.locator('#seat1')).toHaveText('Waiting for a friend…'); // the invite is still open
+});
+
 test('a QR code that isn’t an invite, or a refused camera, says so on one line', async ({ openDevice }) => {
   const page = await openDevice('/');
   await page.setViewportSize({ width: 375, height: 667 });
