@@ -4,8 +4,11 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { MOON, SUN, VARIANTS } from '../../worker/generated/shared.mjs';
 import {
   GAME_IDLE_MS,
+  applyIntent,
+  setConnected,
   LOBBY_IDLE_MS,
   cleanName,
   createRoom,
@@ -101,4 +104,227 @@ test('expiresAt is a day after the last touch in the lobby and a week once start
   assert.equal(expiresAt(room), 1000 + LOBBY_IDLE_MS);
   room.phase = 'roll';
   assert.equal(expiresAt(room), 1000 + GAME_IDLE_MS);
+});
+
+// ---------- play ----------
+
+// an rng that gives the scripted numbers in turn; a roll of n is n marked tips then the rest blank
+const scripted =
+  (...values) =>
+  () => {
+    assert.ok(values.length, 'the test ran out of random numbers');
+    return values.shift();
+  };
+const rolling = (n) => scripted(...[0, 1, 2, 3].map((die) => (die < n ? 0.1 : 0.9)));
+const SUN_FIRST = () => 0.1;
+const MOON_FIRST = () => 0.9;
+
+// a started room with both seated and connected; Sun (Ann, the host) goes first unless told otherwise
+function startedRoom(rng = SUN_FIRST) {
+  const room = newRoom();
+  joinRoom(room, 'Bea', FRIEND_KEY, 1500);
+  setConnected(room, 0, true, 2000);
+  setConnected(room, 1, true, 2000);
+  assert.equal(applyIntent(room, 0, { t: 'start' }, 2000, rng).event.kind, 'start');
+  return room;
+}
+const snapshot = (room) => structuredClone(room);
+
+// a game Sun has just won, by test-set then a roll of 1
+function finishedRoom() {
+  const room = startedRoom();
+  const rules = VARIANTS.classic;
+  const positions = [Array(rules.counters).fill(rules.home), room.positions[MOON]];
+  positions[SUN][0] = rules.home - 1;
+  const hooks = { testHooks: true };
+  applyIntent(room, 0, { t: 'test-set', positions, turn: SUN }, 3000, SUN_FIRST, hooks);
+  applyIntent(room, 0, { t: 'roll' }, 3100, rolling(1));
+  applyIntent(room, 0, { t: 'move', counter: 0 }, 3200, SUN_FIRST);
+  return room;
+}
+
+test('createRoom refuses variant ids inherited from Object.prototype', () => {
+  for (const variant of ['constructor', '__proto__', 'toString'])
+    assert.throws(() => createRoom('K7QXM2', 'Ann', variant, HOST_KEY, 1), /Unknown variant/);
+});
+
+test('only the host can start, and only with two players', () => {
+  const room = newRoom();
+  assert.deepEqual(applyIntent(room, 0, { t: 'start' }, 2000, SUN_FIRST), { error: 'not-ready' });
+  joinRoom(room, 'Bea', FRIEND_KEY, 1500);
+  assert.deepEqual(applyIntent(room, 1, { t: 'start' }, 2000, SUN_FIRST), { error: 'not-host' });
+  assert.equal(room.phase, 'lobby');
+  const { event } = applyIntent(room, 0, { t: 'start' }, 2000, MOON_FIRST); // not connected: start still works
+  assert.deepEqual(event, { kind: 'start', first: MOON });
+  assert.equal(room.phase, 'roll');
+  assert.equal(room.turn, MOON);
+  assert.equal(room.gameNo, 1);
+  assert.deepEqual(room.log, ['Bea goes first.']);
+  assert.deepEqual(applyIntent(room, 0, { t: 'start' }, 2001, SUN_FIRST), { error: 'wrong-phase' });
+});
+
+test('rolling is refused while either player is disconnected', () => {
+  const room = startedRoom();
+  setConnected(room, 1, false, 3000);
+  const before = snapshot(room);
+  assert.deepEqual(applyIntent(room, 0, { t: 'roll' }, 4000, rolling(2)), { error: 'paused' });
+  assert.deepEqual(room, before);
+  setConnected(room, 1, true, 5000);
+  assert.equal(applyIntent(room, 0, { t: 'roll' }, 6000, rolling(2)).event.kind, 'roll');
+});
+
+test('rolling out of turn is refused', () => {
+  const room = startedRoom();
+  const before = snapshot(room);
+  assert.deepEqual(applyIntent(room, 1, { t: 'roll' }, 3000, rolling(2)), { error: 'not-your-turn' });
+  assert.deepEqual(room, before);
+});
+
+test('moving before rolling is refused', () => {
+  const room = startedRoom();
+  assert.deepEqual(applyIntent(room, 0, { t: 'move', counter: 0 }, 3000, SUN_FIRST), { error: 'wrong-phase' });
+});
+
+test('an illegal counter is refused', () => {
+  const room = startedRoom();
+  applyIntent(room, 0, { t: 'roll' }, 3000, rolling(2));
+  const before = snapshot(room);
+  for (const counter of [99, -1, 'x', undefined])
+    assert.deepEqual(applyIntent(room, 0, { t: 'move', counter }, 4000, SUN_FIRST), { error: 'illegal' });
+  assert.deepEqual(room, before);
+});
+
+test('second move of a double-click is rejected', () => {
+  const room = startedRoom();
+  applyIntent(room, 0, { t: 'roll' }, 3000, rolling(2));
+  assert.equal(applyIntent(room, 0, { t: 'move', counter: 0 }, 3100, SUN_FIRST).event.kind, 'move');
+  const before = snapshot(room);
+  const second = applyIntent(room, 0, { t: 'move', counter: 0 }, 3101, SUN_FIRST);
+  assert.ok(['wrong-phase', 'not-your-turn'].includes(second.error));
+  assert.deepEqual(room, before);
+});
+
+test('a roll with no move passes the turn and logs it', () => {
+  const room = startedRoom();
+  const { event } = applyIntent(room, 0, { t: 'roll' }, 3000, rolling(0));
+  assert.deepEqual(event, { kind: 'roll', side: SUN, dice: [0, 0, 0, 0], roll: 0, passed: true });
+  assert.equal(room.turn, MOON);
+  assert.equal(room.phase, 'roll');
+  assert.equal(room.log[0], 'Ann rolled 0: no move');
+  const mine = room.stats.bySide[SUN];
+  assert.equal(mine.rolls, 1);
+  assert.equal(mine.passes, 1);
+  assert.equal(mine.rollCounts[0], 1);
+});
+
+test('a move applies, is logged and passes the turn', () => {
+  const room = startedRoom();
+  applyIntent(room, 0, { t: 'roll' }, 3000, rolling(2));
+  assert.equal(room.phase, 'move');
+  const { event } = applyIntent(room, 0, { t: 'move', counter: 0 }, 3100, SUN_FIRST);
+  assert.deepEqual(event, {
+    kind: 'move',
+    side: SUN,
+    move: { counter: 0, from: 0, to: 2, captures: -1 },
+    landsOnRose: false,
+    again: false,
+    finished: false,
+  });
+  assert.equal(room.positions[SUN][0], 2);
+  assert.equal(room.turn, MOON);
+  assert.equal(room.phase, 'roll');
+  assert.match(room.log[0], /^Ann rolled 2: /);
+  assert.equal(room.stats.bySide[SUN].moves, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(event)), event);
+});
+
+test('landing on a rose keeps the turn', () => {
+  const room = startedRoom();
+  applyIntent(room, 0, { t: 'roll' }, 3000, rolling(4));
+  const { event } = applyIntent(room, 0, { t: 'move', counter: 0 }, 3100, SUN_FIRST);
+  assert.equal(event.landsOnRose, true);
+  assert.equal(event.again, true);
+  assert.equal(room.turn, SUN);
+  assert.equal(room.phase, 'roll');
+  assert.equal(room.stats.bySide[SUN].roseChain, 1);
+});
+
+test('test-set is refused without testHooks', () => {
+  const room = startedRoom();
+  const before = snapshot(room);
+  const intent = { t: 'test-set', positions: room.positions, turn: SUN };
+  assert.deepEqual(applyIntent(room, 0, intent, 3000, SUN_FIRST), { error: 'illegal' });
+  assert.deepEqual(room, before);
+});
+
+test('bringing the last counter home wins', () => {
+  const room = finishedRoom();
+  assert.equal(room.phase, 'over');
+  assert.equal(room.winner, SUN);
+  assert.equal(room.endedBy, 'win');
+  assert.equal(room.log[0].startsWith('Ann rolled 1: '), true);
+});
+
+test('the clock only runs with both players connected', () => {
+  const room = startedRoom(); // started at 2000 with both connected
+  setConnected(room, 1, false, 3000); // 1 s counted
+  setConnected(room, 1, true, 8000); // 5 s away, not counted
+  applyIntent(room, 0, { t: 'roll' }, 9000, rolling(2)); // 1 s more
+  assert.equal(room.stats.playMs, 2000);
+  assert.equal(room.stats.bySide[SUN].msOnTurn, 2000);
+  assert.equal(room.stats.bySide[MOON].msOnTurn, 0);
+});
+
+test('simultaneous rematch starts one game', () => {
+  const room = finishedRoom();
+  assert.deepEqual(applyIntent(room, 0, { t: 'rematch' }, 4000, SUN_FIRST).event, { kind: 'rematch-offer', seat: 0 });
+  assert.equal(room.phase, 'over');
+  const second = applyIntent(room, 1, { t: 'rematch' }, 4001, MOON_FIRST);
+  assert.deepEqual(second.event, { kind: 'start', first: MOON });
+  assert.equal(room.gameNo, 2);
+  assert.equal(room.phase, 'roll');
+  assert.equal(room.winner, null);
+  assert.deepEqual(room.rematch, [false, false]);
+  assert.equal(room.stats.playMs, 0);
+  for (const seat of [0, 1])
+    assert.deepEqual(applyIntent(room, seat, { t: 'rematch' }, 4002, SUN_FIRST), { error: 'wrong-phase' });
+  assert.equal(room.gameNo, 2);
+});
+
+test('leaving mid-game forfeits to the other player', () => {
+  const room = startedRoom();
+  const { event } = applyIntent(room, 1, { t: 'leave' }, 3000, SUN_FIRST);
+  assert.deepEqual(event, { kind: 'left', seat: 1, forfeit: true });
+  assert.equal(room.winner, SUN);
+  assert.equal(room.endedBy, 'forfeit');
+  assert.equal(room.log[0], 'Bea left the game.');
+  assert.equal(room.phase, 'closed');
+  assert.deepEqual(applyIntent(room, 0, { t: 'roll' }, 3001, SUN_FIRST), { error: 'wrong-phase' });
+});
+
+test('leaving between games closes the room without a winner change', () => {
+  const room = finishedRoom();
+  const { event } = applyIntent(room, 1, { t: 'leave' }, 4000, SUN_FIRST);
+  assert.deepEqual(event, { kind: 'left', seat: 1, forfeit: false });
+  assert.equal(room.phase, 'closed');
+  assert.equal(room.winner, SUN);
+  assert.equal(room.endedBy, 'win');
+  const lobby = newRoom();
+  assert.equal(applyIntent(lobby, 0, { t: 'leave' }, 2000, SUN_FIRST).event.forfeit, false);
+  assert.equal(lobby.phase, 'closed');
+});
+
+test('seq rises by one on every accepted intent and not on a refused one', () => {
+  const room = startedRoom();
+  const seq = room.seq;
+  applyIntent(room, 1, { t: 'roll' }, 3000, rolling(2));
+  assert.equal(room.seq, seq);
+  assert.equal(room.touched, 2000);
+  applyIntent(room, 0, { t: 'roll' }, 3000, rolling(2));
+  assert.equal(room.seq, seq + 1);
+  assert.equal(room.touched, 3000);
+  setConnected(room, 1, false, 3500);
+  assert.equal(room.seq, seq + 2);
+  applyIntent(room, 0, { t: 'move', counter: 0 }, 4000, SUN_FIRST); // paused
+  assert.equal(room.seq, seq + 2);
 });

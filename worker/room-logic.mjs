@@ -4,7 +4,22 @@
 // lobby (ids, names, seats, invites, expiry); the play half is added below it. Functions that change a room
 // change it in place and return it, so a caller holds one room object; a refused change touches nothing.
 
-import { IN_TRAY, SIDES, VARIANTS, createGameStats } from './generated/shared.mjs';
+import {
+  IN_TRAY,
+  MOON,
+  SIDES,
+  SUN,
+  VARIANTS,
+  allHome,
+  applyMove,
+  createGameStats,
+  describeMove,
+  isRose,
+  legalMoves,
+  opponentOf,
+  recordMove,
+  rollsAgain,
+} from './generated/shared.mjs';
 
 const ROOM_ID_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const ROOM_ID_LENGTH = 6;
@@ -27,9 +42,10 @@ function cleanName(raw) {
   return name || null;
 }
 
+const freshPositions = (rules) => SIDES.map(() => Array(rules.counters).fill(IN_TRAY));
+
 function createRoom(id, hostName, variant, hostKey, now) {
-  const rules = VARIANTS[variant];
-  if (!rules) throw new Error(`Unknown variant: ${variant}`);
+  if (!Object.hasOwn(VARIANTS, variant)) throw new Error(`Unknown variant: ${variant}`);
   const name = cleanName(hostName);
   if (!name) throw new Error('A room needs a host name');
   return {
@@ -38,7 +54,7 @@ function createRoom(id, hostName, variant, hostKey, now) {
     seats: [{ name, key: hostKey }, null],
     phase: 'lobby',
     gameNo: 0,
-    positions: SIDES.map(() => Array(rules.counters).fill(IN_TRAY)),
+    positions: freshPositions(VARIANTS[variant]),
     turn: null,
     roll: null,
     dice: null,
@@ -87,7 +103,187 @@ function publicState(room, seat) {
   return view;
 }
 
+// ---------- play ----------
+// the same turn sequence as js/game.js (landDice, completeMove, endTurn, finishGame), run by the server
+
+const bothHere = (room) => room.connected[0] && room.connected[1];
+const clockRuns = (room) => (room.phase === 'roll' || room.phase === 'move') && bothHere(room);
+
+// adds the time since the clock last looked to the game and to whoever's turn it was; the caller then changes the
+// state and restarts the clock
+function settleClock(room, now) {
+  if (room.clockFrom !== null && clockRuns(room)) {
+    const elapsed = Math.max(0, now - room.clockFrom);
+    room.stats.playMs += elapsed;
+    room.stats.bySide[room.turn].msOnTurn += elapsed;
+  }
+}
+const restartClock = (room, now) => {
+  room.clockFrom = clockRuns(room) ? now : null;
+};
+
+const sideName = (room, side) => room.seats[side].name;
+const writeToLedger = (room, line) => room.log.unshift(line);
+
+function beginGame(room, rng) {
+  const first = rng() < 0.5 ? SUN : MOON;
+  room.positions = freshPositions(VARIANTS[room.variant]);
+  room.stats = createGameStats();
+  room.gameNo++;
+  room.turn = first;
+  room.roll = null;
+  room.dice = null;
+  room.winner = null;
+  room.endedBy = null;
+  room.rematch = [false, false];
+  room.log = [`${sideName(room, first)} goes first.`];
+  room.phase = 'roll';
+  return { kind: 'start', first };
+}
+
+function rollDice(room, rng) {
+  const dice = Array.from({ length: 4 }, () => (rng() < 0.5 ? 1 : 0));
+  const roll = dice.reduce((sum, die) => sum + die, 0);
+  const side = room.turn;
+  const mine = room.stats.bySide[side];
+  mine.rolls++;
+  mine.rollCounts[roll]++;
+  room.dice = dice;
+  room.roll = roll;
+  const passed = !legalMoves(room.positions, side, roll, VARIANTS[room.variant]).length;
+  if (passed) {
+    mine.passes++;
+    mine.roseChain = 0;
+    writeToLedger(room, `${sideName(room, side)} rolled ${roll}: no move`);
+    room.turn = opponentOf(side);
+    room.roll = null;
+    room.phase = 'roll';
+  } else room.phase = 'move';
+  return { kind: 'roll', side, dice: dice.slice(), roll, passed };
+}
+
+function makeMove(room, move) {
+  const rules = VARIANTS[room.variant];
+  const side = room.turn;
+  const landsOnRose = isRose(move.to, rules);
+  const again = rollsAgain(move, rules);
+  const rolled = `${sideName(room, side)} rolled ${room.roll}: `;
+  writeToLedger(room, rolled + describeMove(side, move, landsOnRose, again, rules));
+  room.positions = applyMove(room.positions, side, move);
+  recordMove(room.stats, room.positions, side, move, landsOnRose, rules);
+  const finished = allHome(room.positions, side, rules);
+  if (finished) {
+    room.winner = side;
+    room.endedBy = 'win';
+    room.phase = 'over';
+  } else {
+    if (!again) {
+      room.stats.bySide[side].roseChain = 0;
+      room.turn = opponentOf(side);
+    }
+    room.phase = 'roll';
+  }
+  room.roll = null;
+  return { kind: 'move', side, move: { ...move }, landsOnRose, again, finished };
+}
+
+function validPositions(room, positions) {
+  const { counters, home } = VARIANTS[room.variant];
+  return (
+    Array.isArray(positions) &&
+    positions.length === SIDES.length &&
+    positions.every(
+      (own) =>
+        Array.isArray(own) &&
+        own.length === counters &&
+        own.every((square) => Number.isInteger(square) && square >= IN_TRAY && square <= home),
+    )
+  );
+}
+
+function runIntent(room, seat, intent, now, rng, testHooks) {
+  const refuse = (error) => ({ error });
+  if (room.phase === 'closed') return refuse('wrong-phase');
+  if (seat !== 0 && seat !== 1) return refuse('not-your-turn');
+  const playing = room.phase === 'roll' || room.phase === 'move';
+  switch (intent && intent.t) {
+    case 'start':
+      if (seat !== 0) return refuse('not-host');
+      if (room.phase !== 'lobby') return refuse('wrong-phase');
+      if (!room.seats[1]) return refuse('not-ready');
+      return { event: beginGame(room, rng) };
+    case 'roll':
+      if (room.phase !== 'roll') return refuse('wrong-phase');
+      if (room.turn !== seat) return refuse('not-your-turn');
+      if (!bothHere(room)) return refuse('paused');
+      settleClock(room, now);
+      return { event: rollDice(room, rng) };
+    case 'move': {
+      if (room.phase !== 'move') return refuse('wrong-phase');
+      if (room.turn !== seat) return refuse('not-your-turn');
+      if (!bothHere(room)) return refuse('paused');
+      const moves = legalMoves(room.positions, seat, room.roll, VARIANTS[room.variant]);
+      const move = moves.find((candidate) => candidate.counter === intent.counter);
+      if (!move) return refuse('illegal');
+      settleClock(room, now);
+      return { event: makeMove(room, move) };
+    }
+    case 'rematch':
+      if (room.phase !== 'over' || room.endedBy !== 'win' || room.rematch[seat]) return refuse('wrong-phase');
+      room.rematch[seat] = true;
+      if (room.rematch[opponentOf(seat)]) return { event: beginGame(room, rng) };
+      return { event: { kind: 'rematch-offer', seat } };
+    case 'leave':
+      settleClock(room, now);
+      if (playing) {
+        room.winner = opponentOf(seat);
+        room.endedBy = 'forfeit';
+        writeToLedger(room, `${sideName(room, seat)} left the game.`);
+      }
+      room.phase = 'closed';
+      return { event: { kind: 'left', seat, forfeit: playing } };
+    case 'test-set':
+      if (!testHooks) return refuse('illegal');
+      if (!playing) return refuse('wrong-phase');
+      if (!validPositions(room, intent.positions) || !SIDES.includes(intent.turn)) return refuse('illegal');
+      settleClock(room, now);
+      room.positions = intent.positions.map((own) => own.slice());
+      room.turn = intent.turn;
+      room.roll = null;
+      room.dice = null;
+      room.phase = 'roll';
+      return { event: { kind: 'test-set' } };
+    default:
+      return refuse('illegal');
+  }
+}
+
+// Carries out a seat's intent if it is allowed. The work is done on a copy that replaces the room's contents only
+// on success, so a refused intent leaves the room (clock, touched and seq too) exactly as it was.
+function applyIntent(room, seat, intent, now, rng, { testHooks = false } = {}) {
+  const draft = structuredClone(room);
+  const outcome = runIntent(draft, seat, intent, now, rng, testHooks);
+  if (outcome.error) return outcome;
+  restartClock(draft, now);
+  draft.touched = now;
+  draft.seq++;
+  Object.assign(room, draft);
+  return { room, event: outcome.event };
+}
+
+// a seat's connection coming or going; time so far counts under the old arrangement, so the clock is settled first
+function setConnected(room, seat, connected, now) {
+  settleClock(room, now);
+  room.connected[seat] = connected;
+  restartClock(room, now);
+  room.touched = now;
+  room.seq++;
+  return { room, event: { kind: 'presence' } };
+}
+
 export {
+  applyIntent,
+  setConnected,
   ROOM_ID_ALPHABET,
   ROOM_ID_LENGTH,
   NAME_MAX,
