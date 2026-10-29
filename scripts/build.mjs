@@ -17,7 +17,18 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = path.join(ROOT, 'dist');
 
 // what the site serves, copied as it is
-const COPIED_AS_IS = ['icons', 'music', 'fonts', 'og-image.jpg', 'manifest.webmanifest', '_headers', 'LICENSE'];
+const COPIED_AS_IS = [
+  'icons',
+  'music',
+  'fonts',
+  'vendor',
+  'og-image.jpg',
+  'manifest.webmanifest',
+  '_headers',
+  'LICENSE',
+];
+// copied scripts the page loads only when it needs them, minified on the way (their licences are copied beside them)
+const MINIFIED_ON_COPY = ['vendor/jsqr.js'];
 const PAGE = 'index.html';
 const SERVICE_WORKER = 'sw.js';
 // the joined files sit in the folders their parts came from, so the stylesheets' relative font paths still work
@@ -78,6 +89,11 @@ function pointPageAtJoinedFiles(page) {
 await rm(OUTPUT, { recursive: true, force: true });
 await mkdir(OUTPUT);
 await Promise.all(COPIED_AS_IS.map((name) => cp(path.join(ROOT, name), path.join(OUTPUT, name), { recursive: true })));
+for (const script of MINIFIED_ON_COPY)
+  await writeOutput(
+    script,
+    (await transform(await readSource(script), { minify: true, target: BROWSER_TARGETS })).code,
+  );
 
 const page = await readSource(PAGE);
 const styles = filesNamedBy(page, STYLESHEET_TAG);

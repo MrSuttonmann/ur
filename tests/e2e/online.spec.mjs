@@ -14,6 +14,7 @@ import {
   linkPath,
   sendTestIntent,
   test,
+  fakeCamera,
 } from './online-helpers.mjs';
 
 const modeAndPhase = (page) => page.evaluate(() => [game.mode, game.phase]);
@@ -130,6 +131,55 @@ test('a mistyped or unknown code says so on one line, and the window stays open'
   await expect(page.locator('#join-dlg')).toBeHidden();
   await page.locator('#code-cancel').click();
   await expect(page.locator('#code-dlg')).toBeHidden();
+});
+
+test('scanning an invite’s QR code in the code window joins the game', async ({ openDevice }) => {
+  const host = await openDevice('/');
+  const link = await inviteFriend(host, 'Ted');
+  const friend = await openDevice('/');
+  await friend.locator('label[for=mode-online]').click();
+  await friend.locator('#join-code').click();
+  await fakeCamera(friend, { text: link });
+  await friend.locator('#code-scan').click();
+  await expect(friend.locator('#join-dlg')).toContainText('Ted has invited you to play the Royal Game of Ur');
+  await expect(friend.locator('#code-dlg')).toBeHidden();
+  expect(await friend.evaluate(() => window.fakeCameraStream.getTracks().map((track) => track.readyState))).toEqual([
+    'ended',
+  ]); // the camera is off once the code is read
+  await expect(friend.locator('video')).toHaveCount(0); // and its video is gone, so Brave's Playlist has nothing to offer
+  await joinFriend(friend, 'Ann');
+  await expect(host.locator('#seat1')).toHaveText('Ann');
+});
+
+test('a QR code that isn’t an invite, or a refused camera, says so on one line', async ({ openDevice }) => {
+  const page = await openDevice('/');
+  await page.setViewportSize({ width: 375, height: 667 });
+  const lines = () =>
+    page.locator('#code-error').evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return new Set([...range.getClientRects()].map((box) => Math.round(box.top))).size;
+    });
+  await page.locator('label[for=mode-online]').click();
+  await page.locator('#join-code').click();
+
+  await fakeCamera(page, { text: 'https://example.com/menu' });
+  await page.locator('#code-scan').click();
+  await expect(page.locator('#code-error')).toContainText('isn’t an invite');
+  expect(await lines()).toBe(1);
+  await expect(page.locator('#code-viewfinder')).toBeVisible(); // still looking for the right one
+  await page.locator('#code-cancel').click();
+  // the window's close event comes a moment after the click; then the camera is off
+  await expect.poll(() => page.evaluate(() => window.fakeCameraStream.getTracks()[0].readyState)).toBe('ended');
+  await expect(page.locator('video')).toHaveCount(0);
+
+  await page.locator('#join-code').click();
+  await fakeCamera(page, { refuse: 'NotAllowedError' });
+  await page.locator('#code-scan').click();
+  await expect(page.locator('#code-error')).toContainText('camera wasn’t allowed');
+  expect(await lines()).toBe(1);
+  await expect(page.locator('#code-viewfinder')).toBeHidden();
+  await expect(page.locator('#code-scan')).toBeVisible(); // to try again, or type the code instead
 });
 
 test('a third visitor is told the game is full', async ({ openDevice }) => {

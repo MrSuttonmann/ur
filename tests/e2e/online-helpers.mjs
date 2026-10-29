@@ -77,3 +77,39 @@ export async function hostAndJoin(openDevice, { hostName = 'Ted', friendName = '
 // sends an intent through the page's own socket to its room, as the page itself would (`test-set` is only allowed
 // by the Worker run for the tests)
 export const sendTestIntent = (page, intent) => page.evaluate((intent) => sendIntent(intent), intent);
+
+// Swaps the page's camera for a canvas showing the QR code of `text`, drawn with the page's own QR maker, or,
+// given an error name, a camera that refuses with it. The browser's own QR reader is hidden, so the page reads the
+// code with jsQR, as an iPhone does. The fake stream is kept on window.fakeCameraStream to check it's stopped.
+export async function fakeCamera(page, { text = null, refuse = null } = {}) {
+  await page.evaluate(
+    ({ text, refuse }) => {
+      delete window.BarcodeDetector;
+      navigator.mediaDevices.getUserMedia = async () => {
+        if (refuse) throw new DOMException('refused', refuse);
+        const code = qrcode(0, 'M');
+        code.addData(text);
+        code.make();
+        const cell = 8,
+          count = code.getModuleCount(),
+          size = (count + 8) * cell;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const context = canvas.getContext('2d');
+        const draw = () => {
+          context.fillStyle = '#fff';
+          context.fillRect(0, 0, size, size);
+          context.fillStyle = '#000';
+          for (let row = 0; row < count; row++)
+            for (let column = 0; column < count; column++)
+              if (code.isDark(row, column)) context.fillRect((column + 4) * cell, (row + 4) * cell, cell, cell);
+        };
+        draw();
+        setInterval(draw, 100); // a canvas stream only sends frames as the canvas is drawn
+        window.fakeCameraStream = canvas.captureStream(10);
+        return window.fakeCameraStream;
+      };
+    },
+    { text, refuse },
+  );
+}

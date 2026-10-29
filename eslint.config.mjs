@@ -33,7 +33,7 @@ function sharedScriptNames() {
 
 export default [
   // js/qrcode.js is vendored as it was published, so it keeps its own style
-  { ignores: ['dist/', 'node_modules/', '.remember/', '.wrangler/', 'worker/generated/', 'js/qrcode.js'] },
+  { ignores: ['dist/', 'node_modules/', '.remember/', '.wrangler/', 'worker/generated/', 'js/qrcode.js', 'vendor/'] },
   js.configs.recommended,
   {
     rules: {

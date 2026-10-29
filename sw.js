@@ -10,7 +10,7 @@
   cache, including the byte ranges audio players ask for. Online play's room API (/api/) is never
   cached or answered here.
 */
-const CACHE = 'ur-v12';
+const CACHE = 'ur-v13';
 const CODE = [
   'css/fonts.css',
   'css/base.css',
@@ -61,6 +61,7 @@ const CODE = [
   'js/music.js',
   'js/qrcode.js',
   'js/online.js',
+  'js/scan.js',
   'js/lobby.js',
   'js/main.js',
 ];

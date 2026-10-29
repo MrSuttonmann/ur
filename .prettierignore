@@ -8,3 +8,4 @@ playwright-report/
 worker/generated/
 # vendored as published
 js/qrcode.js
+vendor/

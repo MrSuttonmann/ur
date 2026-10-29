@@ -789,6 +789,9 @@
           aria-label="Game code"
           aria-describedby="code-error"
         />
+        <button class="btn" type="button" id="code-scan" hidden>Scan QR code</button>
+        <!-- the camera, to aim by, while scanning; what it reads is announced in the message below -->
+        <div class="code-viewfinder" id="code-viewfinder" aria-hidden="true" hidden></div>
         <p class="lobby-error" id="code-error" role="alert" hidden></p>
         <div class="confirm-actions">
           <button class="btn" type="button" id="code-cancel">Cancel</button>
@@ -902,6 +905,7 @@
     <script src="js/music.js"></script>
     <script src="js/qrcode.js"></script>
     <script src="js/online.js"></script>
+    <script src="js/scan.js"></script>
     <script src="js/lobby.js"></script>
     <script src="js/main.js"></script>
   </body>

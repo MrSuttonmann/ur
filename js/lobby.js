@@ -280,17 +280,61 @@ async function followInvite(roomId) {
 $('join-code').addEventListener('click', () => {
   $('code-input').value = '';
   $('code-error').hidden = true;
+  closeViewfinder();
   $('code-dlg').showModal();
   $('code-input').focus();
 });
 $('code-cancel').addEventListener('click', () => $('code-dlg').close());
+$('code-dlg').addEventListener('close', closeViewfinder); // the camera is never left on behind a closed window
 $('code-input').addEventListener('input', () => {
   $('code-error').hidden = true;
 });
-function showCodeError(text) {
+// a message under the code; the typing box takes the focus back unless the camera is in use, which would raise
+// the phone's keyboard over the viewfinder
+function showCodeError(text, { focus = true } = {}) {
   $('code-error').textContent = text;
   $('code-error').hidden = false;
-  $('code-input').focus();
+  if (focus) $('code-input').focus();
+}
+
+// Scan QR code: the camera in a small viewfinder, and an invite's code is joined as if it had been typed
+$('code-scan').addEventListener('click', async () => {
+  $('code-error').hidden = true;
+  $('code-scan').hidden = true;
+  $('code-viewfinder').hidden = false;
+  try {
+    await startScanning($('code-viewfinder'), scanned);
+  } catch (e) {
+    closeViewfinder();
+    showCodeError(cameraTrouble(e), { focus: false });
+  }
+});
+function closeViewfinder() {
+  stopScanning();
+  $('code-viewfinder').hidden = true;
+  $('code-scan').hidden = !canScan();
+}
+function scanned(text) {
+  const code = codeInInvite(text);
+  if (!code) {
+    showCodeError('That QR code isn’t an invite.', { focus: false }); // and the camera keeps looking
+    return;
+  }
+  closeViewfinder();
+  $('code-input').value = code;
+  $('code-form').requestSubmit();
+}
+// the code in an invite's QR code: its link (from this site or another copy of it), or just the code
+function codeInInvite(text) {
+  const inLink = /#g=(\w{6})$/.exec(text.trim());
+  const code = (inLink ? inLink[1] : text.trim()).toUpperCase();
+  return ROOM_CODE.test(code) ? code : null;
+}
+// why the camera didn't start, short enough for one line on a phone
+function cameraTrouble(error) {
+  if (error.name === 'NotAllowedError' || error.name === 'SecurityError') return 'The camera wasn’t allowed.';
+  if (error.name === 'NotFoundError' || error.name === 'OverconstrainedError') return 'No camera was found.';
+  return 'Couldn’t start the camera.';
 }
 // a code typed in any case, with spaces or a dash, is still the code
 const typedCode = () => $('code-input').value.toUpperCase().replace(/[\s-]/g, '');
