@@ -367,3 +367,65 @@ test('a fresh full state wins over a roll still playing out', async ({ openDevic
   await expectInStep(pages);
   expect(await friend.evaluate(() => [game.phase, game.roll])).toEqual(['roll', null]);
 });
+
+// ---------- the board turned for the friend ----------
+
+const MOON_SIDE = 1;
+const boxOf = (page, selector) => page.locator(selector).boundingBox();
+const cellBox = (page, side, square) =>
+  page.evaluate(
+    ([side, square]) => {
+      const r = squareElement(side, square).getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    },
+    [side, square],
+  );
+
+test('the friend sees their own pieces at the bottom', async ({ openDevice }) => {
+  const { friend } = await startOnlineGame(openDevice);
+  const board = await boxOf(friend, '#board'),
+    tray = await boxOf(friend, '#tray1'),
+    theirs = await boxOf(friend, '#tray0');
+  expect(tray.y).toBeGreaterThan(board.y + board.height);
+  expect(theirs.y + theirs.height).toBeLessThan(board.y);
+  // the shared row is 5, and Moon's own row (squares 1–4) lies below it
+  const own = await cellBox(friend, MOON_SIDE, 1),
+    shared = await cellBox(friend, MOON_SIDE, 5);
+  expect(own.y).toBeGreaterThan(shared.y);
+  // the columns stay put: Moon's route still starts at the right of its row and runs left
+  expect(own.x).toBeGreaterThan((await cellBox(friend, MOON_SIDE, 4)).x);
+});
+
+test('the host’s board is unchanged', async ({ openDevice }) => {
+  const { host } = await startOnlineGame(openDevice);
+  const board = await boxOf(host, '#board');
+  expect((await boxOf(host, '#tray0')).y).toBeGreaterThan(board.y + board.height);
+  expect((await boxOf(host, '#tray1')).y + (await boxOf(host, '#tray1')).height).toBeLessThan(board.y);
+  expect((await cellBox(host, 0, 1)).y).toBeGreaterThan((await cellBox(host, 0, 5)).y);
+});
+
+test('move arrows point from the right counter to the right square on the turned board', async ({ openDevice }) => {
+  const { friend, pages } = await startOnlineGame(openDevice);
+  await setUpGame(pages, [Array(7).fill(IN), [IN, 2, IN, IN, IN, IN, IN]], MOON_SIDE);
+  while (!(await rollOnce(pages))) await expectInStep(pages);
+  const piece = friend.locator('.piece.movable').first();
+  await piece.focus();
+  const arrow = friend.locator('#arrow-preview');
+  await expect(arrow).toBeVisible();
+  const [end, landing] = await friend.evaluate(() => {
+    const path = $('arrow-preview'),
+      point = path.getPointAtLength(path.getTotalLength()),
+      move = legalMoves(game.positions, game.turn, game.roll).find(
+        (m) => `${game.turn}-${m.counter}` === document.activeElement.dataset.pid,
+      );
+    const r = landingElement(game.turn, move).getBoundingClientRect();
+    return [
+      { x: point.x - scrollX, y: point.y - scrollY },
+      { x: r.x, y: r.y, width: r.width, height: r.height },
+    ];
+  });
+  expect(end.x).toBeGreaterThanOrEqual(landing.x);
+  expect(end.x).toBeLessThanOrEqual(landing.x + landing.width);
+  expect(end.y).toBeGreaterThanOrEqual(landing.y);
+  expect(end.y).toBeLessThanOrEqual(landing.y + landing.height);
+});

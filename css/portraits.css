@@ -568,3 +568,42 @@
 .stargazer-hat-gold-star {
   fill: var(--ochre);
 }
+
+/* the friend's board is turned: their (Moon's) tray and portrait sit below the board, the host's above it */
+.view-moon > .tray-sun {
+  order: -1;
+}
+
+.view-moon > .tray-moon {
+  order: 1;
+}
+
+.view-moon > .dock,
+.view-moon > .key,
+.view-moon > .under {
+  order: 2;
+}
+
+@media (min-width: 700px) and (max-width: 1159px) {
+  .view-moon #portrait1 .speech {
+    top: auto;
+    bottom: calc(100% + 12px);
+  }
+
+  .view-moon #portrait1 .speech::before {
+    top: auto;
+    bottom: -9px;
+    transform: rotate(225deg);
+  }
+
+  .view-moon #portrait0 .speech {
+    top: calc(100% + 12px);
+    bottom: auto;
+  }
+
+  .view-moon #portrait0 .speech::before {
+    top: -9px;
+    bottom: auto;
+    transform: rotate(45deg);
+  }
+}

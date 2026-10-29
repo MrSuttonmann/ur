@@ -39,6 +39,15 @@
   gap: 4px;
 }
 
+.board > .cell {
+  grid-row: calc(var(--row) + 1);
+}
+
+/* the friend plays Moon: the rows are mirrored top to bottom (the columns stay put) */
+.view-moon .board > .cell {
+  grid-row: calc(3 - var(--row));
+}
+
 .cell {
   position: relative;
 }

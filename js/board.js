@@ -116,6 +116,7 @@ for (let row = 0; row < BOARD_ROWS; row++)
     const key = cellKey([row, column]);
     const cell = document.createElement('div');
     cell.className = 'cell';
+    placeOnBoard(cell, row, column, 1);
     cell.innerHTML =
       tileSVG(kind, tileSeed++) +
       '<span class="danger-wash" aria-hidden="true"></span><span class="num"></span><span class="num num-moon"></span><div class="slot"></div>' +
@@ -124,9 +125,15 @@ for (let row = 0; row < BOARD_ROWS; row++)
     boardElement.appendChild(cell);
   }
 const boardSlots = Object.values(boardCells).map((cell) => cell.querySelector('.slot')); // where counters stand on the board
+// every square and gate label names its own row and column, so the friend's board can mirror the rows in CSS
+function placeOnBoard(element, row, column, span) {
+  element.style.setProperty('--row', row);
+  element.style.gridColumn = `${column + 1} / span ${span}`;
+}
 function gateLabel(row) {
   const gate = document.createElement('div');
   gate.className = 'cell gap g1';
+  placeOnBoard(gate, row, GATE_COLUMN, 2);
   gate.innerHTML = row === ROW.MOON ? 'Moon’s<br>gate' : row === ROW.SUN ? 'Sun’s<br>gate' : '';
   return gate;
 }
@@ -477,6 +484,7 @@ function renderTray(side) {
 
 // ---------- render: redraw everything from the game state ----------
 function render() {
+  $('game').classList.toggle('view-moon', isOnline() && mySide() === MOON); // the friend sees their own side at the bottom
   const previousPlaces = counterPlaces();
   placeCounters();
   const effects = pendingEffects;
