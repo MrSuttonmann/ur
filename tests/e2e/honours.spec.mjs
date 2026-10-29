@@ -60,11 +60,20 @@ test('honours are awarded, announced, shared and kept', async ({ page }) => {
 
   await test.step('the result card is drawn', async () => {
     const card = await page.evaluate(async () => {
-      const file = await resultCardFile;
-      return file && { name: file.name, type: file.type, size: file.size };
+      const ready = await resultCard;
+      return ready && { name: ready.file.name, type: ready.file.type, size: ready.file.size };
     });
     expect(card).toMatchObject({ name: CARD_FILE_NAME, type: 'image/png' });
     expect(card.size).toBeGreaterThan(MIN_CARD_BYTES);
+  });
+
+  await test.step('the shared words keep the opponent played, even if the Opponent choice changes after', async () => {
+    const text = await page.evaluate(async () => {
+      game.level = 'hard';
+      return (await resultCard).text;
+    });
+    expect(text).toContain('Squire');
+    expect(text).not.toContain('King');
   });
 
   await test.step('Share result saves the card where there is no share sheet', async () => {

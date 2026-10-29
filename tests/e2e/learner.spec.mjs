@@ -11,6 +11,7 @@ const OWN_ROW_SQUARE = 2;
 const SKILL_HONOURS = ['untouchable', 'hunter', 'clean-sweep'];
 // Longer than the Squire takes to roll and move (about 2.2 s), so if he were going to move, he would have.
 const SQUIRE_TURN_MS = 2500;
+const BLANK_DIE_RANDOM = 0.9; // a die shows its marked tip when Math.random() is under one half
 
 // start a game against the given opponent and hold it at the Sun's move, a roll of 2 with a choice of moves
 async function startAtSunsMove(page, level) {
@@ -115,6 +116,20 @@ test('Undo takes back your move once, the Squire waits, and rolling again ends i
     await page.waitForFunction(() => game.turn === SUN && game.phase === 'move');
     expect(await page.evaluate(() => canUndo())).toBe(false);
   });
+});
+
+test('a roll of nothing still spends the chance to undo, so the Squire’s turn brings none back', async ({ page }) => {
+  await startAtSunsMove(page, 'easy');
+  await moveFirstCounter(page);
+  await page.waitForFunction(() => game.turn === SUN && game.phase === 'roll' && canUndo());
+  // every die lands blank (Math.random never under one half), so the roll has no move and play passes over
+  await page.evaluate((blank) => {
+    Math.random = () => blank;
+    rollDice();
+  }, BLANK_DIE_RANDOM);
+  await page.waitForFunction(() => game.turn === MOON);
+  expect(await page.evaluate(() => canUndo()), 'Undo stays spent through the Squire’s turn').toBe(false);
+  await expect(page.locator('#undo')).toBeDisabled();
 });
 
 test('a won game with an undo still earns First Victory, but no skill honours', async ({ page }) => {

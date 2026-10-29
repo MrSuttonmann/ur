@@ -116,6 +116,7 @@ const throwDice = () => Array.from({ length: DICE_COUNT }, throwDie);
 
 function rollDice() {
   if (game.phase !== 'roll') return;
+  if (!isComputer(game.turn)) forgetUndoPoint(); // rolling again spends your chance to undo, even if the roll can't move
   game.phase = 'rolling';
   game.advice = null;
   closeGuideTip(false);
@@ -335,9 +336,9 @@ function finishGame(winner) {
   recordGame(winner);
   game.newHonours = awardHonours(winner);
   render();
-  prepareResultCard();
   showEndBanner(winner);
   announceHonours(game.newHonours);
+  prepareResultCard();
 }
 
 function endTurn(again) {
