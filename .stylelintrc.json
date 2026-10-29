@@ -1,0 +1,8 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "property-no-vendor-prefix": [true, { "ignoreProperties": ["user-select", "appearance", "touch-callout"] }],
+    "media-feature-range-notation": "prefix",
+    "no-descending-specificity": null
+  }
+}

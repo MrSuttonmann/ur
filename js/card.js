@@ -7,7 +7,7 @@
 
 const CARD = { width: 1200, height: 630, inset: 22, textWidth: 960 };
 const CARD_FILE_NAME = 'royal-game-of-ur-result.png';
-const SITE_URL = document.querySelector('link[rel=canonical]').href; // the game's home, wherever this copy runs
+const SITE_URL = /** @type {HTMLLinkElement} */ (document.querySelector('link[rel=canonical]')).href; // the game's home, wherever this copy runs
 const FLOURISH = { path: document.querySelector('.flourish path').getAttribute('d'), width: 260, scale: 1.6 };
 
 const cssValue = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();

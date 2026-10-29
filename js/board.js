@@ -334,8 +334,8 @@ function drawArrow(path, fromEl, toEl) {
     end = towardControl(to, (to.radius * 0.72 + 6) * room);
   // the layer covers the whole page so nothing it draws is clipped
   const layer = $('arrow-layer');
-  layer.setAttribute('width', document.documentElement.scrollWidth);
-  layer.setAttribute('height', document.documentElement.scrollHeight);
+  layer.setAttribute('width', String(document.documentElement.scrollWidth));
+  layer.setAttribute('height', String(document.documentElement.scrollHeight));
   const point = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
   path.setAttribute('d', `M${point(start)} Q${point(control)} ${point(end)}`);
   path.removeAttribute('hidden');
@@ -372,7 +372,8 @@ function addTouchPeek(el, move) {
   el.addEventListener('contextmenu', (e) => e.preventDefault()); // a long press would otherwise open the browser's menu
 }
 addEventListener('pointerdown', (e) => {
-  if (e.pointerType === 'touch' && !e.target.closest('.piece.movable')) clearMovePreview();
+  if (e.pointerType === 'touch' && !(e.target instanceof Element && e.target.closest('.piece.movable')))
+    clearMovePreview();
 });
 
 // ---------- counters and trays ----------
@@ -382,12 +383,13 @@ function counterLabel(side, counter) {
 }
 function createCounter(side, counter, move) {
   const label = counterLabel(side, counter);
+  /** @type {HTMLElement} */
   const el = document.createElement(move ? 'button' : 'div');
   el.className = `piece p${side}` + (move ? ' movable' : '');
   el.dataset.pid = side + '-' + counter;
   el.innerHTML = counterSVG(side, counter + side);
   if (move) {
-    el.type = 'button';
+    el.setAttribute('type', 'button');
     el.setAttribute(
       'aria-label',
       `${label}: move to ${move.to === currentRules.home ? 'home' : 'square ' + move.to}${move.captures >= 0 ? ', capturing' : ''}`,
@@ -675,7 +677,7 @@ function renderRollOrAdvise() {
   advise.classList.toggle('swapped', !offered);
   advise.disabled = !offered || left <= 0;
   $('advice-left').hidden = unlimited || !(game.level in ADVICE_LIMIT);
-  $('advice-left').textContent = unlimited ? '' : left;
+  $('advice-left').textContent = unlimited ? '' : String(left);
   advise.title =
     left <= 0
       ? 'No advice left this game'
@@ -705,7 +707,7 @@ function renderSetupControls() {
   $('level-field').hidden = game.mode !== 'ai';
   const locked = !isBetweenGames(),
     why = locked ? 'Start a new game to change this' : '';
-  document.querySelectorAll('input[name=mode]').forEach((radio) => {
+  document.querySelectorAll('input[name=mode]').forEach((/** @type {HTMLInputElement} */ radio) => {
     radio.disabled = locked;
   });
   $('level').disabled = locked;

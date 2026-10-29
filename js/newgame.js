@@ -5,7 +5,7 @@
 const isBetweenGames = () => game.phase === 'setup' || game.phase === 'over';
 // a game with moves in it would be lost by starting over, refreshing or closing the tab
 const hasProgressToLose = () => game && !isBetweenGames() && game.stats.bySide.some((side) => side.moves > 0);
-const chosenMode = () => document.querySelector('input[name=mode]:checked').value;
+const chosenMode = () => /** @type {HTMLInputElement} */ (document.querySelector('input[name=mode]:checked')).value;
 
 // throw away the current game (and anything it had scheduled) before setting up another
 function abandonCurrentGame() {

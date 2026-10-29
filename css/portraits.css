@@ -6,9 +6,11 @@
 .game {
   position: relative;
 }
+
 .portrait {
   display: none;
 }
+
 @media (min-width: 1160px) {
   .portrait {
     display: flex;
@@ -19,13 +21,16 @@
     width: 190px;
     z-index: 2;
   }
+
   #portrait1 {
     right: calc(100% + 30px);
   }
+
   #portrait0 {
     left: calc(100% + 30px);
   }
 }
+
 /* tablets: no room in the margins, so each medallion sits at the left end of its own tray and its
    speech bubble pops out over the board edge (the Moon's below, the Sun's above); clicks pass through */
 @media (min-width: 700px) and (max-width: 1159px) {
@@ -36,17 +41,21 @@
     width: 84px;
     z-index: 3;
   }
+
   .portrait .medal {
     width: 84px;
     height: 84px;
   }
+
   .portrait .pname {
     display: none;
   }
+
   .tray {
     padding-left: 110px;
     min-height: 104px;
   }
+
   .portrait .speech {
     position: absolute;
     left: -4px;
@@ -57,21 +66,26 @@
     z-index: 4;
     text-align: left;
   }
+
   .portrait .speech::before {
     left: 36px;
   }
+
   #portrait1 .speech {
     top: calc(100% + 12px);
   }
+
   #portrait0 .speech {
     bottom: calc(100% + 12px);
   }
+
   #portrait0 .speech::before {
     top: auto;
     bottom: -9px;
     transform: rotate(225deg);
   }
 }
+
 /* phones: each character peeks in from the screen edge beside its tray, tilted, with a sliver showing,
    and slides in to say its line (the .speaking class) before tucking back out; clicks pass through */
 @media (max-width: 699px) {
@@ -80,6 +94,7 @@
     overflow-x: hidden;
     overflow-x: clip;
   }
+
   .portrait {
     display: block;
     position: absolute;
@@ -88,27 +103,34 @@
     pointer-events: none;
     transition: transform 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
   }
+
   .portrait .medal {
     width: 72px;
     height: 72px;
   }
+
   .portrait .pname {
     display: none;
   }
+
   #portrait1 {
     left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)) - 50px);
     transform: rotate(20deg);
   }
+
   #portrait0 {
     right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)) - 50px);
     transform: rotate(-20deg);
   }
+
   #portrait1.speaking {
     transform: translateX(62px);
   }
+
   #portrait0.speaking {
     transform: translateX(-62px);
   }
+
   .portrait .speech {
     position: absolute;
     top: 8px;
@@ -117,17 +139,21 @@
     margin: 0;
     text-align: left;
   }
+
   #portrait1 .speech {
     left: calc(100% + 12px);
   }
+
   #portrait0 .speech {
     right: calc(100% + 12px);
   }
+
   #portrait1 .speech::before {
     left: -9px;
     top: 12px;
     transform: rotate(-45deg);
   }
+
   #portrait0 .speech::before {
     left: auto;
     right: -9px;
@@ -135,43 +161,51 @@
     transform: rotate(135deg);
   }
 }
+
 @media (max-width: 699px) and (prefers-reduced-motion: reduce) {
   .portrait {
     transition: none;
   }
 }
+
 .medal {
   width: 150px;
   height: 150px;
-  filter: drop-shadow(1px 4px 3px rgba(40, 28, 18, 0.35));
+  filter: drop-shadow(1px 4px 3px rgb(40 28 18 / 35%));
+
+  /* whose turn it is: their medallion glows in their side's colour, and the other player's fades back */
+  transition:
+    filter 0.25s,
+    opacity 0.25s;
 }
+
 .medal svg {
   width: 100%;
   height: 100%;
   overflow: visible;
 }
+
 /* whose turn it is: their medallion glows in their side's colour, and the other player's fades back */
-.medal {
-  transition:
-    filter 0.25s,
-    opacity 0.25s;
-}
 .game[data-turn='sun'] #medal0 {
   filter: drop-shadow(0 0 5px var(--sunfire)) drop-shadow(0 0 3px var(--sunfire))
-    drop-shadow(1px 4px 3px rgba(40, 28, 18, 0.35));
+    drop-shadow(1px 4px 3px rgb(40 28 18 / 35%));
 }
+
 .game[data-turn='moon'] #medal1 {
   filter: drop-shadow(0 0 5px var(--c-moon)) drop-shadow(0 0 3px var(--c-moon))
-    drop-shadow(1px 4px 3px rgba(40, 28, 18, 0.35));
+    drop-shadow(1px 4px 3px rgb(40 28 18 / 35%));
 }
+
 .game[data-turn='sun'] #medal1,
 .game[data-turn='moon'] #medal0 {
   opacity: 0.65;
 }
+
 .pname {
   font-family: var(--f-display);
   font-size: 17px;
 }
+
 .speech {
   position: relative;
   margin-top: 10px;
@@ -183,8 +217,9 @@
   background: #fffaf0;
   border: 2px solid var(--ink);
   border-radius: 14px 18px 12px 16px / 16px 12px 18px 14px;
-  box-shadow: 0 6px 14px -8px rgba(40, 28, 18, 0.6);
+  box-shadow: 0 6px 14px -8px rgb(40 28 18 / 60%);
 }
+
 .speech::before {
   content: '';
   position: absolute;
@@ -198,30 +233,36 @@
   border-bottom: 0;
   transform: rotate(45deg);
 }
+
 .speech.pop {
   animation: speech-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
+
 @keyframes speech-pop {
   from {
     transform: scale(0.4) rotate(-6deg);
     opacity: 0;
   }
 }
+
 .blink {
   transform-box: fill-box;
   transform-origin: center;
   animation: blink 5.5s infinite;
 }
+
 @keyframes blink {
   0%,
   96%,
   100% {
     transform: scaleY(1);
   }
+
   98% {
     transform: scaleY(0.1);
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .speech.pop,
   .blink {
@@ -236,236 +277,294 @@
   stroke-width: 1.4;
   stroke-linejoin: round;
 }
+
 .medal-sun-disc {
   fill: var(--sunfire);
 }
+
 .medal-sun-wash {
   fill: var(--ochre);
   fill-opacity: 0.6;
 }
+
 .medal-night {
   fill: var(--night);
 }
+
 .medal-night-wash {
   fill: var(--woad);
   fill-opacity: 0.5;
 }
+
 .medal-moon,
 .medal-star {
   fill: #fffaf0;
 }
+
 .ink-line.medal-rim {
   stroke-width: 2;
 }
+
 /* portraits: the face, in each character's skin tone */
 .character-hero,
+/* stylelint-disable-next-line selector-class-pattern -- named after the character key heroLocal in portraits.js */
 .character-heroLocal {
   --skin: #f3cfa6;
 }
+
 .character-squire {
   --skin: #f6d6b3;
 }
+
 .character-knight {
   --skin: #e8c29a;
 }
+
 .character-king {
   --skin: #efc9a4;
 }
+
 .character-stargazer {
   --skin: #e9cdb4;
 }
+
 .skin {
   fill: var(--skin);
   stroke: var(--ink);
   stroke-width: 1.3;
 }
+
 .skin.face {
   stroke-width: 1.6;
 }
+
 .pupil {
   fill: var(--ink);
 }
+
 .eye-white {
   fill: #fffaf0;
   stroke: var(--ink);
   stroke-width: 1.3;
 }
+
 .ink-line.eyelid {
   stroke-width: 2.2;
 }
+
 .ink-line.brow {
   stroke-width: 1.8;
 }
+
 .ink-line.brow-sad {
   stroke-width: 2;
 }
+
 .ink-line.brow-angry {
   stroke-width: 2.4;
 }
+
 .ink-line.mouth {
   stroke-width: 2;
 }
+
 .ink-line.mouth-angry {
   stroke-width: 2.2;
 }
+
 .mouth-open {
   fill: #7a2a1e;
   stroke: var(--ink);
   stroke-width: 1.6;
   stroke-linejoin: round;
 }
+
 .mouth-gasp {
   fill: #7a2a1e;
   stroke: var(--ink);
   stroke-width: 1.4;
 }
+
 .teeth {
   fill: none;
   stroke: #fffaf0;
   stroke-width: 1.8;
 }
+
 .blush {
   fill: var(--rose);
   fill-opacity: 0.55;
 }
+
 /* portraits: what each character wears */
 .ink-line.outfit-outline {
   stroke-width: 1.6;
 }
+
 .hero-tunic {
   fill: var(--ochre);
 }
+
 .hero-collar {
   fill: var(--bone);
 }
+
 .hero-brooch {
   fill: var(--sunfire);
   stroke: var(--ink);
   stroke-width: 1.3;
 }
+
 .hero-curl {
   fill: #9a4f2a;
   stroke: var(--ink);
   stroke-width: 1.3;
 }
+
 .squire-tunic {
   fill: var(--sage);
 }
+
 .squire-sash {
   fill: none;
   stroke: var(--ochre);
   stroke-width: 4;
 }
+
 .squire-hair {
   fill: #8a5a2b;
   stroke: var(--ink);
   stroke-width: 1.5;
 }
+
 .squire-freckles {
   fill: #b5764a;
 }
+
 .knight-mail {
   fill: #a7adb5;
 }
+
 .knight-tabard {
   fill: var(--woad);
 }
+
 .knight-badge {
   fill: #fffaf0;
 }
+
 .knight-plume {
   fill: var(--vermilion);
   stroke: var(--ink);
   stroke-width: 1.4;
 }
+
 .knight-helm {
   fill: #b3b9c1;
   stroke: var(--ink);
   stroke-width: 1.6;
   stroke-linejoin: round;
 }
+
 .knight-cheek-guards {
   fill: #b3b9c1;
   stroke: var(--ink);
   stroke-width: 1.5;
   stroke-linejoin: round;
 }
+
 .knight-helm-band {
   fill: #8e959e;
   stroke: var(--ink);
   stroke-width: 1.4;
 }
+
 .knight-rivets {
   fill: none;
   stroke: var(--ink);
   stroke-width: 1.2;
   stroke-dasharray: 3 2;
 }
+
 .king-robe {
   fill: var(--vermilion);
 }
+
 .king-ermine {
   fill: #fffaf0;
   stroke: var(--ink);
   stroke-width: 1.3;
 }
+
 .king-ermine-spots {
   fill: var(--ink);
 }
+
 .king-hair {
   fill: #e6e0d2;
   stroke: var(--ink);
   stroke-width: 1.2;
 }
+
 .king-beard {
   fill: #e6e0d2;
   stroke: var(--ink);
   stroke-width: 1.4;
 }
+
 .king-moustache {
   fill: #d8d1c1;
   stroke: var(--ink);
   stroke-width: 1.1;
 }
+
 .king-crown {
   fill: var(--ochre);
   stroke: var(--ink);
   stroke-width: 1.6;
   stroke-linejoin: round;
 }
+
 .king-crown-band {
   fill: none;
   stroke: var(--ink);
   stroke-width: 1.2;
 }
+
 .king-ruby {
   fill: var(--vermilion);
   stroke: var(--ink);
   stroke-width: 1;
 }
+
 .king-sapphire {
   fill: var(--woad);
   stroke: var(--ink);
   stroke-width: 0.9;
 }
+
 .stargazer-robe {
   fill: var(--woad);
 }
+
 .stargazer-badge,
 .stargazer-hat-star {
   fill: #fffaf0;
 }
+
 .stargazer-hat {
   fill: var(--night);
   stroke: var(--ink);
   stroke-width: 1.6;
   stroke-linejoin: round;
 }
+
 .stargazer-hat-brim {
   fill: var(--night);
   stroke: var(--ink);
   stroke-width: 1.6;
 }
+
 .stargazer-hat-gold-star {
   fill: var(--ochre);
 }

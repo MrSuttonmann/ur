@@ -6,6 +6,7 @@
 let game; // the game in progress (see createGameState)
 let gameId = 0; // changes with every new game, so timers from an old game can tell they're stale
 let pendingStep = null; // the one scheduled next step (a computer roll or move, a pass, an auto-move)
+/** @type {(id: string) => any} an element by id; any, as callers know which kind of element it is */
 const $ = (id) => document.getElementById(id);
 const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 

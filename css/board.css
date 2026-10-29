@@ -10,15 +10,16 @@
   border: 2px solid var(--ink);
   border-radius: 18px 26px 16px 24px / 24px 16px 26px 18px;
   background:
-    radial-gradient(ellipse 45% 70% at 15% 30%, rgba(135, 159, 102, 0.7), transparent 70%),
-    radial-gradient(ellipse 40% 60% at 85% 75%, rgba(135, 159, 102, 0.6), transparent 70%),
-    radial-gradient(ellipse 35% 55% at 55% 15%, rgba(214, 165, 64, 0.45), transparent 70%),
-    radial-gradient(ellipse 30% 50% at 40% 90%, rgba(61, 93, 142, 0.25), transparent 70%), var(--paper-deep);
+    radial-gradient(ellipse 45% 70% at 15% 30%, rgb(135 159 102 / 70%), transparent 70%),
+    radial-gradient(ellipse 40% 60% at 85% 75%, rgb(135 159 102 / 60%), transparent 70%),
+    radial-gradient(ellipse 35% 55% at 55% 15%, rgb(214 165 64 / 45%), transparent 70%),
+    radial-gradient(ellipse 30% 50% at 40% 90%, rgb(61 93 142 / 25%), transparent 70%), var(--paper-deep);
   box-shadow:
     0 0 0 5px var(--paper),
     0 0 0 6.5px var(--ink-soft),
-    0 14px 30px -18px rgba(59, 42, 27, 0.7);
+    0 14px 30px -18px rgb(59 42 27 / 70%);
 }
+
 .slab::before {
   content: '';
   position: absolute;
@@ -29,6 +30,7 @@
   opacity: 0.9;
   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='w'><feTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='4' seed='9'/><feColorMatrix values='0 0 0 0 .55 0 0 0 0 .45 0 0 0 0 .25 0 0 0 .35 -.05'/></filter><rect width='100%' height='100%' filter='url(%23w)'/></svg>");
 }
+
 .board {
   position: relative;
   display: grid;
@@ -36,9 +38,11 @@
   grid-auto-rows: var(--cell);
   gap: 4px;
 }
+
 .cell {
   position: relative;
 }
+
 .cell svg.tile {
   position: absolute;
   inset: -3%;
@@ -46,6 +50,7 @@
   height: 106%;
   overflow: visible;
 }
+
 .cell.gap {
   display: grid;
   place-items: center;
@@ -56,9 +61,11 @@
   font-size: clamp(11px, calc(var(--cell) * 0.24), 15px);
   line-height: 1.1;
 }
+
 .cell.gap.g1 {
   grid-column: span 2;
 }
+
 .cell .num {
   position: absolute;
   top: -5px;
@@ -79,34 +86,40 @@
   transition: opacity 0.2s;
   pointer-events: none;
 }
+
 .show-route .cell .num {
   opacity: 1;
 }
+
 /* where the two sides number a cell differently (Masters' route), each number wears its side's colour */
 .cell .num.num-sun {
   border-color: var(--c-sun);
   color: var(--c-sun);
 }
+
 .cell .num.num-moon {
   left: auto;
   right: -4px;
   border-color: var(--c-moon);
   color: var(--c-moon);
 }
+
 .slot {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
 }
+
 .cell.lastto::before {
   content: '';
   position: absolute;
   inset: 2px;
   border-radius: 40%;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(214, 165, 64, 0.7), rgba(214, 165, 64, 0) 70%);
+  background: radial-gradient(circle, rgb(214 165 64 / 70%), rgb(214 165 64 / 0%) 70%);
 }
+
 .cell.target::after {
   content: '';
   position: absolute;
@@ -115,6 +128,7 @@
   border: 2.5px dashed var(--ink);
   pointer-events: none;
 }
+
 .cell.target.capture::after {
   border: 3px solid var(--vermilion);
 }
@@ -126,10 +140,9 @@
   top: 0;
   pointer-events: none;
   z-index: 45;
-}
-.arrow-layer {
   filter: drop-shadow(0 0 1.5px #fffaf0) drop-shadow(0 0 1px #fffaf0);
 }
+
 .move-arrow {
   fill: none;
   stroke: var(--vermilion);
@@ -138,19 +151,23 @@
   stroke-dasharray: 10 7;
   animation: march 0.9s linear infinite;
 }
+
 @keyframes march {
   to {
     stroke-dashoffset: -17;
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .move-arrow {
     animation: none;
   }
 }
+
 .move-arrowhead {
   fill: var(--vermilion);
 }
+
 /* the centre rose is the one safe square: a gold ring sets it apart from the other roses */
 .cell.safe-sq {
   border-radius: 7px;
@@ -169,11 +186,13 @@
   border: 1.5px dashed var(--ink-soft);
   border-radius: var(--hand);
 }
+
 .key-title {
   font-family: var(--f-display);
   font-size: 17px;
   flex-basis: 100%;
 }
+
 .key-item {
   display: flex;
   align-items: center;
@@ -182,9 +201,11 @@
   line-height: 1.25;
   min-width: 0;
 }
+
 .key-item b {
   font-weight: 600;
 }
+
 .key-item small {
   display: block;
   font-family: var(--f-note);
@@ -192,17 +213,20 @@
   font-size: 13px;
   color: var(--ink-soft);
 }
+
 .key-icons {
   display: flex;
   gap: 3px;
   flex-shrink: 0;
 }
+
 .key-tile {
   position: relative;
   width: 30px;
   height: 30px;
   flex-shrink: 0;
 }
+
 .key-tile svg.tile {
   position: absolute;
   inset: 0;
@@ -210,6 +234,7 @@
   height: 100%;
   overflow: visible;
 }
+
 .key-tile.safe-sq {
   border-radius: 5px;
   box-shadow:
@@ -229,6 +254,7 @@
   opacity: min(0.7, calc(var(--danger, 0) * 0.9));
   transition: opacity 0.3s;
 }
+
 .danger-chance {
   position: absolute;
   left: 50%;
@@ -244,23 +270,27 @@
   font: 600 clamp(9px, calc(var(--cell) * 0.2), 12px) / 1.3 var(--f-body);
   font-variant-numeric: tabular-nums;
 }
+
 .danger-chance:empty {
   display: none;
 }
+
 .key-item[hidden] {
   display: none;
 }
+
 .key-danger-swatch {
   width: 30px;
   height: 30px;
   border-radius: 5px;
-  background: linear-gradient(90deg, rgba(182, 67, 42, 0.12), rgba(182, 67, 42, 0.75));
+  background: linear-gradient(90deg, rgb(182 67 42 / 12%), rgb(182 67 42 / 75%));
   border: 1.5px solid var(--ink);
 }
 
 .cell .tile .art {
   transition: opacity 0.25s;
 }
+
 .cell.occupied .tile .art {
   opacity: 0.28;
 }

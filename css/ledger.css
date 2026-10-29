@@ -13,6 +13,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
 }
+
 .log {
   list-style: none;
   margin: 0;
@@ -25,9 +26,11 @@
   gap: 1px;
   min-width: 0;
 }
+
 .log li:first-child {
   color: var(--ink);
 }
+
 /* move history: a ruled parchment box with a scroll-banner label */
 .ledger {
   position: relative;
@@ -35,10 +38,11 @@
   min-width: 0;
   margin-top: 14px;
   padding: 22px 6px 10px 12px;
-  background: rgba(246, 236, 210, 0.7);
+  background: rgb(246 236 210 / 70%);
   border: 1.5px solid var(--ink-soft);
   border-radius: var(--hand);
 }
+
 /* the whole game's history; six ruled lines show, the rest scroll. The rules scroll with the text */
 .ledger .log {
   gap: 0;
@@ -47,14 +51,16 @@
   overscroll-behavior: contain;
   list-style: none;
   padding: 0 8px 0 0;
-  background-image: repeating-linear-gradient(180deg, transparent 0 22px, rgba(110, 88, 64, 0.13) 22px 23px);
+  background-image: repeating-linear-gradient(180deg, transparent 0 22px, rgb(110 88 64 / 13%) 22px 23px);
   background-attachment: local;
 }
+
 /* hanging move numbers; top-aligned so the smaller digits never make a line taller than its rule */
 .ledger .log li {
   line-height: 23px;
   padding-left: 2.4em;
 }
+
 .ledger .log .n {
   display: inline-block;
   width: 2em;
@@ -66,6 +72,7 @@
   color: var(--vermilion);
   font-variant-numeric: tabular-nums;
 }
+
 .ledger .log:focus-visible {
   outline: 2px dashed var(--vermilion);
   outline-offset: 3px;
@@ -85,8 +92,9 @@
   background: linear-gradient(180deg, var(--bone) 0%, #fffaf0 45%, var(--paper-deep) 100%);
   border-top: 1.5px solid var(--ink);
   border-bottom: 1.5px solid var(--ink);
-  box-shadow: 0 3px 6px -2px rgba(40, 28, 18, 0.4);
+  box-shadow: 0 3px 6px -2px rgb(40 28 18 / 40%);
 }
+
 .ledger-label::before,
 .ledger-label::after {
   content: '';
@@ -98,9 +106,11 @@
   border-radius: 6px;
   background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
 }
+
 .ledger-label::before {
   left: -6px;
 }
+
 .ledger-label::after {
   right: -6px;
 }

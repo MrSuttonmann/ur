@@ -28,7 +28,7 @@ const ARROW_STEP = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return;
-  const tag = e.target.tagName,
+  const tag = e.target instanceof Element ? e.target.tagName : '',
     typing = ['SELECT', 'INPUT', 'TEXTAREA'].includes(tag);
   if (!typing && e.key !== 'Shift') setKeyboardMode(true);
   if (guideTipOpen && e.key === 'Escape') {
@@ -52,7 +52,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (game.phase !== 'move' || isComputer(game.turn)) return;
   const movable = [...document.querySelectorAll('.piece.movable[data-key]')].sort(
-    (a, b) => a.dataset.key - b.dataset.key,
+    (a, b) => Number(a.dataset.key) - Number(b.dataset.key),
   );
   if (/^[1-9]$/.test(e.key)) {
     const counter = movable[+e.key - 1];
@@ -62,7 +62,7 @@ document.addEventListener('keydown', (e) => {
     }
   } else if (e.key in ARROW_STEP && movable.length) {
     e.preventDefault();
-    const at = movable.indexOf(document.activeElement);
+    const at = movable.indexOf(/** @type {HTMLElement} */ (document.activeElement));
     movable[at < 0 ? 0 : (at + ARROW_STEP[e.key] + movable.length) % movable.length].focus();
   } else if (isAdviseKey(e) && canAdvise()) {
     e.preventDefault();

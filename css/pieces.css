@@ -7,23 +7,20 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-/* the play area is pressed and held on touchscreens (to preview a move), so it mustn't start selecting text */
-.game {
+
+  /* the play area is pressed and held on touchscreens (to preview a move), so it mustn't start selecting text */
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
-.piece {
-  touch-action: manipulation;
-}
+
 .tray {
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 4px 12px;
   align-items: center;
-  background: rgba(246, 236, 210, 0.7);
+  background: rgb(246 236 210 / 70%);
   border: 1.5px solid var(--ink-soft);
   border-radius: var(--hand);
   padding: 8px 14px;
@@ -32,15 +29,18 @@
     box-shadow 0.25s,
     background-color 0.25s;
 }
+
 /* whose turn it is: their tray takes a wash and a heavy border in their side's colour, and the other tray fades back */
 .tray-sun {
   --side: var(--c-sun);
-  --side-wash: rgba(233, 165, 44, 0.2);
+  --side-wash: rgb(233 165 44 / 20%);
 }
+
 .tray-moon {
   --side: var(--c-moon);
-  --side-wash: rgba(58, 98, 168, 0.1);
+  --side-wash: rgb(58 98 168 / 10%);
 }
+
 /* the heavier border is a ring of shadow, so the counters inside don't shift and twitch when the turn changes */
 .tray.active {
   background-color: var(--side-wash);
@@ -49,6 +49,7 @@
     0 0 0 1px var(--side),
     3px 3px 0 -1px var(--ink);
 }
+
 /* the fade goes on the words and on each counter, never on the pools: a faded pool would hold its counters
    in a layer of its own, hiding one flying in under the board and repainting the lot on every redraw */
 .tray.off-turn .tray-name,
@@ -59,15 +60,18 @@
     opacity 0.25s,
     filter 0.25s;
 }
+
 .tray.off-turn .piece {
   opacity: 0.6;
   filter: saturate(0.6) var(--counter-shadow);
 }
+
 .tray .piece {
   transition:
     opacity 0.25s,
     filter 0.25s;
 }
+
 .tray-name {
   font-weight: 600;
   display: flex;
@@ -75,12 +79,14 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .tray-name .side {
   font-family: var(--f-note);
   font-style: italic;
   font-weight: 400;
   color: var(--ink-soft);
 }
+
 /* "your turn" is a tag in the side's colour pinned to the tray's top edge, so it never reflows the tray */
 .chip {
   position: absolute;
@@ -99,6 +105,7 @@
   border-radius: 9px 6px 10px 5px;
   box-shadow: 1px 2px 0 var(--ink);
 }
+
 .tray-count {
   font-family: var(--f-note);
   font-size: 14px;
@@ -106,6 +113,7 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
+
 /* tall enough for the enlarged movable counter, so highlighting one doesn't grow the tray */
 .pool {
   display: flex;
@@ -114,18 +122,23 @@
   gap: 3px;
   flex-wrap: wrap;
 }
+
 .pool.home {
   justify-content: flex-end;
 }
+
 .pool.home .piece + .piece {
   margin-left: calc(var(--cell) * -0.24);
 }
+
 .pool .piece {
   width: calc(var(--cell) * 0.55);
 }
+
 .pool .piece.movable {
   width: calc(var(--cell) * 0.66);
 }
+
 .pool.target {
   outline: 2px dashed var(--vermilion);
   outline-offset: 3px;
@@ -147,6 +160,7 @@
   cursor: default;
   font: inherit;
   filter: var(--counter-shadow);
+  touch-action: manipulation; /* no double-tap zoom when tapping counters */
 }
 
 .piece svg {
@@ -155,15 +169,18 @@
   display: block;
   overflow: visible;
 }
+
 .piece.movable {
   cursor: pointer;
   filter: drop-shadow(0 0 4px var(--sunfire)) drop-shadow(0 0 2px var(--sunfire)) var(--counter-shadow);
   animation: bob 1.3s ease-in-out infinite;
 }
+
 .piece:focus-visible {
   outline: 2.5px dashed var(--vermilion);
   outline-offset: 3px;
 }
+
 /* keyboard players see a number on each counter that can move */
 .kbd .piece.movable[data-key]::after {
   content: attr(data-key);
@@ -179,22 +196,27 @@
   background: var(--ink);
   border: 1.5px solid var(--bone);
 }
+
 @keyframes bob {
   50% {
     transform: translateY(-3px) rotate(-4deg);
   }
 }
+
 /* a moving counter passes over the others: hopping along its route, or gliding to its new place after a redraw */
 .piece.gliding {
   z-index: 5;
 }
+
 /* a captured counter flies back over its tray-mates, which shuffle along to make room for it */
 .piece.knocked-off {
   z-index: 6;
 }
+
 .piece.hopping {
   z-index: 20;
 }
+
 .petal {
   position: absolute;
   left: 50%;
@@ -208,9 +230,11 @@
   background: var(--vermilion);
   opacity: 0.85;
 }
+
 .petal.alt {
   background: var(--ochre);
 }
+
 /* event words ride on a little parchment scroll with rolled ends */
 .float-word {
   position: absolute;
@@ -227,8 +251,9 @@
   background: linear-gradient(180deg, var(--bone) 0%, #fffaf0 45%, var(--paper-deep) 100%);
   border-top: 1.5px solid var(--ink);
   border-bottom: 1.5px solid var(--ink);
-  box-shadow: 0 5px 10px -3px rgba(40, 28, 18, 0.45);
+  box-shadow: 0 5px 10px -3px rgb(40 28 18 / 45%);
 }
+
 .float-word::before,
 .float-word::after {
   content: '';
@@ -240,9 +265,11 @@
   border-radius: 6px;
   background: linear-gradient(90deg, var(--paper-deep), #fffaf0 50%, var(--paper-deep));
 }
+
 .float-word::before {
   left: -7px;
 }
+
 .float-word::after {
   right: -7px;
 }

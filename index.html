@@ -207,7 +207,7 @@
                 >Two players</label
               >
             </div>
-            <label class="field" id="level-field" for="level">
+            <label class="field" id="level-field">
               <span>Opponent</span>
               <select id="level">
                 <option value="easy">Squire (easy)</option>
@@ -266,7 +266,7 @@
           <div class="status" id="status" aria-live="polite"></div>
         </div>
 
-        <div class="key" id="key" aria-label="Board key"></div>
+        <div class="key" id="key" role="group" aria-label="Board key"></div>
 
         <div class="under">
           <section class="ledger" aria-labelledby="ledger-label">
@@ -587,7 +587,7 @@
         </div>
         <div class="rules">
           <h4 class="first-heading">Play</h4>
-          <label class="opt" for="opt-auto">
+          <label class="opt">
             <input type="checkbox" class="toggle" id="opt-auto" />
             <span><b>Auto-move</b><small>When a roll leaves only one legal move, play it for me.</small></span>
           </label>
