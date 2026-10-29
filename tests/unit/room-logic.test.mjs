@@ -182,7 +182,9 @@ test('rolling out of turn is refused', () => {
 
 test('moving before rolling is refused', () => {
   const room = startedRoom();
+  const before = snapshot(room);
   assert.deepEqual(applyIntent(room, 0, { t: 'move', counter: 0 }, 3000, SUN_FIRST), { error: 'wrong-phase' });
+  assert.deepEqual(room, before);
 });
 
 test('an illegal counter is refused', () => {
