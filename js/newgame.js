@@ -3,8 +3,10 @@
 // Starting games: the waiting set-up board, starting play, asking before a game in progress is lost.
 
 const isBetweenGames = () => game.phase === 'setup' || game.phase === 'over';
-// a game with moves in it would be lost by starting over, refreshing or closing the tab
-const hasProgressToLose = () => game && !isBetweenGames() && game.stats.bySide.some((side) => side.moves > 0);
+// a game with moves in it would be lost by starting over, refreshing or closing the tab; an online game is kept
+// by its room
+const hasProgressToLose = () =>
+  game && !isOnline() && !isBetweenGames() && game.stats.bySide.some((side) => side.moves > 0);
 const chosenMode = () => /** @type {HTMLInputElement} */ (document.querySelector('input[name=mode]:checked')).value;
 
 // throw away the current game (and anything it had scheduled) before setting up another

@@ -38,6 +38,10 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
 }
 const isOnline = () => game.mode === 'online';
 const isComputer = (side) => game.mode === 'ai' && side === COMPUTER_SIDE;
+// the side this device plays: online, its seat in the room; otherwise the Sun, as against the computer
+const mySide = () => (isOnline() ? online.seat : HUMAN_SIDE);
+// whether this device rolls and moves for a side: not the computer's, and online only its own seat's
+const canAct = (side) => !isComputer(side) && (!isOnline() || side === online.seat);
 // against the Squire the game helps you learn: it shades the squares in danger and lets you take back a move
 const LEARNER_LEVEL = 'easy';
 const isLearnerGame = () => game.mode === 'ai' && game.level === LEARNER_LEVEL;
@@ -93,6 +97,16 @@ function scheduleStep(fn, ms) {
 // decide what happens next on its own: the computer's roll or move, a pass, or a forced move
 function continueGame() {
   if (game.phase === 'over' || game.phase === 'setup') return;
+  // online the room plays everything out but your own forced move
+  if (isOnline()) {
+    const forced =
+      game.phase === 'move' &&
+      canAct(game.turn) &&
+      prefs.autoMove &&
+      legalMoves(game.positions, game.turn, game.roll).length === 1;
+    if (forced) scheduleStep(playForcedMove, DELAY.autoMove);
+    return;
+  }
   // while a guide tip is open the game waits; dismissing it calls continueGame() again
   if (guideTipOpen) {
     resumeAfterTip = true;
@@ -115,7 +129,7 @@ function continueGame() {
 }
 // the forced move is worked out again when the timer fires, in case the player already moved
 function playForcedMove() {
-  const moves = game.phase === 'move' && !isComputer(game.turn) ? legalMoves(game.positions, game.turn, game.roll) : [];
+  const moves = game.phase === 'move' && canAct(game.turn) ? legalMoves(game.positions, game.turn, game.roll) : [];
   if (moves.length === 1) makeMove(moves[0]);
 }
 
@@ -125,28 +139,38 @@ const throwDice = () => Array.from({ length: DICE_COUNT }, throwDie);
 
 function rollDice() {
   if (game.phase !== 'roll') return;
+  if (isOnline()) {
+    askRoom({ t: 'roll' }, 'rolling'); // the room rolls, and its answer plays out the roll
+    return;
+  }
   if (!isComputer(game.turn)) forgetUndoPoint(); // rolling again spends your chance to undo, even if the roll can't move
   game.phase = 'rolling';
   game.advice = null;
   closeGuideTip(false);
+  const thisGame = gameId;
+  shakeDice(throwDice, landDice, () => thisGame !== gameId);
+}
+// the dice tumble through a few random faces, then land(result) on the faces throwFaces() gave; the tumbling stops
+// early once stale() says the game has moved on
+function shakeDice(throwFaces, land, stale) {
   sfxDice();
   tumbleDice();
-  const thisGame = gameId,
-    result = throwDice();
+  const result = throwFaces();
+  render();
   let frame = 0;
   const frames = prefersReducedMotion ? 0 : DICE_TUMBLE_FRAMES;
   const tick = () => {
-    if (thisGame !== gameId) return;
+    if (stale()) return;
     if (frame++ < frames) {
       drawDice(throwDice(), false);
       setTimeout(tick, DICE_TUMBLE_FRAME_MS);
       return;
     }
-    landDice(result);
+    land(result);
   };
-  render();
   tick();
 }
+const passNote = (roll) => (roll === 0 ? 'Rolled 0. Turn passes.' : `No legal move with a ${roll}. Turn passes.`);
 function landDice(result) {
   game.dice = result;
   game.roll = result.reduce((sum, die) => sum + die, 0);
@@ -157,7 +181,7 @@ function landDice(result) {
   if (!legalMoves(game.positions, game.turn, game.roll).length) {
     sideStats.passes++;
     speak(game.turn, 'pass', 0, 0.5);
-    game.note = game.roll === 0 ? 'Rolled 0. Turn passes.' : `No legal move with a ${game.roll}. Turn passes.`;
+    game.note = passNote(game.roll);
     writeToLedger(`${playerName(game.turn)} rolled ${game.roll}: no move`);
   } else {
     game.note = '';
@@ -269,6 +293,10 @@ function showEventScroll(cell, word) {
 function makeMove(move) {
   if (game.phase !== 'move') return;
   clearTimeout(pendingStep); // a pending auto-move must not fire into a later turn
+  if (isOnline()) {
+    askRoom({ t: 'move', counter: move.counter }, 'animating'); // the room's answer plays out the move
+    return;
+  }
   saveUndoPoint();
   game.phase = 'animating';
   game.advice = null;
@@ -292,10 +320,17 @@ function completeMove(move) {
     finishGame(side);
     return;
   }
-  game.note = landsOnRose ? 'A rose! Roll again.' : again ? 'A capture! Roll again.' : '';
+  game.note = againNote(landsOnRose, again);
   endTurn(again);
 }
+const againNote = (landsOnRose, again) => (landsOnRose ? 'A rose! Roll again.' : again ? 'A capture! Roll again.' : '');
 function applyMoveToGame(side, move, landsOnRose) {
+  markLanding(side, move, landsOnRose);
+  game.positions = applyMove(game.positions, side, move);
+  recordMove(game.stats, game.positions, side, move, landsOnRose, currentRules);
+}
+// what the next render shows of a move: where it landed, and its landing effects
+function markLanding(side, move, landsOnRose) {
   pendingEffects = {
     moved: side + '-' + move.counter,
     captured: move.captures >= 0 ? opponentOf(side) + '-' + move.captures : null,
@@ -303,9 +338,7 @@ function applyMoveToGame(side, move, landsOnRose) {
     rose: landsOnRose,
   };
   if (move.captures >= 0) lastCapturedSide = opponentOf(side);
-  game.positions = applyMove(game.positions, side, move);
   game.lastLanding = move.to === currentRules.home ? null : routeCell(side, move.to);
-  recordMove(game.stats, game.positions, side, move, landsOnRose, currentRules);
 }
 // sounds and the players' reactions
 function reactToMove(side, move, landsOnRose, finished) {
@@ -324,7 +357,7 @@ function reactToMove(side, move, landsOnRose, finished) {
   else if (landsOnRose) speak(side, 'rose', 0, 0.5);
   if (move.to === currentRules.home) sfxHome();
   if (landsOnRose) sfxRose();
-  if (finished) (isComputer(side) ? sfxLament : sfxFanfare)(0.5); // a computer win is your loss
+  if (finished) (isComputer(side) || (isOnline() && side !== mySide()) ? sfxLament : sfxFanfare)(0.5); // their win is your loss
 }
 function finishGame(winner) {
   game.phase = 'over';

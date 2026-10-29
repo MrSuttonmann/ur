@@ -203,7 +203,7 @@ onRoomState((message) => {
     showRoomNote('ended');
     return;
   }
-  adoptRoomState(view);
+  queueRoomMessage(message); // the board plays out the room's states in order
   if (view.phase !== 'lobby') closeLobbyWindows();
   else if (online.seat === SUN) {
     if (!$('invite-dlg').open) showInvitePanel(online.roomId);

@@ -3,8 +3,9 @@
 // The game's buttons: Roll (or Play again), Sound, Route, and the mode and opponent choices.
 
 $('roll').addEventListener('click', () => {
-  if (game.phase === 'over') startGame();
-  else if (!isComputer(game.turn)) rollDice();
+  if (game.phase === 'over') {
+    if (!isOnline()) startGame();
+  } else if (canAct(game.turn)) rollDice();
 });
 
 // mode and opponent only change between games, and then just update the waiting board

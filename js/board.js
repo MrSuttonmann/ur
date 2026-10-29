@@ -444,6 +444,7 @@ const counterContainers = () => [...boardSlots, ...document.querySelectorAll('.t
 const isInPlay = () => game.phase !== 'over' && game.phase !== 'setup';
 function turnTag(side) {
   if (isComputer(side)) return 'thinking…';
+  if (isOnline()) return side === mySide() ? 'your turn' : 'their turn';
   return game.mode === 'ai' ? 'your turn' : `${SIDE_NAME[side]}’s turn`;
 }
 function renderTurn() {
@@ -459,7 +460,9 @@ function renderTray(side) {
   const plays =
     game.mode === 'ai'
       ? ` <span class="side">${side === COMPUTER_SIDE ? 'plays' : 'play'} the ${SIDE_NAME[side]}</span>`
-      : '';
+      : isOnline()
+        ? ` <span class="side">plays the ${SIDE_NAME[side]}</span>`
+        : '';
   tray.classList.toggle('active', active);
   tray.classList.toggle('off-turn', isInPlay() && !active);
   // the pools are built once and kept, so the counters in them can be too
@@ -503,7 +506,8 @@ function counterPlaces() {
 
 // rebuild every counter in its tray or on its square
 function placeCounters() {
-  const moves = game.phase === 'move' && !isComputer(game.turn) ? legalMoves(game.positions, game.turn, game.roll) : [];
+  const moves =
+    game.phase === 'move' && canAct(game.turn) && !roomPaused() ? legalMoves(game.positions, game.turn, game.roll) : [];
   const moveFor = new Map(moves.map((move) => [move.counter, move]));
   // keyboard numbers: the counter furthest along the route is 1
   const keyboardOrder = moves
@@ -617,8 +621,17 @@ function renderStatus() {
   status.innerHTML = `<strong>${whoseCounter}${escapeHtml(headline)}</strong><span>${escapeHtml(hint)}</span>${share}`;
 }
 function statusText() {
+  const [headline, hint] = statusForPhase();
+  // online, while the other player's connection is down the game waits for them
+  const other = opponentOf(mySide());
+  if (isOnline() && isInPlay() && online.view && !online.view.connected[other])
+    return [headline, `${playerName(other)} has lost connection…`];
+  return [headline, hint];
+}
+function statusForPhase() {
   const who = playerName(game.turn),
-    yourTurn = game.mode === 'ai' && game.turn !== COMPUTER_SIDE;
+    yourTurn = isOnline() ? game.turn === mySide() : game.mode === 'ai' && game.turn !== COMPUTER_SIDE,
+    theirs = isOnline() && !yourTurn; // online, the other player's turn
   switch (game.phase) {
     case 'setup':
       return [
@@ -641,24 +654,24 @@ function statusText() {
     case 'roll':
       return [
         isComputer(game.turn) ? `${who} rolls…` : yourTurn ? 'Your roll' : `${who} to roll`,
-        game.note || (isComputer(game.turn) ? '' : 'Press Space or R to roll.'),
+        game.note ||
+          (isComputer(game.turn) ? '' : theirs ? `Waiting for ${who} to roll.` : 'Press Space or R to roll.'),
       ];
     case 'rolling':
       return ['The dice tumble…', ''];
     default: {
       const choices = legalMoves(game.positions, game.turn, game.roll).length;
-      const autoMoving = choices === 1 && prefs.autoMove && !game.guided && !isComputer(game.turn);
+      const autoMoving = choices === 1 && prefs.autoMove && !game.guided && canAct(game.turn);
+      const yourHint = autoMoving
+        ? 'Only one move: playing it for you.'
+        : choices
+          ? keyboardMode
+            ? `Press ${choices > 1 ? '1 to ' + choices : '1'}, or use the arrows and Enter.`
+            : 'Choose a glowing piece.'
+          : '';
       let hint =
         game.note ||
-        (isComputer(game.turn)
-          ? 'Pondering…'
-          : autoMoving
-            ? 'Only one move: playing it for you.'
-            : choices
-              ? keyboardMode
-                ? `Press ${choices > 1 ? '1 to ' + choices : '1'}, or use the arrows and Enter.`
-                : 'Choose a glowing piece.'
-              : '');
+        (isComputer(game.turn) ? 'Pondering…' : theirs ? (choices ? `Waiting for ${who} to move.` : '') : yourHint);
       if (game.advice) hint = 'Advice is marked on the board.';
       return [`${yourTurn ? 'You' : who} rolled ${game.roll}.`, hint];
     }
@@ -671,7 +684,8 @@ function renderRollOrAdvise() {
   const roll = $('roll'),
     advise = $('advise');
   roll.textContent = game.phase === 'over' ? 'Play again' : 'Roll';
-  roll.disabled = !(game.phase === 'over' || (game.phase === 'roll' && !isComputer(game.turn)));
+  // online, a finished game's next step is the room's, not Play again
+  roll.disabled = game.phase === 'over' ? isOnline() : !(game.phase === 'roll' && canAct(game.turn) && !roomPaused());
   const offered = adviceOffered(),
     left = adviceLeft(),
     unlimited = left === Infinity;

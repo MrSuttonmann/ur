@@ -8,10 +8,10 @@ const online = {
   roomId: null, // the room this page is in, or null
   seat: null, // SUN for the host, MOON for the friend
   socket: null,
-  seq: 0, // the sequence number of the last state the room sent
+  seq: 0, // the sequence number of the last state from the room that the board has taken on
   queue: [], // the room's messages waiting to play out on the board, one at a time
   busy: false, // a message is playing out
-  view: null, // the room as last told to this seat
+  view: null, // the room as the board last took it on
 };
 
 // ---------- seats ----------
@@ -95,6 +95,7 @@ function connectRoom(roomId) {
 // stop listening to the room (it isn't told; leaving is an intent of its own)
 function disconnectRoom() {
   clearTimeout(reconnectTimer);
+  stopPlaying();
   const socket = online.socket;
   Object.assign(online, { roomId: null, seat: null, socket: null, seq: 0, queue: [], busy: false, view: null });
   if (socket) socket.close();
@@ -122,10 +123,6 @@ function openSocket() {
     } catch (error) {
       return;
     }
-    if (message.type === 'state') {
-      online.seq = message.seq;
-      online.view = message.state;
-    }
     tellRoomHandlers(message);
   });
   socket.addEventListener('close', (e) => {
@@ -147,9 +144,11 @@ function reconnectLater() {
   reconnectTries++;
   reconnectTimer = setTimeout(openSocket, delay);
 }
-// a phone that slept has usually lost its socket; try again as soon as the page is looked at
+// a phone that slept has usually lost its socket; try again as soon as the page is looked at. A page put away
+// mid-move skips to the latest state, as its animations would otherwise wait for it to come back.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && online.roomId && !online.socket) openSocket();
+  if (document.hidden) catchUpWithRoom();
+  else if (online.roomId && !online.socket) openSocket();
 });
 
 // tell the room this seat is leaving, which ends the room, and stop listening to it; a socket still connecting
@@ -168,11 +167,144 @@ function leaveRoom() {
   else if (socket.readyState === WebSocket.CONNECTING) socket.addEventListener('open', sayLeaving);
 }
 
+// says whether it was sent: it can't be while the socket is down
 function sendIntent(intent) {
-  if (online.socket && online.socket.readyState === WebSocket.OPEN) online.socket.send(JSON.stringify(intent));
+  if (!online.socket || online.socket.readyState !== WebSocket.OPEN) return false;
+  online.socket.send(JSON.stringify(intent));
+  return true;
 }
 
 // ---------- the room's game on the board ----------
+// The room's states play out on the board one at a time, in the order it sent them: a roll or a move animates as
+// it would in a game on one device, then the board takes on the room's state exactly. A state that doesn't follow
+// on from the last (a fresh connection's, or after a gap), or that arrives while the page is out of sight, is
+// taken on at once, with nothing animated.
+
+// whether the room is waiting for someone to come back: it takes no rolls or moves until both are here
+const roomPaused = () => isOnline() && Boolean(online.view) && !online.view.connected.every(Boolean);
+
+// online, a roll or move is the room's to make: ask it, and hold the board still (so a second press does nothing)
+// until its answer plays out
+function askRoom(intent, waitingPhase) {
+  if (!canAct(game.turn) || roomPaused() || !sendIntent(intent)) return;
+  game.phase = waitingPhase;
+  render();
+}
+
+let playing = null, // the message playing out now
+  playbackId = 0; // changes when playing out is cut short, so its timers and animations can tell they're stale
+
+function queueRoomMessage(message) {
+  online.queue.push(message);
+  // a fresh connection's full state is the room as it stands now, so it wins over anything still to play out
+  if (!message.event || document.hidden) catchUpWithRoom();
+  else if (!online.busy) playNextRoomMessage();
+}
+function playNextRoomMessage() {
+  playing = online.queue.shift() || null;
+  online.busy = Boolean(playing);
+  if (playing) playRoomMessage(playing, playNextRoomMessage);
+}
+// stop playing out the current message, wherever it has got to
+function stopPlaying() {
+  playbackId++;
+  playing = null;
+  online.busy = false;
+}
+// skip whatever is still to play out and take on the newest state the room has sent
+function catchUpWithRoom() {
+  const newest = online.queue.at(-1) || playing;
+  if (!newest) return;
+  online.queue = [];
+  stopPlaying();
+  takeOnRoomMessage(newest);
+}
+
+function playRoomMessage(message, done) {
+  const { event, seq, state } = message;
+  const animated =
+    event &&
+    (event.kind === 'roll' || event.kind === 'move') &&
+    seq === online.seq + 1 &&
+    game.roomGameId === state.gameId &&
+    !document.hidden;
+  if (!animated) {
+    takeOnRoomMessage(message);
+    done();
+    return;
+  }
+  const thisPlayback = playbackId,
+    stale = () => thisPlayback !== playbackId;
+  const finish = (react = () => {}) => {
+    if (stale()) return;
+    takeOnRoomMessage(message, true);
+    react();
+    done();
+  };
+  if (event.kind === 'roll') playRoomRoll(event, state, finish, stale);
+  else playRoomMove(event, finish, stale);
+}
+
+// the dice tumble and land on the room's roll; a roll with no move shows the pass for a moment
+function playRoomRoll({ side, dice, roll, passed }, state, finish, stale) {
+  game.phase = 'rolling';
+  game.note = '';
+  shakeDice(
+    () => dice,
+    () => {
+      Object.assign(game, { dice, roll, phase: 'move' });
+      if (!passed) {
+        if (roll === MAX_ROLL) speak(side, 'bigRoll', 0, 0.35);
+        finish();
+        return;
+      }
+      speak(side, 'pass', 0, 0.5);
+      game.note = passNote(roll);
+      game.log = state.log; // the ledger's "no move"
+      render();
+      setTimeout(() => {
+        if (stale()) return;
+        game.note = '';
+        finish();
+      }, DELAY.pass);
+    },
+    stale,
+  );
+}
+
+// the counter hops along its route and lands with its effects, then the players react
+function playRoomMove({ side, move, landsOnRose, again, finished }, finish, stale) {
+  game.phase = 'animating';
+  animateHops(side, move, () => {
+    if (stale()) return;
+    markLanding(side, move, landsOnRose);
+    game.note = finished ? '' : againNote(landsOnRose, again);
+    finish(() => reactToMove(side, move, landsOnRose, finished));
+  });
+}
+
+// The board takes on a state the room sent, as it is. One not played out still marks where a move landed; after a
+// jump, what happened in between (and so the last landing and its note) isn't known.
+function takeOnRoomMessage({ event, seq, state }, played = false) {
+  const follows = event && seq === online.seq + 1;
+  if (!played && (!follows || event.kind !== 'presence')) {
+    const rules = VARIANTS[state.variant],
+      move = follows && event.kind === 'move' ? event.move : null;
+    game.lastLanding = move && move.to !== rules.home ? routeCell(event.side, move.to, rules) : null;
+    game.note = '';
+  }
+  online.seq = seq;
+  adoptRoomState(state);
+}
+
+// A refused roll or move (the room paused, say, or a second press that got through) puts the board back as the
+// room last had it, so it's never left waiting for an answer that isn't coming. Nothing is said: a refusal
+// changes nothing in the room.
+onRoomState((message) => {
+  if (message.type !== 'error' || online.busy || !online.view || !isOnline()) return;
+  if (game.phase === 'rolling' || game.phase === 'animating') adoptRoomState(online.view);
+});
+
 const PHASE_FROM_ROOM = { lobby: 'setup', closed: 'over' };
 function adoptRoomState(view) {
   if (!isOnline() || game.roomGameId !== view.gameId) {
@@ -180,6 +312,7 @@ function adoptRoomState(view) {
     if (game && game.guided) finishGuide();
     game = createGameState('online', game.level, view.variant, false);
   }
+  online.view = view;
   $('mode-online').checked = true;
   currentRules = VARIANTS[view.variant];
   Object.assign(game, {
@@ -201,4 +334,5 @@ function adoptRoomState(view) {
   if (seat && opponent && seat.opponent !== opponent) saveSeat(online.roomId, { ...seat, opponent });
   showRulesInPlay();
   render();
+  continueGame(); // your own forced move plays itself
 }

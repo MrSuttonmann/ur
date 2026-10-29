@@ -71,3 +71,7 @@ export async function hostAndJoin(openDevice, { hostName = 'Ted', friendName = '
   await joinFriend(friend, friendName);
   return { host, friend, link };
 }
+
+// sends an intent through the page's own socket to its room, as the page itself would (`test-set` is only allowed
+// by the Worker run for the tests)
+export const sendTestIntent = (page, intent) => page.evaluate((intent) => sendIntent(intent), intent);

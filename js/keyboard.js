@@ -37,7 +37,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (typing) return;
   if (isRollKey(e, tag)) {
-    if (game.phase === 'roll' && !isComputer(game.turn)) {
+    if (game.phase === 'roll' && canAct(game.turn) && !roomPaused()) {
       e.preventDefault();
       rollDice();
     }
@@ -50,7 +50,7 @@ document.addEventListener('keydown', (e) => {
     }
     return;
   }
-  if (game.phase !== 'move' || isComputer(game.turn)) return;
+  if (game.phase !== 'move' || !canAct(game.turn)) return;
   const movable = [...document.querySelectorAll('.piece.movable[data-key]')].sort(
     (a, b) => Number(a.dataset.key) - Number(b.dataset.key),
   );
