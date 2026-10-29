@@ -167,7 +167,8 @@ function thisGameStatsHTML() {
   const stats = game.stats,
     sun = stats.bySide[SUN],
     moon = stats.bySide[MOON];
-  const names = { [SUN]: playerName(SUN), [MOON]: playerName(MOON) };
+  // escaped once here, as the names go into the page both as text and in data-tip attributes
+  const names = { [SUN]: escapeHtml(playerName(SUN)), [MOON]: escapeHtml(playerName(MOON)) };
   // [label, Sun value, Moon value, which is better ('more' / 'fewer'), note]
   const rows = [
     ['Moves made', sun.moves, moon.moves],

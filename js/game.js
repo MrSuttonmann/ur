@@ -33,7 +33,7 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
     newHonours: [], // honours the game earned, once it's over
     undos: 0, // moves you took back
     names: [null, null], // online, the players' names from the room: [host, friend]
-    gameId: null, // online, the room's id for this game
+    roomGameId: null, // online, the room's id for this game (not the page's own gameId counter)
   };
 }
 const isOnline = () => game.mode === 'online';

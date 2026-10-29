@@ -75,15 +75,52 @@ test('the host opening their own link rejoins as host', async ({ openDevice }) =
 });
 
 test('a name with markup shows as text', async ({ openDevice }) => {
-  const { host, friend } = await hostAndJoin(openDevice, { friendName: '<b>Ann</b>' });
-  await expect(host.locator('#seat1')).toHaveText('<b>Ann</b>');
+  const name = '"><b>Ann</b>'; // a quote too, to break out of an attribute
+  const { host, friend } = await hostAndJoin(openDevice, { friendName: name });
+  await expect(host.locator('#seat1')).toHaveText(name);
   await expect(host.locator('#seat1 b')).toHaveCount(0);
   await host.locator('#invite-start').click();
   for (const page of [host, friend]) {
     await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'roll']);
-    await expect(page.locator('#tray1 .tray-name')).toContainText('<b>Ann</b>');
+    await expect(page.locator('#tray1 .tray-name')).toContainText(name);
     await expect(page.locator('#tray1 .tray-name b, #log b, #status b')).toHaveCount(0);
+    // the Stats window's side-by-side table and dice chart (given a roll to chart) name both players
+    await page.locator('#open-stats').click();
+    await page.evaluate(() => {
+      game.stats.bySide[MOON].rollCounts[2] = 1;
+      drawStats();
+    });
+    await expect(page.locator('#stats-body .cmp thead')).toContainText(name);
+    await expect(page.locator('#stats-body .legend')).toContainText(name);
+    await expect(page.locator('#stats-body b', { hasText: 'Ann' })).toHaveCount(0); // its own <b>s hold numbers
+    const tips = await page
+      .locator('#stats-body .rc-bar[data-tip]')
+      .evaluateAll((bars) => bars.map((bar) => bar.dataset.tip));
+    expect(tips).toContain(`${name} rolled 2: 1 of 1 rolls (100.0%)`);
+    await page.locator('#close-stats').click();
   }
+});
+
+test('a room that closes without a word says it has ended, and isn’t reconnected', async ({ openDevice }) => {
+  const host = await openDevice('/');
+  const link = await inviteFriend(host, 'Ted');
+  const friend = await openDevice(linkPath(link));
+  // the friend's socket goes through the test, which can close it as the room does when it expires: 4001, no state
+  const sockets = [];
+  await friend.routeWebSocket(/\/api\/rooms\/\w+\/ws/, (socket) => {
+    socket.connectToServer();
+    sockets.push(socket);
+  });
+  await joinFriend(friend, 'Ann');
+  expect(sockets).toHaveLength(1);
+  await sockets[0].close({ code: 4001, reason: 'closed' });
+  await expect(friend.locator('#room-note-text')).toContainText('has ended');
+  await expect(friend.locator('#join-dlg')).toBeHidden();
+  expect(await friend.evaluate(() => [online.roomId, Object.keys(savedSeats())])).toEqual([null, []]);
+  // neither looking at the page again nor the retry timers open another socket
+  await friend.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await friend.waitForTimeout(2500); // past the first two retry delays
+  expect(sockets).toHaveLength(1);
 });
 
 test('an invite link skips the welcome', async ({ openDevice }) => {

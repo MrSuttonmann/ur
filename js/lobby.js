@@ -186,13 +186,12 @@ function closeLobbyWindows() {
 }
 
 onRoomState((message) => {
+  // the room closed the socket: another tab took this seat, or the room has ended (expired, say) without a
+  // closing state to say so
   if (message.type === 'closed') {
-    // another tab took this seat; this one lets go, so it doesn't take the seat back on its next reconnect
-    if (message.code === CLOSE_REPLACED) {
-      disconnectRoom();
-      closeLobbyWindows();
-      showRoomNote('elsewhere');
-    }
+    if (message.code === CLOSE_ENDED) forgetSeat(message.roomId);
+    closeLobbyWindows();
+    showRoomNote(message.code === CLOSE_REPLACED ? 'elsewhere' : 'ended');
     return;
   }
   if (message.type !== 'state') return;

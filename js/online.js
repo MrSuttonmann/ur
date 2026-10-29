@@ -75,7 +75,7 @@ let reconnectTries = 0,
   reconnectTimer = null;
 
 // lobby and game code hear every message here: {type: 'state', seq, event, state} or {type: 'error', code}, and
-// {type: 'closed', code} when the room has closed this page's socket for good
+// {type: 'closed', code, roomId} when the room has closed this page's socket for good (this page has let go of it)
 const roomHandlers = [];
 const onRoomState = (handler) => roomHandlers.push(handler);
 function tellRoomHandlers(message) {
@@ -131,8 +131,14 @@ function openSocket() {
   socket.addEventListener('close', (e) => {
     if (!current()) return;
     online.socket = null;
-    if (e.code === CLOSE_REPLACED || e.code === CLOSE_ENDED) tellRoomHandlers({ type: 'closed', code: e.code });
-    else reconnectLater();
+    if (e.code !== CLOSE_REPLACED && e.code !== CLOSE_ENDED) {
+      reconnectLater();
+      return;
+    }
+    // closed for good: let go of the room, so nothing reconnects to it, then say which room it was
+    const roomId = online.roomId;
+    disconnectRoom();
+    tellRoomHandlers({ type: 'closed', code: e.code, roomId });
   });
 }
 
@@ -169,7 +175,7 @@ function sendIntent(intent) {
 // ---------- the room's game on the board ----------
 const PHASE_FROM_ROOM = { lobby: 'setup', closed: 'over' };
 function adoptRoomState(view) {
-  if (!isOnline() || game.gameId !== view.gameId) {
+  if (!isOnline() || game.roomGameId !== view.gameId) {
     abandonCurrentGame();
     if (game && game.guided) finishGuide();
     game = createGameState('online', game.level, view.variant, false);
@@ -187,7 +193,7 @@ function adoptRoomState(view) {
     log: view.log,
     stats: view.stats,
     names: view.names,
-    gameId: view.gameId,
+    roomGameId: view.gameId,
   });
   // the opponent's name is kept with the seat, for offering to rejoin later
   const seat = savedSeats()[online.roomId],
