@@ -12,10 +12,11 @@
     "lint:html": "html-validate index.html",
     "typecheck": "tsc -p jsconfig.json",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "node --test \"tests/unit/*.test.mjs\"",
+    "test:unit": "npm run build:shared && node --test \"tests/unit/*.test.mjs\"",
     "test:e2e": "playwright test",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
-    "build": "node scripts/build.mjs",
+    "build:shared": "node scripts/shared-module.mjs",
+    "build": "npm run build:shared && node scripts/build.mjs",
     "lighthouse": "npm run build && lhci autorun",
     "prepare": "husky"
   },

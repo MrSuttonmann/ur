@@ -273,7 +273,9 @@ function completeMove(move) {
   const side = game.turn,
     landsOnRose = isRose(move.to),
     again = rollsAgain(move);
-  writeToLedger(`${playerName(side)} rolled ${game.roll}: ${describeMove(side, move, landsOnRose, again)}`);
+  writeToLedger(
+    `${playerName(side)} rolled ${game.roll}: ${describeMove(side, move, landsOnRose, again, currentRules)}`,
+  );
   applyMoveToGame(side, move, landsOnRose);
   const finished = allHome(game.positions, side);
   reactToMove(side, move, landsOnRose, finished);
@@ -283,18 +285,6 @@ function completeMove(move) {
   }
   game.note = landsOnRose ? 'A rose! Roll again.' : again ? 'A capture! Roll again.' : '';
   endTurn(again);
-}
-function describeMove(side, move, landsOnRose, again) {
-  let text =
-    move.from === IN_TRAY
-      ? `entered a piece${move.to > 1 ? ' to ' + move.to : ''}`
-      : move.to === currentRules.home
-        ? 'brought a piece home'
-        : `moved ${move.from} → ${move.to}`;
-  if (move.captures >= 0) text += `, captured a ${SIDE_NAME[opponentOf(side)]} piece`;
-  if (landsOnRose) text += ', landed on a rose and rolls again';
-  else if (again) text += ' and rolls again';
-  return text;
 }
 function applyMoveToGame(side, move, landsOnRose) {
   pendingEffects = {
@@ -306,7 +296,7 @@ function applyMoveToGame(side, move, landsOnRose) {
   if (move.captures >= 0) lastCapturedSide = opponentOf(side);
   game.positions = applyMove(game.positions, side, move);
   game.lastLanding = move.to === currentRules.home ? null : routeCell(side, move.to);
-  recordMove(side, move, landsOnRose);
+  recordMove(game.stats, game.positions, side, move, landsOnRose, currentRules);
 }
 // sounds and the players' reactions
 function reactToMove(side, move, landsOnRose, finished) {

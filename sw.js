@@ -31,6 +31,7 @@ const CODE = [
   'css/honours.css',
   'css/splash.css',
   'js/rules.js',
+  'js/turns.js',
   'js/sound.js',
   'js/game.js',
   'js/stats.js',
