@@ -692,7 +692,9 @@
           Your friend can scan this code with their phone’s camera, or you can send them the link.
         </p>
         <div class="invite-qr" id="invite-qr" role="img" aria-label="QR code for the invite link"></div>
-        <input class="invite-link" id="invite-link" type="text" readonly aria-label="Invite link" />
+        <p class="invite-link" id="invite-link">
+          <span class="invite-code" id="invite-code"></span><span class="invite-host" id="invite-host"></span>
+        </p>
         <div class="lobby-buttons">
           <button class="btn" type="button" id="invite-copy"><span class="lbl">Copy link</span></button>
           <button class="btn with-icon" type="button" id="invite-share" hidden>

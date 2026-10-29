@@ -12,7 +12,7 @@
   flex: 1;
   min-width: 0;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px; /* any smaller and iPhones zoom the page in when the field is tapped */
   font-weight: 600;
   color: var(--ink);
   background: var(--bone);
@@ -81,21 +81,27 @@ dialog.lobby {
   fill: var(--ink);
 }
 
+/* the game's code, large enough to read out across a table, with the site's address small beneath it */
 .invite-link {
-  width: 100%;
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 14px;
-  text-align: center;
-  color: var(--ink);
-  background: var(--paper-deep);
-  border: 1.5px solid var(--ink-soft);
-  border-radius: 6px;
-  padding: 6px 8px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
-.invite-link:focus-visible {
-  outline: 2px dashed var(--vermilion);
-  outline-offset: 2px;
+.invite-code {
+  font-size: clamp(30px, 9vw, 38px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  margin-right: -0.18em; /* the spacing after the last letter would push the code off centre */
+  line-height: 1.1;
+  user-select: all;
+}
+
+.invite-host {
+  font-size: 14px;
+  color: var(--ink-soft);
 }
 
 .lobby-buttons {

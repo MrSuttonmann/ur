@@ -53,8 +53,8 @@ export async function inviteFriend(host, name) {
   await host.locator('label[for=mode-online]').click();
   await host.locator('#player-name').fill(name);
   await host.locator('#newgame').click();
-  await expect(host.locator('#invite-link')).toHaveValue(/#g=\w{6}$/);
-  return host.locator('#invite-link').inputValue();
+  await expect(host.locator('#invite-link')).toHaveAttribute('data-link', /#g=\w{6}$/);
+  return host.locator('#invite-link').getAttribute('data-link');
 }
 
 // the friend, on the invite link, gives their name and joins

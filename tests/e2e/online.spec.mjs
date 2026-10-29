@@ -52,6 +52,30 @@ test('host invites, friend joins, host starts', async ({ openDevice }) => {
   }
 });
 
+test('on a phone the invite shows the whole code, and the name fields don’t make iPhones zoom', async ({
+  openDevice,
+}) => {
+  const host = await openDevice('/');
+  await host.setViewportSize({ width: 390, height: 844 }); // an iPhone 13 Pro
+  const link = await inviteFriend(host, 'Ted');
+  const roomId = new URL(link).hash.slice('#g='.length);
+  await expect(host.locator('#invite-code')).toHaveText(roomId);
+  await expect(host.locator('#invite-host')).toHaveText(new URL(link).host);
+  const fits = await host.evaluate(() => {
+    const panel = document.querySelector('#invite-dlg .stats-inner').getBoundingClientRect();
+    return [...document.querySelectorAll('#invite-code, #invite-host')].every((el) => {
+      const box = el.getBoundingClientRect();
+      return box.left >= panel.left && box.right <= panel.right && el.scrollWidth <= el.clientWidth + 1;
+    });
+  });
+  expect(fits).toBe(true);
+  // iPhones zoom in on a text field whose text is smaller than 16px
+  for (const field of ['#player-name', '#join-name'])
+    expect(
+      await host.locator(field).evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+    ).toBeGreaterThanOrEqual(16);
+});
+
 test('an empty name is refused before anything is sent', async ({ openDevice }) => {
   const host = await openDevice('/');
   await host.locator('label[for=mode-online]').click();
@@ -115,7 +139,7 @@ test('the host opening their own link rejoins as host', async ({ openDevice }) =
   const again = await openDevice(linkPath(link), { context: host.context() });
   await expect(again.locator('#invite-dlg')).toBeVisible();
   await expect(again.locator('#seat0')).toHaveText('Ted');
-  await expect(again.locator('#invite-link')).toHaveValue(link);
+  await expect(again.locator('#invite-link')).toHaveAttribute('data-link', link);
   await expect(again.locator('#join-dlg')).toBeHidden();
   // the older tab gave up its seat to the newer one, and says so
   await expect(host.locator('#room-note-text')).toContainText('another tab');

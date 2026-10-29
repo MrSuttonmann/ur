@@ -61,7 +61,10 @@ function openInvite(roomId) {
 function showInvitePanel(roomId) {
   const link = inviteLink(roomId);
   setLinkRoom(roomId); // a reload comes back here
-  $('invite-link').value = link;
+  // the code is what matters, so it's shown large; Copy and Share give the whole link
+  $('invite-link').dataset.link = link;
+  $('invite-code').textContent = roomId;
+  $('invite-host').textContent = new URL(link).host;
   const code = qrcode(0, 'M');
   code.addData(link);
   code.make();
@@ -85,25 +88,41 @@ function drawSeats(prefix, names) {
 $('invite-copy').addEventListener('click', async () => {
   const button = $('invite-copy'),
     label = button.querySelector('.lbl');
+  const link = $('invite-link').dataset.link;
+  let copied = false;
   try {
-    await navigator.clipboard.writeText($('invite-link').value);
-    label.textContent = 'Copied';
-    setTimeout(() => (label.textContent = 'Copy link'), 2000);
+    await navigator.clipboard.writeText(link);
+    copied = true;
   } catch (e) {
-    $('invite-link').focus();
-    $('invite-link').select();
+    copied = copyTheOldWay(link);
   }
+  label.textContent = copied ? 'Copied' : 'Couldn’t copy';
+  setTimeout(() => (label.textContent = 'Copy link'), 2000);
 });
+// for browsers that refuse the clipboard API: copy from a briefly selected, off-screen text box
+function copyTheOldWay(text) {
+  const box = document.createElement('textarea');
+  box.value = text;
+  box.readOnly = true;
+  box.style.cssText = 'position:fixed;top:0;left:-9999px;font-size:16px';
+  $('invite-dlg').appendChild(box); // inside the dialog, which is the only part of a modal page that can be selected
+  box.select();
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } catch (e) {}
+  box.remove();
+  return copied;
+}
 $('invite-share').addEventListener('click', () => {
   navigator
     .share({
       title: 'The Royal Game of Ur',
       text: 'Come and play the Royal Game of Ur with me.',
-      url: $('invite-link').value,
+      url: $('invite-link').dataset.link,
     })
     .catch(() => {}); // the player closed the share sheet
 });
-$('invite-link').addEventListener('focus', () => $('invite-link').select());
 $('invite-start').addEventListener('click', () => sendIntent({ t: 'start' }));
 
 // cancelling the invite ends the room: a friend waiting in it, or anyone opening the link later, is told so
