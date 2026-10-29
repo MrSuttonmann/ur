@@ -94,6 +94,8 @@ own game. The same happens if the link is for a room that no longer exists.
   but records nothing.
   A leave the room doesn't hear (the connection down, say) is kept and said again whenever the page might reach
   the room (loading, coming back online, being looked at again); the seat is only forgotten once the room confirms.
+  The leave names the game it was meant for (none, in the lobby): one that arrives after another game has begun
+  ends the room as a leave between games would, with no forfeit.
 - **Coming back without the link** (_my call_). When the site starts and this browser holds a seat key for a room
   that is still live, it offers "Rejoin your game with ‹Name›" in place of the usual start. Separate browser
   storage (for example an installed iPhone app and Safari) counts as a different device, under the non-goals.

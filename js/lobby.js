@@ -289,7 +289,9 @@ let rejoinRoom = null;
 // are forgotten on the way; one that can't be checked (no connection, a failing room) is left saved, and skipped.
 async function liveSeatRoom() {
   for (const roomId of seatsNewestFirst()) {
-    if (savedSeats()[roomId].leaving) continue; // being left
+    // a seat may have gone while the last was checked (a leave confirmed, say), and one being left isn't offered
+    const seat = savedSeats()[roomId];
+    if (!seat || seat.leaving) continue;
     const { status, data } = await roomInfo(roomId);
     if (status === 200 && data.status !== 'closed') return roomId;
     if (status === 404 || (status === 200 && data.status === 'closed')) forgetSeat(roomId);

@@ -94,12 +94,15 @@ const inviteInfo = (room) => ({
 
 const expiresAt = (room) => room.touched + (room.phase === 'lobby' ? LOBBY_IDLE_MS : GAME_IDLE_MS);
 
+// the room's current game, as the pages name it
+const gameIdOf = (room) => `${room.id}-${room.gameNo}`;
+
 // what a seat is told: the room without anyone's key or the server's clock
 function publicState(room, seat) {
   const view = { ...room, you: seat, names: room.seats.map((taken) => (taken ? taken.name : null)) };
   delete view.seats;
   delete view.clockFrom;
-  view.gameId = `${room.id}-${room.gameNo}`;
+  view.gameId = gameIdOf(room);
   return view;
 }
 
@@ -233,21 +236,28 @@ function runIntent(room, seat, intent, now, rng, testHooks) {
       room.rematch[seat] = true;
       if (room.rematch[opponentOf(seat)]) return { event: beginGame(room, rng) };
       return { event: { kind: 'rematch-offer', seat } };
-    case 'leave':
+    case 'leave': {
+      // A leave names the game it was meant for (null for the lobby), as one held up on the way may arrive after
+      // another game has begun; one that doesn't name the game in play leaves between games. A leave naming no
+      // game at all is for the room as it is now.
+      const current = room.phase === 'lobby' ? null : gameIdOf(room);
+      const meant = intent.game === undefined ? current : intent.game;
       // a friend leaving the lobby frees their seat for someone else; the host can still invite them by link
-      if (room.phase === 'lobby' && seat === 1) {
+      if (room.phase === 'lobby' && seat === 1 && meant === null) {
         room.seats[1] = null;
         room.connected[1] = false;
         return { event: { kind: 'left', seat, forfeit: false } };
       }
+      const forfeit = playing && meant === current;
       settleClock(room, now);
-      if (playing) {
+      if (forfeit) {
         room.winner = opponentOf(seat);
         room.endedBy = 'forfeit';
         writeToLedger(room, `${sideName(room, seat)} left the game.`);
       }
       room.phase = 'closed';
-      return { event: { kind: 'left', seat, forfeit: playing } };
+      return { event: { kind: 'left', seat, forfeit } };
+    }
     case 'test-set':
       if (!testHooks) return refuse('illegal');
       if (!playing) return refuse('wrong-phase');

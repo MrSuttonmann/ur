@@ -361,3 +361,43 @@ test('seq rises by one on every accepted intent and not on a refused one', () =>
   applyIntent(room, 0, { t: 'move', counter: 0 }, 4000, SUN_FIRST); // paused
   assert.equal(room.seq, seq + 2);
 });
+
+// A leave names the game it was meant for (null for the lobby): one held up on the way can't forfeit a later game
+test('a lobby leave that arrives after the game has started closes the room without a forfeit', () => {
+  const room = startedRoom();
+  const { event } = applyIntent(room, 1, { t: 'leave', game: null }, 3000, SUN_FIRST);
+  assert.deepEqual(event, { kind: 'left', seat: 1, forfeit: false });
+  assert.equal(room.phase, 'closed');
+  assert.equal(room.winner, null);
+  assert.equal(room.endedBy, null);
+  assert.equal(room.seats[1].name, 'Bea');
+});
+
+test('a leave meant for the last game closes a rematch without a forfeit', () => {
+  const room = finishedRoom();
+  applyIntent(room, 1, { t: 'rematch' }, 4000, SUN_FIRST);
+  applyIntent(room, 0, { t: 'rematch' }, 4001, SUN_FIRST);
+  assert.equal(room.gameNo, 2);
+  const { event } = applyIntent(room, 1, { t: 'leave', game: 'K7QXM2-1' }, 5000, SUN_FIRST);
+  assert.deepEqual(event, { kind: 'left', seat: 1, forfeit: false });
+  assert.equal(room.phase, 'closed');
+  assert.equal(room.winner, null);
+  assert.equal(room.endedBy, null);
+  assert.notEqual(room.log[0], 'Bea left the game.');
+});
+
+test('a leave meant for the game in play forfeits it', () => {
+  const room = startedRoom();
+  const { event } = applyIntent(room, 1, { t: 'leave', game: 'K7QXM2-1' }, 3000, SUN_FIRST);
+  assert.deepEqual(event, { kind: 'left', seat: 1, forfeit: true });
+  assert.equal(room.winner, SUN);
+  assert.equal(room.endedBy, 'forfeit');
+});
+
+test('a lobby leave from the friend still frees their seat while the room is in the lobby', () => {
+  const room = newRoom();
+  joinRoom(room, 'Bea', FRIEND_KEY, 1500);
+  applyIntent(room, 1, { t: 'leave', game: null }, 2000, SUN_FIRST);
+  assert.equal(room.phase, 'lobby');
+  assert.equal(room.seats[1], null);
+});

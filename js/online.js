@@ -16,8 +16,9 @@ const online = {
 
 // ---------- seats ----------
 // each room this browser has a seat in: {[roomId]: {key, seat, opponent, savedAt, leaving}}, the key being the
-// seat's secret; `leaving` marks a seat whose leave the room hasn't confirmed yet. They're kept in memory too,
-// so online play still works for the visit should storage be blocked.
+// seat's secret; `leaving` marks a seat whose leave the room hasn't confirmed yet, as {game}: the room's id for the
+// game left, or null for the lobby. They're kept in memory too, so online play still works for the visit should
+// storage be blocked.
 const SEATS_KEY = 'ur-seats-v1';
 let seatsHere = {};
 function savedSeats() {
@@ -176,16 +177,19 @@ document.addEventListener('visibilitychange', () => {
 const goodbyes = {}; // the sockets saying goodbye now, by room id
 
 // tell the room this seat is leaving, and stop listening to it; the page's own socket says so if it's open or
-// opening, and otherwise one is opened just to say so
+// opening, and otherwise one is opened just to say so. The leave names the game on the board (null in the lobby),
+// so one that arrives late can't forfeit a game begun since.
 function leaveRoom() {
   const roomId = online.roomId,
     seats = savedSeats(),
     seat = seats[roomId];
+  const inGame = isOnline() && online.view && online.view.phase !== 'lobby';
+  const leaving = { game: inGame ? game.roomGameId : null };
   const socket = online.socket;
   online.socket = null; // so letting go of the room leaves this socket open long enough to say goodbye
   disconnectRoom();
   if (!seat) return;
-  storeSeats({ ...seats, [roomId]: { ...seat, leaving: true } });
+  storeSeats({ ...seats, [roomId]: { ...seat, leaving } });
   sayGoodbye(roomId, socket);
 }
 
@@ -198,7 +202,7 @@ function sayGoodbye(roomId, socket = null) {
     forgetSeat(roomId, seat.key);
     socket.close();
   };
-  const sayLeaving = () => socket.send(JSON.stringify({ t: 'leave' }));
+  const sayLeaving = () => socket.send(JSON.stringify({ t: 'leave', game: seat.leaving.game }));
   if (socket.readyState === WebSocket.OPEN) sayLeaving();
   else socket.addEventListener('open', sayLeaving);
   socket.addEventListener('message', (e) => {

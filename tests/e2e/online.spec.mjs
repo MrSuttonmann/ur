@@ -723,12 +723,13 @@ test('a leave made while the connection is down reaches the room once it’s bac
   await friend.evaluate(() => online.socket.close());
   await expect(host.locator('#status')).toContainText('Ann has lost connection');
 
+  const gameId = await friend.evaluate(() => game.roomGameId);
   await friend.locator('label[for=mode-ai]').click();
   await friend.locator('#confirm-yes').click();
   expect(await recordOf(friend)).toMatchObject({ games: 1, online: { w: 0, l: 1 } });
-  // the room hasn't heard, so the seat is kept until it has
+  // the room hasn't heard, so the seat is kept until it has, with the game it leaves
   await friend.waitForTimeout(1000);
-  expect(await friend.evaluate((roomId) => savedSeats()[roomId].leaving, roomId)).toBe(true);
+  expect(await friend.evaluate((roomId) => savedSeats()[roomId].leaving, roomId)).toEqual({ game: gameId });
   await expect(host.locator('#status')).not.toContainText('has left');
 
   down = false;
