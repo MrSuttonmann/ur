@@ -276,6 +276,44 @@ async function followInvite(roomId) {
   else showJoin(roomId, data);
 }
 
+// ---------- joining with just the code, for someone already on the site ----------
+$('join-code').addEventListener('click', () => {
+  $('code-input').value = '';
+  $('code-error').hidden = true;
+  $('code-dlg').showModal();
+  $('code-input').focus();
+});
+$('code-cancel').addEventListener('click', () => $('code-dlg').close());
+$('code-input').addEventListener('input', () => {
+  $('code-error').hidden = true;
+});
+function showCodeError(text) {
+  $('code-error').textContent = text;
+  $('code-error').hidden = false;
+  $('code-input').focus();
+}
+// a code typed in any case, with spaces or a dash, is still the code
+const typedCode = () => $('code-input').value.toUpperCase().replace(/[\s-]/g, '');
+$('code-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const code = typedCode();
+  if (!ROOM_CODE.test(code)) {
+    showCodeError('That isn’t a game code. A code has six letters and numbers, like K7QXM2.');
+    return;
+  }
+  $('code-go').disabled = true;
+  const { status, data } = await roomInfo(code);
+  $('code-go').disabled = false;
+  if (status === 0 || status >= 500) showCodeError('Couldn’t reach the game. Check your connection, then try again.');
+  else if (status !== 200 || data.status === 'closed')
+    showCodeError('There’s no game with that code. Check it with your friend.');
+  else {
+    $('code-dlg').close();
+    setLinkRoom(code); // as if they'd opened the link, so a reload comes back to the game
+    followInvite(code);
+  }
+});
+
 // ---------- notes: a full or ended room ----------
 const ROOM_NOTES = {
   full: ['The game is full', 'This game already has two players. You’re welcome to start a game of your own.'],

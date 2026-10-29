@@ -768,6 +768,7 @@ function renderSetupControls() {
   document.querySelector('.seg').title = why;
   $('level-field').title = why;
   $('variant-field').title = why;
+  $('join-code').hidden = !isOnline() || locked || Boolean(online.roomId);
   $('newgame').classList.toggle('start', !locked);
   $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : isOnline() ? 'Invite a friend' : 'Start game';
 }

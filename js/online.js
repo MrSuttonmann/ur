@@ -69,10 +69,12 @@ async function roomApi(method, path, body) {
 }
 
 const inviteLink = (roomId) => location.origin + '/#g=' + roomId;
+// a room's code: six of these letters and digits, leaving out the ones easily mistaken for each other
+const ROOM_CODE = /^[23456789A-HJKMNP-Z]{6}$/;
 // the room named by the page's link (#g=K7QXM2), or null
 function roomInLink() {
-  const match = /^#g=([23456789A-HJKMNP-Z]{6})$/i.exec(location.hash);
-  return match ? match[1].toUpperCase() : null;
+  const code = location.hash.startsWith('#g=') ? location.hash.slice('#g='.length).toUpperCase() : '';
+  return ROOM_CODE.test(code) ? code : null;
 }
 const setLinkRoom = (roomId) => history.replaceState(null, '', roomId ? '#g=' + roomId : location.pathname);
 

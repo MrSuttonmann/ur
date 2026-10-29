@@ -85,6 +85,43 @@ test('an empty name is refused before anything is sent', async ({ openDevice }) 
   expect(await host.locator('#player-name').evaluate((input) => input.validationMessage)).toContain('your name');
 });
 
+test('a friend already on the site can join with just the code', async ({ openDevice }) => {
+  const host = await openDevice('/');
+  const link = await inviteFriend(host, 'Ted');
+  const code = await host.locator('#invite-code').textContent();
+
+  const friend = await openDevice('/');
+  await expect(friend.locator('#join-code')).toBeHidden(); // only offered in Online mode
+  await friend.locator('label[for=mode-online]').click();
+  await friend.locator('#join-code').click();
+  // typed in lower case with a space in the middle, it's still the code
+  await friend.locator('#code-input').fill(`${code.slice(0, 3)} ${code.slice(3)}`.toLowerCase());
+  await friend.locator('#code-go').click();
+  await expect(friend.locator('#code-dlg')).toBeHidden();
+  await expect(friend.locator('#join-dlg')).toContainText('Ted has invited you to play the Royal Game of Ur');
+  expect(await friend.evaluate(() => location.hash)).toBe(new URL(link).hash); // a reload comes back here
+  await joinFriend(friend, 'Ann');
+  await expect(host.locator('#seat1')).toHaveText('Ann');
+  await expect(friend.locator('#join-code')).toBeHidden(); // not while holding a seat
+});
+
+test('a mistyped or unknown code says so, and the window stays open', async ({ openDevice }) => {
+  const page = await openDevice('/');
+  await page.locator('label[for=mode-online]').click();
+  await page.locator('#join-code').click();
+  await page.locator('#code-input').fill('K7Q');
+  await page.locator('#code-go').click();
+  await expect(page.locator('#code-error')).toContainText('isn’t a game code');
+  await page.locator('#code-input').fill('ZZZZZZ');
+  await expect(page.locator('#code-error')).toBeHidden(); // typing clears the message
+  await page.locator('#code-go').click();
+  await expect(page.locator('#code-error')).toContainText('no game with that code');
+  await expect(page.locator('#code-dlg')).toBeVisible();
+  await expect(page.locator('#join-dlg')).toBeHidden();
+  await page.locator('#code-cancel').click();
+  await expect(page.locator('#code-dlg')).toBeHidden();
+});
+
 test('a third visitor is told the game is full', async ({ openDevice }) => {
   const { link } = await hostAndJoin(openDevice);
   const third = await openDevice(linkPath(link));

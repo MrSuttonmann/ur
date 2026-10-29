@@ -245,6 +245,7 @@
             <button class="btn with-icon start" id="newgame" type="button">
               <span data-icon="play"></span><span class="lbl">Start game</span>
             </button>
+            <button class="btn" id="join-code" type="button" aria-haspopup="dialog" hidden>Join with a code</button>
             <span class="tb-break" aria-hidden="true"></span>
           </div>
         </div>
@@ -771,6 +772,29 @@
           <button class="btn start" type="button" id="room-note-own">Start your own game</button>
         </div>
       </div>
+    </dialog>
+
+    <dialog id="code-dlg" class="stats lobby" aria-labelledby="code-title" aria-describedby="code-lead">
+      <form class="stats-inner join-form" id="code-form" novalidate>
+        <h2 id="code-title">Join a friend’s game</h2>
+        <p class="lobby-lead" id="code-lead">Type the six-letter code shown on your friend’s screen.</p>
+        <input
+          class="code-input"
+          type="text"
+          id="code-input"
+          maxlength="9"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          aria-label="Game code"
+          aria-describedby="code-error"
+        />
+        <p class="lobby-error" id="code-error" role="alert" hidden></p>
+        <div class="confirm-actions">
+          <button class="btn" type="button" id="code-cancel">Cancel</button>
+          <button class="btn start" type="submit" id="code-go">Join</button>
+        </div>
+      </form>
     </dialog>
 
     <dialog id="rejoin-dlg" class="stats confirm" aria-labelledby="rejoin-title" aria-describedby="rejoin-text">

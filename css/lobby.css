@@ -181,6 +181,31 @@ dialog.lobby {
   color: var(--ink-soft);
 }
 
+/* Join with a code: beside Invite a friend in the setup strip, and the box the code is typed into */
+#join-code {
+  order: 2;
+}
+
+.code-input {
+  width: 8.5em;
+  font: inherit;
+  font-size: 26px; /* never under 16px, or iPhones zoom in when it's tapped */
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--bone);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--hand);
+  padding: 4px 10px;
+}
+
+.code-input:focus-visible {
+  outline: 2px dashed var(--vermilion);
+  outline-offset: 3px;
+}
+
 .lobby-error {
   margin: 0;
   color: var(--vermilion);
