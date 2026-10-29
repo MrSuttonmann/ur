@@ -482,6 +482,17 @@ function renderTray(side) {
   return { waiting: tray.querySelector('.wait'), home: tray.querySelector('.home') };
 }
 
+// When a game starts, the page scrolls to the top of the upper player's tray, so the board and both trays are in
+// view rather than the header. It waits a frame, until any window that started the game has closed and handed
+// the focus back, which would otherwise scroll the page to wherever that focus lands.
+const GAME_TOP_MARGIN = 8; // px left above the tray
+function scrollToGame() {
+  requestAnimationFrame(() => {
+    const top = Math.min(...[$('tray0'), $('tray1')].map((tray) => tray.getBoundingClientRect().top));
+    scrollTo({ top: scrollY + top - GAME_TOP_MARGIN, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  });
+}
+
 // ---------- render: redraw everything from the game state ----------
 function render() {
   $('game').classList.toggle('view-moon', isOnline() && mySide() === MOON); // the friend sees their own side at the bottom

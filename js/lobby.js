@@ -249,8 +249,10 @@ onRoomState((message) => {
     return;
   }
   queueRoomMessage(message); // the board plays out the room's states in order
-  if (view.phase !== 'lobby') closeLobbyWindows();
-  else if (online.seat === SUN) {
+  if (view.phase !== 'lobby') {
+    closeLobbyWindows();
+    if (message.event && message.event.kind === 'start') scrollToGame(); // a first game, or a rematch
+  } else if (online.seat === SUN) {
     if (!$('invite-dlg').open) showInvitePanel(online.roomId);
     drawSeats('seat', view.names);
     $('invite-start').disabled = !view.names[MOON];

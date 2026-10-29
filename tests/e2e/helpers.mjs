@@ -67,6 +67,16 @@ export async function speedUpGame(page, rate) {
   }, rate);
 }
 
+// A game's start scrolls the page to the upper player's tray, smoothly. Clicking during that scroll can miss, as
+// the click is aimed where the target was, so this waits until the scroll has arrived, or the page can't go further.
+export async function waitForGameInView(page) {
+  await page.waitForFunction(() => {
+    const top = Math.min(...['tray0', 'tray1'].map((id) => document.getElementById(id).getBoundingClientRect().top));
+    const furthest = document.documentElement.scrollHeight - innerHeight;
+    return Math.abs(top - 8) <= 1 || scrollY >= furthest - 1;
+  });
+}
+
 // the last script has run and the board is laid out
 export async function waitForBoot(page) {
   await page.waitForFunction(() => typeof game === 'object' && game !== null);

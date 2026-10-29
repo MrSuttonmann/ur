@@ -36,6 +36,7 @@ function startGame({ guided = false } = {}) {
   const who = game.mode === 'ai' && game.turn === HUMAN_SIDE ? 'You go' : `${playerName(game.turn)} goes`;
   writeToLedger(`${who} first.`);
   render();
+  scrollToGame();
   continueGame();
   speak(MOON, 'start', 300);
   speak(SUN, 'start', 1500, 0.6);

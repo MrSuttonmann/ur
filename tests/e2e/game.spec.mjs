@@ -79,3 +79,17 @@ for (const variant of VARIANTS) {
     expect(result.problems).toEqual([]);
   });
 }
+
+// how far the upper player's tray sits from the top of the window, in whole pixels
+const upperTrayTop = (page) =>
+  page.evaluate(() =>
+    Math.round(Math.min(...['tray0', 'tray1'].map((id) => document.getElementById(id).getBoundingClientRect().top))),
+  );
+
+test('starting a game scrolls to the top of the upper player’s tray', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 }); // a phone, where the header pushes the board down
+  await openGame(page);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await page.locator('#newgame').click();
+  await expect.poll(() => upperTrayTop(page)).toBe(8);
+});

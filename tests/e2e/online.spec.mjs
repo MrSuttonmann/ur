@@ -5,7 +5,7 @@
 // `wrangler dev`. The room rolls its own dice, so the play tests work with whatever it rolls.
 
 import { expect } from '@playwright/test';
-import { speedUpGame } from './helpers.mjs';
+import { speedUpGame, waitForGameInView } from './helpers.mjs';
 import {
   createRoomViaApi,
   hostAndJoin,
@@ -203,6 +203,20 @@ test('a QR code that isn’t an invite, or a refused camera, says so on one line
   expect(await lines()).toBe(1);
   await expect(page.locator('#code-viewfinder')).toBeHidden();
   await expect(page.locator('#code-scan')).toBeVisible(); // to try again, or type the code instead
+});
+
+test('when an online game starts, both pages scroll to their upper player’s tray', async ({ openDevice }) => {
+  const { host, friend } = await hostAndJoin(openDevice);
+  for (const page of [host, friend]) await page.setViewportSize({ width: 390, height: 844 });
+  await host.locator('#invite-start').click();
+  // the host's upper tray is the Moon's; the friend's board is turned, so theirs is the Sun's
+  for (const [page, upper] of [
+    [host, 'tray1'],
+    [friend, 'tray0'],
+  ])
+    await expect
+      .poll(() => page.evaluate((id) => Math.round(document.getElementById(id).getBoundingClientRect().top), upper))
+      .toBe(8);
 });
 
 test('a third visitor is told the game is full', async ({ openDevice }) => {
@@ -422,6 +436,7 @@ async function startOnlineGame(openDevice) {
   const pages = [host, friend];
   for (const page of pages) {
     await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'roll']);
+    await waitForGameInView(page);
     await page.evaluate(() => (prefs.autoMove = false));
     await speedUpGame(page, 4);
   }
@@ -468,6 +483,11 @@ test('both screens agree after several turns', async ({ openDevice }) => {
     await expectInStep(pages);
   }
   expect(await pages[0].evaluate(() => game.log.length)).toBe(13); // who went first, then a line a turn
+  // the lobby's windows stay closed through the game
+  for (const page of pages) {
+    await expect(page.locator('#invite-dlg')).toBeHidden();
+    await expect(page.locator('#join-dlg')).toBeHidden();
+  }
 });
 
 test('you can’t roll on your friend’s turn', async ({ openDevice }) => {
@@ -845,9 +865,15 @@ test('leaving mid-game forfeits', async ({ openDevice }) => {
   await expect(host.locator('#room-note-dlg')).toBeHidden();
 
   // the friend is back on a page of their own, which the room no longer pulls back into the game
+  // (a fresh computer game, in whatever phase it's reached: the computer may already have rolled)
   await friend.locator('#newgame').click();
   await friend.waitForTimeout(500);
-  expect(await modeAndPhase(friend)).toEqual(['ai', 'roll']);
+  expect(await friend.evaluate(() => [game.mode, game.roomGameId, online.roomId, game.phase === 'over'])).toEqual([
+    'ai',
+    null,
+    null,
+    false,
+  ]);
   await expect(friend.locator('#game')).not.toHaveClass(/view-moon/);
   expect(await host.evaluate(() => lifetime.games)).toBe(1);
 
