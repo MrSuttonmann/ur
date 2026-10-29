@@ -21,6 +21,21 @@ function finishGuide() {
   } catch (e) {}
 }
 
+// A new player is offered the guided first game rather than put straight into it. Saying no (or closing the
+// window) is final; saying yes leaves the guide to be marked seen when they leave the guided game, as ever.
+const ACCEPTED_GUIDE = 'guided';
+function offerGuidedGame() {
+  $('welcome-dlg').showModal();
+  $('welcome-yes').focus();
+}
+$('welcome-yes').addEventListener('click', () => $('welcome-dlg').close(ACCEPTED_GUIDE));
+$('welcome-no').addEventListener('click', () => $('welcome-dlg').close());
+$('welcome-dlg').addEventListener('close', () => {
+  if ($('welcome-dlg').returnValue === ACCEPTED_GUIDE) startGame({ guided: true });
+  else finishGuide();
+  $('welcome-dlg').returnValue = '';
+});
+
 // where a move by your counters lands: a board square, or your home tray
 const yourLanding = (move) => landingElement(HUMAN_SIDE, move);
 

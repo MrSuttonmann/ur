@@ -20,8 +20,8 @@ export { expect };
 
 const DEFAULT_SEED = 20260101;
 
-// What a test starts with: the guided first game already seen, and the given preferences. Only written when
-// absent, so a reload keeps whatever the game has saved since.
+// What a test starts with: the guided first game already seen (unless it plays a new player), and the given
+// preferences. Only written when absent, so a reload keeps whatever the game has saved since.
 const BASE_PREFS = { autoMove: true, backdrop: 'none' };
 
 // Math.random, seeded (mulberry32), installed before any of the game's scripts run
@@ -36,17 +36,18 @@ function installSeededRandom(seed) {
   };
 }
 
-function seedStorage(prefs) {
+function seedStorage({ prefs, newPlayer }) {
   if (localStorage.getItem('ur-prefs') === null) {
-    localStorage.setItem('ur-guide-done', '1');
+    if (!newPlayer) localStorage.setItem('ur-guide-done', '1');
     localStorage.setItem('ur-prefs', JSON.stringify(prefs));
   }
 }
 
-// open the game on its set-up board, with the given preferences and random seed
-export async function openGame(page, { prefs = {}, seed = DEFAULT_SEED } = {}) {
+// open the game on its set-up board, with the given preferences and random seed; a new player hasn't seen
+// the guided first game
+export async function openGame(page, { prefs = {}, seed = DEFAULT_SEED, newPlayer = false } = {}) {
   await page.addInitScript(installSeededRandom, seed);
-  await page.addInitScript(seedStorage, { ...BASE_PREFS, ...prefs });
+  await page.addInitScript(seedStorage, { prefs: { ...BASE_PREFS, ...prefs }, newPlayer });
   await page.goto('/');
   await waitForBoot(page);
 }
