@@ -86,6 +86,19 @@ body {
   gap: 18px;
 }
 
+/* While the scripts build the board, trays and toolbar, the page stays hidden so nothing visibly jumps into
+   place; main.js shows it once the game and its fonts are ready. Should a script fail, it shows anyway. */
+.booting .wrap {
+  visibility: hidden;
+  animation: show-anyway 0s 4s forwards;
+}
+
+@keyframes show-anyway {
+  to {
+    visibility: visible;
+  }
+}
+
 /* scrollbars (ledger and every modal): an inked rail with a rolled-parchment handle, like the scroll banners */
 .ledger .log::-webkit-scrollbar,
 .stats-inner::-webkit-scrollbar,

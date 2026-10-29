@@ -1,6 +1,7 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
-// A tiny static file server for the end-to-end tests: serves the repository root as the site.
+// A tiny static file server for the end-to-end tests: serves the repository root as the site, or the folder
+// SITE_ROOT names (such as dist, the built site).
 // Usage: node tests/serve.mjs [port]   (or set PORT)
 
 import { createReadStream } from 'node:fs';
@@ -9,7 +10,8 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const REPOSITORY = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = path.resolve(REPOSITORY, process.env.SITE_ROOT || '.');
 const DEFAULT_PORT = 4173;
 const PORT = Number(process.argv[2] || process.env.PORT || DEFAULT_PORT);
 const INDEX_PAGE = 'index.html';

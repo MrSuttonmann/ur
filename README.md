@@ -23,16 +23,16 @@ python3 -m http.server 8000
 
 Run `npm install` once (and `npx playwright install chromium` for the browser tests), then:
 
-| Command                | What it does                                                                              |
-| ---------------------- | ----------------------------------------------------------------------------------------- |
-| `npm run format`       | Tidies every file with Prettier                                                           |
-| `npm run format:check` | Lists any file Prettier would change                                                      |
-| `npm run lint`         | Checks the scripts with ESLint, the styles with Stylelint and the page with html-validate |
-| `npm run typecheck`    | Type-checks the scripts with TypeScript, from their JSDoc (nothing is compiled)           |
-| `npm test`             | Runs the unit tests of the rules, then the browser tests with Playwright                  |
-| `npm run check`        | All of the above, as CI runs them                                                         |
-| `npm run build`        | Copies the site into `dist/`, minifying the scripts, styles and page                      |
-| `npm run lighthouse`   | Builds, then audits `dist/` with Lighthouse; reports go in `.lighthouseci/`               |
+| Command                | What it does                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run format`       | Tidies every file with Prettier                                                                                                               |
+| `npm run format:check` | Lists any file Prettier would change                                                                                                          |
+| `npm run lint`         | Checks the scripts with ESLint, the styles with Stylelint and the page with html-validate                                                     |
+| `npm run typecheck`    | Type-checks the scripts with TypeScript, from their JSDoc (nothing is compiled)                                                               |
+| `npm test`             | Runs the unit tests of the rules, then the browser tests with Playwright (set `SITE_ROOT=dist` to play the built site, as CI does)            |
+| `npm run check`        | All of the above, as CI runs them                                                                                                             |
+| `npm run build`        | Builds the site into `dist/`: the stylesheets joined into one file and the scripts into another, in the page's order, and everything minified |
+| `npm run lighthouse`   | Builds, then audits `dist/` with Lighthouse; reports go in `.lighthouseci/`                                                                   |
 
 Committing runs Prettier, ESLint, Stylelint and html-validate on the staged files. GitHub Actions runs the checks, the tests and Lighthouse on every push and pull request, and Dependabot proposes updates to the tools.
 
@@ -70,6 +70,7 @@ Committing runs Prettier, ESLint, Stylelint and html-validate on the staged file
 | `js/music.js`                             | Background music                                                                                |
 | `js/main.js`                              | Start-up                                                                                        |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Offline support and installing                                                                  |
+| `css/fonts.css`, `fonts/`                 | The game's fonts, served with it (each under the SIL Open Font License; see `fonts/*-OFL.txt`)  |
 | `scripts/build.mjs`                       | The deployment build                                                                            |
 | `tests/unit/`                             | Unit tests of the rules and the computer opponent (Node's test runner)                          |
 | `tests/e2e/`                              | Browser tests: whole games, honours, danger shading and undo, music, tray counters (Playwright) |

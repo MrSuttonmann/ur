@@ -9,8 +9,9 @@
   to download up front, so each track is saved the first time it plays and then served from the
   cache, including the byte ranges audio players ask for.
 */
-const CACHE = 'ur-v9';
+const CACHE = 'ur-v10';
 const CODE = [
+  'css/fonts.css',
   'css/base.css',
   'css/header.css',
   'css/controls.css',
@@ -64,6 +65,14 @@ const SHELL = [
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
   'icons/apple-touch-icon.png',
+  'fonts/alegreya-latin.woff2',
+  'fonts/alegreya-latin-ext.woff2',
+  'fonts/alegreya-italic-latin.woff2',
+  'fonts/alegreya-italic-latin-ext.woff2',
+  'fonts/im-fell-english-latin.woff2',
+  'fonts/im-fell-english-italic-latin.woff2',
+  'fonts/uncial-antiqua-latin.woff2',
+  'fonts/uncial-antiqua-latin-ext.woff2',
 ];
 
 // the offline copy is fetched straight from the server, never from the browser's cache, so it's all one version
@@ -93,12 +102,7 @@ self.addEventListener('fetch', (e) => {
   if (req.mode === 'navigate') e.respondWith(page(req));
   else if (url.origin === location.origin && /\.(js|css)$/.test(url.pathname)) e.respondWith(fresh(req));
   else if (url.origin === location.origin && url.pathname.endsWith('.mp3')) e.respondWith(music(req, url.pathname));
-  else if (
-    url.origin === location.origin ||
-    url.hostname === 'fonts.googleapis.com' ||
-    url.hostname === 'fonts.gstatic.com'
-  )
-    e.respondWith(cached(req));
+  else if (url.origin === location.origin) e.respondWith(cached(req));
 });
 
 // the page: network first, cache as the fallback

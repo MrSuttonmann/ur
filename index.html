@@ -14,7 +14,7 @@
   Source: https://github.com/MrSuttonmann/ur
   The music (the files in music/) is not covered by this licence; see the README.
 -->
-<html lang="en">
+<html lang="en" class="booting">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -49,12 +49,20 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='6' fill='%23d6a540' stroke='%233b2a1b' stroke-width='2'/%3E%3Cg fill='%23b6432a' stroke='%233b2a1b' stroke-width='1.2'%3E%3Ccircle cx='20' cy='12' r='6.4'/%3E%3Ccircle cx='27.6' cy='17.5' r='6.4'/%3E%3Ccircle cx='24.7' cy='26.5' r='6.4'/%3E%3Ccircle cx='15.3' cy='26.5' r='6.4'/%3E%3Ccircle cx='12.4' cy='17.5' r='6.4'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='5' fill='%23f6ecd2' stroke='%233b2a1b' stroke-width='1.2'/%3E%3C/svg%3E"
     />
     <title>Royal Game of Ur</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap"
-    />
+    <!-- the fonts the first screen uses, fetched alongside the styles rather than after them -->
+    <link rel="preload" href="fonts/uncial-antiqua-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/alegreya-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/im-fell-english-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/im-fell-english-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- the page stays hidden while the scripts build it (see base.css); without scripts it shows at once -->
+    <noscript
+      ><style>
+        .booting .wrap {
+          visibility: visible;
+        }
+      </style></noscript
+    >
+    <link rel="stylesheet" href="css/fonts.css" />
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/header.css" />
     <link rel="stylesheet" href="css/controls.css" />
