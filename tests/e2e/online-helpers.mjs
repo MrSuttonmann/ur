@@ -22,16 +22,18 @@ export async function joinViaApi(request, id, name) {
 }
 
 // The tests' devices: `openDevice(url, options)` opens the game at `url` in a browser context of its own, as
-// another person's phone would (or in `options.context`, as another tab on the same one). Script errors on any of
-// them fail the test, as on the usual test page.
+// another person's phone would (or in `options.context`, as another tab on the same one); `options.prepare` is
+// given a new context first, to set up its storage or network. Script errors on any of them fail the test, as on
+// the usual test page.
 export const test = base.extend({
   openDevice: async ({ browser }, use) => {
     const contexts = [],
       errors = [];
-    await use(async (url = '/', { context, ...options } = {}) => {
+    await use(async (url = '/', { context, prepare, ...options } = {}) => {
       if (!context) {
         context = await browser.newContext({ baseURL: ONLINE_URL });
         contexts.push(context);
+        if (prepare) await prepare(context);
       }
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(error.stack || error.message));

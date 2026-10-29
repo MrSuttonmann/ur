@@ -15,26 +15,37 @@ const online = {
 };
 
 // ---------- seats ----------
-// each room this browser has a seat in: {[roomId]: {key, seat, opponent}}, the key being the seat's secret
+// each room this browser has a seat in: {[roomId]: {key, seat, opponent, savedAt, leaving}}, the key being the
+// seat's secret; `leaving` marks a seat whose leave the room hasn't confirmed yet. They're kept in memory too,
+// so online play still works for the visit should storage be blocked.
 const SEATS_KEY = 'ur-seats-v1';
+let seatsHere = {};
 function savedSeats() {
   try {
-    return JSON.parse(localStorage.getItem(SEATS_KEY)) || {};
+    return JSON.parse(localStorage.getItem(SEATS_KEY)) || seatsHere;
   } catch (e) {
-    return {};
+    return seatsHere;
   }
 }
 function storeSeats(seats) {
+  seatsHere = seats;
   try {
     localStorage.setItem(SEATS_KEY, JSON.stringify(seats));
   } catch (e) {}
 }
-const saveSeat = (roomId, entry) => storeSeats({ ...savedSeats(), [roomId]: entry });
-function forgetSeat(roomId) {
+const saveSeat = (roomId, entry) => storeSeats({ ...savedSeats(), [roomId]: { ...entry, savedAt: Date.now() } });
+// a seat is forgotten only if it's still the one that holds `key`, when given (the browser may have joined again)
+function forgetSeat(roomId, key = null) {
   const seats = savedSeats();
+  if (key && seats[roomId] && seats[roomId].key !== key) return;
   delete seats[roomId];
   storeSeats(seats);
 }
+// the saved seats' room ids, the most recently saved first
+const seatsNewestFirst = () =>
+  Object.entries(savedSeats())
+    .sort(([, a], [, b]) => (b.savedAt || 0) - (a.savedAt || 0))
+    .map(([roomId]) => roomId);
 
 // ---------- the room API ----------
 // resolves to the response's status and JSON body; a network failure resolves to status 0
@@ -149,27 +160,77 @@ function reconnectLater() {
 // a phone that slept has usually lost its socket; try again as soon as the page is looked at. A page put away
 // mid-move skips to the latest state, as its animations would otherwise wait for it to come back.
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) catchUpWithRoom();
-  else if (online.roomId && !online.socket) openSocket();
+  if (document.hidden) {
+    catchUpWithRoom();
+    return;
+  }
+  if (online.roomId && !online.socket) openSocket();
+  retryLeaves();
 });
 
-// tell the room this seat is leaving, which ends the room, and stop listening to it; a socket still connecting
-// says so once it's open, and with the connection down a socket is opened just to say so
+// ---------- leaving ----------
+// Leaving tells the room, which ends it (or, for a friend still in the lobby, frees their seat). Until the room
+// confirms it (a closed state, or ending this socket), the seat is kept, marked as leaving, and the leave is said
+// again whenever the page might reach the room: on loading, on coming back online and on being looked at again.
+// Otherwise a leave lost on the way would leave the room waiting, and the other player with no way to win.
+const goodbyes = {}; // the sockets saying goodbye now, by room id
+
+// tell the room this seat is leaving, and stop listening to it; the page's own socket says so if it's open or
+// opening, and otherwise one is opened just to say so
 function leaveRoom() {
   const roomId = online.roomId,
-    seat = savedSeats()[roomId];
-  const socket = online.socket || (seat ? socketTo(roomId, seat.key) : null);
-  forgetSeat(roomId);
+    seats = savedSeats(),
+    seat = seats[roomId];
+  const socket = online.socket;
   online.socket = null; // so letting go of the room leaves this socket open long enough to say goodbye
   disconnectRoom();
-  if (!socket) return;
-  const sayLeaving = () => {
-    socket.send(JSON.stringify({ t: 'leave' }));
+  if (!seat) return;
+  storeSeats({ ...seats, [roomId]: { ...seat, leaving: true } });
+  sayGoodbye(roomId, socket);
+}
+
+function sayGoodbye(roomId, socket = null) {
+  const seat = savedSeats()[roomId];
+  if (!seat || goodbyes[roomId]) return;
+  if (!socket || socket.readyState > WebSocket.OPEN) socket = socketTo(roomId, seat.key);
+  goodbyes[roomId] = socket;
+  const confirmed = () => {
+    forgetSeat(roomId, seat.key);
     socket.close();
   };
+  const sayLeaving = () => socket.send(JSON.stringify({ t: 'leave' }));
   if (socket.readyState === WebSocket.OPEN) sayLeaving();
-  else if (socket.readyState === WebSocket.CONNECTING) socket.addEventListener('open', sayLeaving);
+  else socket.addEventListener('open', sayLeaving);
+  socket.addEventListener('message', (e) => {
+    try {
+      const message = JSON.parse(e.data);
+      if (message.type === 'state' && message.state.phase === 'closed') confirmed();
+    } catch (error) {}
+  });
+  // anything but the room ending this socket leaves the seat marked, to try again later
+  socket.addEventListener('close', (e) => {
+    if (goodbyes[roomId] === socket) delete goodbyes[roomId];
+    if (e.code === CLOSE_ENDED) forgetSeat(roomId, seat.key);
+  });
 }
+
+// say again each leave the room hasn't confirmed; a room that's gone, or closed already, needs no goodbye
+let retryingLeaves = false;
+async function retryLeaves() {
+  if (retryingLeaves) return;
+  retryingLeaves = true;
+  try {
+    for (const [roomId, seat] of Object.entries(savedSeats())) {
+      if (!seat.leaving || goodbyes[roomId]) continue;
+      const { status, data } = await roomApi('GET', `/api/rooms/${roomId}`);
+      if (status === 404 || (status === 200 && data && data.status === 'closed')) forgetSeat(roomId, seat.key);
+      else if (status === 200 && data && data.status) sayGoodbye(roomId);
+    }
+  } finally {
+    retryingLeaves = false;
+  }
+}
+addEventListener('online', retryLeaves);
 
 // says whether it was sent: it can't be while the socket is down
 function sendIntent(intent) {
@@ -349,7 +410,7 @@ function adoptRoomState(view) {
     dice: view.dice,
     winner: view.winner,
     log: view.log,
-    stats: view.stats,
+    stats: structuredClone(view.stats), // the page's own clock ticks into this copy, never into the room's
     names: view.names,
     roomGameId: view.gameId,
     seat: view.you,

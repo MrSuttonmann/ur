@@ -6,9 +6,25 @@
 
 import { expect } from '@playwright/test';
 import { speedUpGame } from './helpers.mjs';
-import { hostAndJoin, inviteFriend, joinFriend, linkPath, sendTestIntent, test } from './online-helpers.mjs';
+import {
+  createRoomViaApi,
+  hostAndJoin,
+  inviteFriend,
+  joinFriend,
+  linkPath,
+  sendTestIntent,
+  test,
+} from './online-helpers.mjs';
 
 const modeAndPhase = (page) => page.evaluate(() => [game.mode, game.phase]);
+
+// a context's saved seats before its first page loads, kept through reloads
+const seedSeats = (seats) => (context) =>
+  context.addInitScript((seats) => {
+    if (localStorage.getItem('ur-seats-v1') === null) localStorage.setItem('ur-seats-v1', JSON.stringify(seats));
+  }, seats);
+const savedRoomIds = (page) =>
+  page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('ur-seats-v1') || '{}')));
 
 test('host invites, friend joins, host starts', async ({ openDevice }) => {
   const host = await openDevice('/');
@@ -62,6 +78,35 @@ test('an ended room’s link says so', async ({ openDevice }) => {
   await expect(friend.locator('#room-note-text')).toContainText('has ended');
   const visitor = await openDevice(linkPath(link));
   await expect(visitor.locator('#room-note-text')).toContainText('has ended');
+});
+
+test('a friend can leave the waiting room, and the link still works for someone else', async ({ openDevice }) => {
+  const { host, friend, link } = await hostAndJoin(openDevice);
+  await expect(host.locator('#invite-start')).toBeEnabled();
+  await friend.locator('#join-leave').click();
+
+  // the friend is back on a set-up board of their own, with the room let go and their seat forgotten
+  await expect(friend.locator('#join-dlg')).toBeHidden();
+  await expect(friend.locator('#room-note-dlg')).toBeHidden();
+  expect(await modeAndPhase(friend)).toEqual(['online', 'setup']);
+  expect(await friend.evaluate(() => [online.roomId, location.hash])).toEqual([null, '']);
+  await expect.poll(() => friend.evaluate(() => Object.keys(savedSeats()))).toEqual([]);
+
+  // the host waits for a friend again, with the room still open
+  await expect(host.locator('#seat1')).toHaveText('Waiting for a friend…');
+  await expect(host.locator('#invite-start')).toBeDisabled();
+  await expect(host.locator('#invite-dlg')).toBeVisible();
+  await expect(host.locator('#room-note-dlg')).toBeHidden();
+
+  const another = await openDevice(linkPath(link));
+  await expect(another.locator('#join-host')).toContainText('Ted has invited you');
+  await joinFriend(another, 'Cy');
+  await expect(host.locator('#seat1')).toHaveText('Cy');
+  await expect(host.locator('#invite-start')).toBeEnabled();
+  await host.locator('#invite-start').click();
+  await expect.poll(() => modeAndPhase(another)).toEqual(['online', 'roll']);
+  await friend.waitForTimeout(500);
+  expect(await modeAndPhase(friend)).toEqual(['online', 'setup']); // not pulled back in
 });
 
 test('the host opening their own link rejoins as host', async ({ openDevice }) => {
@@ -132,6 +177,63 @@ test('an invite link skips the welcome', async ({ openDevice }) => {
   await expect(friend.locator('#join-dlg')).toBeVisible();
   await expect(friend.locator('html')).not.toHaveClass(/booting/); // the moment the welcome would be offered
   await expect(friend.locator('#welcome-dlg')).toBeHidden();
+});
+
+// a page that answers every room request in its place, as a captive portal or a site's fallback page would
+const answerWithAPage = (context) =>
+  context.route('**/api/rooms/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Sign in</title>' }),
+  );
+
+test('a reply that isn’t the room’s counts as not reaching it', async ({ openDevice }) => {
+  const visitor = await openDevice('/#g=K7QXM2', { prepare: answerWithAPage });
+  await expect(visitor.locator('#room-note-title')).toHaveText('Can’t reach the game');
+  // a new player with a saved seat that can't be checked is still offered the guided game
+  const prepare = async (context) => {
+    await answerWithAPage(context);
+    await seedSeats({ K7QXM2: { key: 'a'.repeat(32), seat: 0, opponent: 'Ann', savedAt: 1 } })(context);
+  };
+  const newcomer = await openDevice('/', { prepare, newPlayer: true });
+  await expect(newcomer.locator('#welcome-dlg')).toBeVisible();
+  await expect(newcomer.locator('#rejoin-dlg')).toBeHidden();
+  expect(await savedRoomIds(newcomer)).toEqual(['K7QXM2']);
+});
+
+test('online play works for the visit with storage blocked', async ({ openDevice }) => {
+  const blockSeats = (context) =>
+    context.addInitScript(() => {
+      for (const name of ['getItem', 'setItem']) {
+        const real = Storage.prototype[name];
+        Storage.prototype[name] = function (key, ...rest) {
+          if (key === 'ur-seats-v1') throw new DOMException('Storage is blocked', 'SecurityError');
+          return real.call(this, key, ...rest);
+        };
+      }
+    });
+  const host = await openDevice('/', { prepare: blockSeats });
+  const link = await inviteFriend(host, 'Ted');
+  const friend = await openDevice(linkPath(link), { prepare: blockSeats });
+  await joinFriend(friend, 'Ann');
+  await expect(host.locator('#seat1')).toHaveText('Ann');
+  await host.locator('#invite-start').click();
+  for (const page of [host, friend]) await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'roll']);
+});
+
+test('an invite link pasted into an open tab is followed between games', async ({ openDevice }) => {
+  const host = await openDevice('/');
+  const link = await inviteFriend(host, 'Ted');
+  const busy = await openDevice('/');
+  await busy.locator('#newgame').click(); // a game against the computer, in play
+  await busy.evaluate((hash) => (location.hash = hash), new URL(link).hash);
+  await busy.waitForTimeout(500);
+  await expect(busy.locator('#join-dlg')).toBeHidden();
+  expect((await modeAndPhase(busy))[0]).toBe('ai');
+
+  const friend = await openDevice('/');
+  await friend.evaluate((hash) => (location.hash = hash), new URL(link).hash);
+  await expect(friend.locator('#join-host')).toContainText('Ted has invited you');
+  await joinFriend(friend, 'Ann');
+  await expect(host.locator('#seat1')).toHaveText('Ann');
 });
 
 test('the last name is remembered', async ({ openDevice }) => {
@@ -545,6 +647,29 @@ test('computer-only honours aren’t earned online, Good Company is', async ({ o
   expect(await host.evaluate(() => honours.variantsWon)).toEqual([]);
 });
 
+test('the page’s own clock doesn’t run into the room’s figures', async ({ openDevice }) => {
+  const { friend } = await startOnlineGame(openDevice);
+  const before = await friend.evaluate(() => online.view.stats.playMs);
+  await friend.waitForTimeout(2500);
+  const [roomMs, shownMs] = await friend.evaluate(() => [online.view.stats.playMs, game.stats.playMs]);
+  expect(roomMs).toBe(before);
+  expect(shownMs).toBeGreaterThan(before); // the Stats window still counts the time
+});
+
+test('the variant can’t change while an online room is held between games', async ({ openDevice }) => {
+  const { host, friend, pages } = await startOnlineGame(openDevice);
+  await playToSunWin(pages);
+  for (const page of pages) {
+    await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'over']);
+    await expect(page.locator('#open-variants')).toBeDisabled();
+  }
+  await friend.locator('label[for=mode-ai]').click();
+  await expect(friend.locator('#open-variants')).toBeEnabled();
+  // once the other player has gone, the room is let go and the variant is free again
+  await expect(host.locator('#status')).toContainText('Ann has left the game.');
+  await expect(host.locator('#open-variants')).toBeEnabled();
+});
+
 test('rematch starts a new game for both', async ({ openDevice }) => {
   const { host, friend, pages } = await startOnlineGame(openDevice);
   const firstGame = await host.evaluate(() => game.roomGameId);
@@ -584,6 +709,35 @@ test('leaving mid-game forfeits', async ({ openDevice }) => {
 
   const visitor = await openDevice(linkPath(link));
   await expect(visitor.locator('#room-note-text')).toContainText('has ended');
+});
+
+test('a leave made while the connection is down reaches the room once it’s back', async ({ openDevice }) => {
+  const { host, friend } = await startOnlineGame(openDevice);
+  const roomId = await friend.evaluate(() => online.roomId);
+  // from here the friend's sockets go through the test, which cuts them off while `down`
+  let down = true;
+  await friend.routeWebSocket(/\/api\/rooms\/\w+\/ws/, (socket) => {
+    if (down) socket.close();
+    else socket.connectToServer();
+  });
+  await friend.evaluate(() => online.socket.close());
+  await expect(host.locator('#status')).toContainText('Ann has lost connection');
+
+  await friend.locator('label[for=mode-ai]').click();
+  await friend.locator('#confirm-yes').click();
+  expect(await recordOf(friend)).toMatchObject({ games: 1, online: { w: 0, l: 1 } });
+  // the room hasn't heard, so the seat is kept until it has
+  await friend.waitForTimeout(1000);
+  expect(await friend.evaluate((roomId) => savedSeats()[roomId].leaving, roomId)).toBe(true);
+  await expect(host.locator('#status')).not.toContainText('has left');
+
+  down = false;
+  await friend.evaluate(() => dispatchEvent(new Event('online')));
+  await expect(host.locator('#status')).toContainText('Ann has left the game.');
+  await expect.poll(() => recordOf(host)).toMatchObject({ games: 1, online: { w: 1, l: 0 } });
+  await expect.poll(() => friend.evaluate(() => Object.keys(savedSeats()))).toEqual([]);
+  expect(await recordOf(friend)).toMatchObject({ games: 1, online: { w: 0, l: 1 } });
+  expect(await modeAndPhase(friend)).toEqual(['ai', 'setup']);
 });
 
 for (const [leaver, stayer, leaverName, stayerSide] of [
@@ -672,16 +826,54 @@ test('opening the site without the link offers to rejoin', async ({ openDevice }
   expect(await back.evaluate(() => game.log.length)).toBe(3);
 });
 
-test('seats for ended rooms are forgotten quietly', async ({ openDevice }) => {
-  const { host, friend } = await startOnlineGame(openDevice);
-  const roomId = await host.evaluate(() => online.roomId);
-  await friend.locator('label[for=mode-ai]').click();
-  await friend.locator('#confirm-yes').click();
-  await expect(host.locator('#status')).toContainText('Ann has left the game.');
-
-  const back = await openDevice('/', { context: host.context() });
-  await expect
-    .poll(() => back.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('ur-seats-v1') || '{}'))))
-    .not.toContain(roomId);
+test('seats for ended rooms are forgotten quietly', async ({ openDevice, request }) => {
+  // a room that never existed, and one its host has left
+  const alphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  const missing = Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+  const closed = await createRoomViaApi(request, 'Ted', 'classic');
+  const closer = await openDevice('/');
+  await closer.evaluate(
+    ({ id, key }) =>
+      new Promise((resolve) => {
+        const socket = new WebSocket(`ws://${location.host}/api/rooms/${id}/ws?key=${key}`);
+        socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'leave' })));
+        socket.addEventListener('close', resolve);
+      }),
+    closed,
+  );
+  const seats = {
+    [missing]: { key: 'a'.repeat(32), seat: 0, opponent: 'Ann', savedAt: 2 },
+    [closed.id]: { key: closed.key, seat: 0, opponent: 'Bea', savedAt: 1 },
+  };
+  const back = await openDevice('/', { prepare: seedSeats(seats) });
+  await expect.poll(() => savedRoomIds(back)).toEqual([]);
   await expect(back.locator('#rejoin-dlg')).toBeHidden();
+});
+
+test('turning down the offer to rejoin keeps the seat, and it’s offered again next time', async ({ openDevice }) => {
+  const host = await openDevice('/');
+  await inviteFriend(host, 'Ted');
+  const roomId = await host.evaluate(() => online.roomId);
+  const context = host.context();
+  await host.close();
+  const back = await openDevice('/', { context });
+  await expect(back.locator('#rejoin-text')).toHaveText('Rejoin your game with your friend?');
+  await back.locator('#rejoin-no').click();
+  await expect(back.locator('#rejoin-dlg')).toBeHidden();
+  expect(await savedRoomIds(back)).toEqual([roomId]);
+  await back.close();
+  const again = await openDevice('/', { context });
+  await expect(again.locator('#rejoin-dlg')).toBeVisible();
+});
+
+test('the seat offered back is the one saved most recently', async ({ openDevice, request }) => {
+  const older = await createRoomViaApi(request, 'Ted', 'classic'),
+    newer = await createRoomViaApi(request, 'Ted', 'classic');
+  // the newer seat comes first in the saved object, as an all-digit room id would
+  const seats = {
+    [newer.id]: { key: newer.key, seat: 0, opponent: 'Newer friend', savedAt: 2000 },
+    [older.id]: { key: older.key, seat: 0, opponent: 'Older friend', savedAt: 1000 },
+  };
+  const back = await openDevice('/', { prepare: seedSeats(seats) });
+  await expect(back.locator('#rejoin-text')).toHaveText('Rejoin your game with Newer friend?');
 });

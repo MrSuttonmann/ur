@@ -60,6 +60,8 @@ own pieces along the bottom of the board.
 1. Opening the link shows "‹Host› has invited you to play the Royal Game of Ur", the rules in play, a **Your name**
    field and **Join**.
 2. After joining they see both seats and "Waiting for ‹Host› to start the game…".
+   They can **Leave** from there, which frees their seat: the host's panel goes back to "Waiting for a
+   friend…" and the link still works for someone else (a host leaving the lobby still closes the room).
 3. When the host starts, both devices go to the board.
 
 **A full room.** Anyone else who opens the link sees "This game already has two players" and a way to start their
@@ -90,6 +92,8 @@ own game. The same happens if the link is for a room that no longer exists.
   with their win, and the room closes: the link then shows that the game has ended. Closing the tab is a
   disconnect, not leaving. Leaving between games (after the end banner, before a rematch) also closes the room,
   but records nothing.
+  A leave the room doesn't hear (the connection down, say) is kept and said again whenever the page might reach
+  the room (loading, coming back online, being looked at again); the seat is only forgotten once the room confirms.
 - **Coming back without the link** (_my call_). When the site starts and this browser holds a seat key for a room
   that is still live, it offers "Rejoin your game with ‹Name›" in place of the usual start. Separate browser
   storage (for example an installed iPhone app and Safari) counts as a different device, under the non-goals.

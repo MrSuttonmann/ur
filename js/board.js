@@ -762,7 +762,8 @@ function renderSetupControls() {
   });
   $('level').disabled = locked;
   $('player-name').disabled = locked;
-  $('open-variants').disabled = locked;
+  // an online room held between games waits for a rematch; changing the variant would leave it
+  $('open-variants').disabled = locked || (isOnline() && Boolean(online.roomId));
   $('variant-name').textContent = VARIANTS[game.variant].name; // in a game, the rules being played
   document.querySelector('.seg').title = why;
   $('level-field').title = why;

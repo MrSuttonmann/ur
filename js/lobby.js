@@ -175,10 +175,17 @@ function showJoinWaiting(view) {
   if (!$('join-dlg').open) $('join-dlg').showModal();
 }
 
-// before joining, Esc (or Back) turns the invite down; once joined, the friend waits for the host
+// before joining, Esc (or Back) turns the invite down; once joined, the friend waits for the host, or leaves
 $('join-dlg').addEventListener('cancel', (e) => {
   if (!$('join-wait').hidden) e.preventDefault();
   else setLinkRoom(null);
+});
+// leaving the waiting room gives up the seat, so the host can invite someone else on the same link
+$('join-leave').addEventListener('click', () => {
+  leaveRoom();
+  setLinkRoom(null);
+  $('join-dlg').close();
+  showSetupBoard();
 });
 
 // ---------- following the room ----------
@@ -213,6 +220,7 @@ onRoomState((message) => {
     } finally {
       disconnectRoom();
       setLinkRoom(null);
+      render(); // the variant can be changed again
     }
     return;
   }
@@ -225,15 +233,24 @@ onRoomState((message) => {
   } else showJoinWaiting(view);
 });
 
+// what the room says about itself, {host, variant, status}; a reply that isn't the room's (a captive portal's
+// page, say) counts as not reaching it, status 0
+async function roomInfo(roomId) {
+  const { status, data } = await roomApi('GET', `/api/rooms/${roomId}`);
+  return status === 200 && !(data && data.status) ? { status: 0, data: null } : { status, data };
+}
+
 // an invite link opened: the host's own room, a friend's seat coming back, or someone new to the room
 async function followInvite(roomId) {
-  const { status, data } = await roomApi('GET', `/api/rooms/${roomId}`);
+  const { status, data } = await roomInfo(roomId);
   const live = status === 200 && data.status !== 'closed';
   const seat = savedSeats()[roomId];
-  if (seat && !live && status !== 0) forgetSeat(roomId);
+  if (seat && !live && status !== 0 && status < 500) forgetSeat(roomId);
   if (status === 0 || status >= 500) showRoomNote('offline');
-  else if (!live) showRoomNote('ended');
-  else if (seat && seat.seat === SUN && data.status === 'open') openInvite(roomId);
+  else if (!live || (seat && seat.leaving)) {
+    showRoomNote('ended'); // a game this browser has left, though the room may not have heard yet
+    retryLeaves();
+  } else if (seat && seat.seat === SUN && data.status === 'open') openInvite(roomId);
   else if (seat)
     connectRoom(roomId); // the room's state shows the lobby or the game, whichever it's in
   else if (data.status === 'full') showRoomNote('full');
@@ -271,8 +288,9 @@ let rejoinRoom = null;
 // The newest saved seat whose room is still alive, as a room id, or null. Seats for rooms that are gone or closed
 // are forgotten on the way; one that can't be checked (no connection, a failing room) is left saved, and skipped.
 async function liveSeatRoom() {
-  for (const roomId of Object.keys(savedSeats()).reverse()) {
-    const { status, data } = await roomApi('GET', `/api/rooms/${roomId}`);
+  for (const roomId of seatsNewestFirst()) {
+    if (savedSeats()[roomId].leaving) continue; // being left
+    const { status, data } = await roomInfo(roomId);
     if (status === 200 && data.status !== 'closed') return roomId;
     if (status === 404 || (status === 200 && data.status === 'closed')) forgetSeat(roomId);
   }
@@ -292,3 +310,14 @@ $('rejoin-yes').addEventListener('click', () => {
   followInvite(rejoinRoom);
 });
 $('rejoin-no').addEventListener('click', () => $('rejoin-dlg').close());
+
+// an invite link pasted into a tab already open is followed, between games and with no online room held
+addEventListener('hashchange', () => {
+  const roomId = roomInLink();
+  if (roomId && !online.roomId && isBetweenGames()) {
+    closeLobbyWindows();
+    $('mode-online').checked = true;
+    showSetupBoard();
+    followInvite(roomId);
+  }
+});
