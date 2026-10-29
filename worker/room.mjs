@@ -92,13 +92,19 @@ class Room extends DurableObject {
     for (const older of this.ctx.getWebSockets(String(seat))) older.close(CLOSE_REPLACED, 'replaced');
     this.ctx.acceptWebSocket(server, [String(seat)]);
     server.serializeAttachment({ seat });
+    // presence first, so the newcomer's own state already shows it here
+    await this.updatePresence(seat, server);
     server.send(this.stateMessage(seat, null));
     if (this.room.phase === 'closed') server.close(CLOSE_ENDED, 'closed');
-    else await this.updatePresence(seat, server);
     return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(socket, message) {
+    // the room may have expired and been forgotten while this socket was still open
+    if (!this.room) {
+      socket.close(CLOSE_ENDED, 'closed');
+      return;
+    }
     const intent = typeof message === 'string' ? parseJson(message) : undefined;
     if (!intent || typeof intent !== 'object') {
       socket.send(JSON.stringify({ type: 'error', code: 'bad-message' }));

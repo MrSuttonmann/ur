@@ -79,13 +79,22 @@ test('a socket without the right key is refused', async ({ request }) => {
 });
 
 test('a second socket for a seat replaces the first', async ({ request }) => {
+  // under wrangler dev the replaced socket's close takes Node's whole close-handshake wait (about 10 seconds)
+  test.slow();
   const room = await createRoomViaApi(request, 'Ennigaldi', 'classic');
   const first = new WebSocket(socketUrl(room.id, room.key));
   const hello = await firstMessage(first);
-  expect(hello).toMatchObject({ type: 'state', event: null, state: { you: 0, names: ['Ennigaldi', null] } });
+  // the first state already counts this socket as here: connecting was the room's first change (seq 1)
+  expect(hello).toMatchObject({
+    type: 'state',
+    seq: 1,
+    event: null,
+    state: { you: 0, seq: 1, names: ['Ennigaldi', null], connected: [true, false] },
+  });
   const firstClosed = closeCode(first);
   const second = new WebSocket(socketUrl(room.id, room.key));
-  await firstMessage(second);
+  const again = await firstMessage(second);
+  expect(again).toMatchObject({ seq: 1, event: null, state: { you: 0, connected: [true, false] } });
   expect(await firstClosed).toBe(4000);
   second.close();
 });
