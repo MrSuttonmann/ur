@@ -80,6 +80,7 @@
     <link rel="stylesheet" href="css/portraits.css" />
     <link rel="stylesheet" href="css/banner.css" />
     <link rel="stylesheet" href="css/honours.css" />
+    <link rel="stylesheet" href="css/splash.css" />
   </head>
   <body>
     <canvas class="backdrop" id="backdrop" aria-hidden="true"></canvas>
@@ -649,16 +650,31 @@
       </div>
     </dialog>
 
-    <dialog id="welcome-dlg" class="stats confirm" aria-labelledby="welcome-title" aria-describedby="welcome-text">
+    <dialog id="welcome-dlg" class="stats splash" aria-labelledby="welcome-title" aria-describedby="welcome-text">
       <div class="stats-inner">
-        <h2 id="welcome-title">New to the Royal Game of Ur?</h2>
-        <p id="welcome-text">
-          Play a guided first game against the Squire, with tips that explain each thing the first time it comes up. You
-          can play it any time from Options.
-        </p>
-        <div class="confirm-actions">
+        <p class="eyebrow">First played in Ur, Mesopotamia, some 4,600 years ago</p>
+        <h2 id="welcome-title" class="splash-title"><span class="cap">T</span>he Royal Game of Ur</h2>
+        <svg class="flourish" viewBox="0 0 260 16" aria-hidden="true">
+          <path
+            d="M2 9 C40 2, 70 15, 110 8 S 170 3, 200 9 C215 12, 230 6, 246 8 M246 8 c4 -5 10 -3 10 1 c0 4 -6 5 -8 1"
+            class="flourish-line"
+            filter="url(#ink)"
+          />
+          <circle cx="130" cy="8" r="2.4" class="flourish-dot" />
+        </svg>
+        <div id="welcome-text" class="splash-history">
+          <p>
+            In the 1920s, Leonard Woolley dug up beautifully inlaid game boards in the royal tombs of Ur. For a long
+            time nobody knew how the game was played.
+          </p>
+          <p>
+            The rules survive on a Babylonian clay tablet written in 177&nbsp;BC. Irving Finkel of the British Museum
+            worked them out, and that’s the game you’re about to play.
+          </p>
+        </div>
+        <div class="splash-actions">
           <button class="btn" type="button" id="welcome-no">No thanks, I know the rules</button>
-          <button class="btn start" type="button" id="welcome-yes">Play the guided game</button>
+          <button class="btn start" type="button" id="welcome-yes">Play a guided first game</button>
         </div>
       </div>
     </dialog>

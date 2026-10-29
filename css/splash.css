@@ -1,0 +1,108 @@
+/* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
+
+/* The welcome splash a new player sees: a museum plaque with a little of the game's history, set over the
+   faded set-up board, offering the guided first game. */
+
+dialog.splash {
+  --splash-rise: 14px; /* how far the plaque rises as it comes in */
+  --splash-enter: 420ms;
+
+  width: min(520px, calc(100vw - 24px));
+  text-align: center;
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 6px var(--paper-deep),
+    0 0 0 5px var(--paper),
+    0 0 0 6.5px var(--ink-soft),
+    0 24px 50px -20px rgb(40 28 18 / 70%);
+  animation: splash-rise var(--splash-enter) ease-out;
+}
+
+/* the board shows through, faded and softened, as if behind the glass of a museum case */
+dialog.splash::backdrop {
+  background: rgb(243 231 201 / 55%);
+  backdrop-filter: blur(3px);
+  animation: splash-fade var(--splash-enter) ease-out;
+}
+
+.splash .stats-inner {
+  align-items: center;
+  gap: 10px;
+  padding: 26px 28px 28px;
+}
+
+.splash .eyebrow {
+  text-wrap: balance;
+}
+
+.splash-title {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: clamp(28px, 7vw, 38px);
+  line-height: 1.05;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.splash-title .cap {
+  color: var(--vermilion);
+  font-size: 1.35em;
+  line-height: 0.8;
+}
+
+.splash .flourish {
+  margin: 0 auto 4px;
+}
+
+.splash-history {
+  max-width: 42ch;
+  text-wrap: pretty;
+}
+
+.splash-history p {
+  margin: 0 0 10px;
+}
+
+.splash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* on a phone the plaque fits one screen: smaller history, and the buttons stacked with the guided game on top */
+@media (max-width: 479px) {
+  .splash .stats-inner {
+    padding: 20px 18px 22px;
+  }
+
+  .splash-history {
+    font-size: 15px;
+  }
+
+  .splash-actions {
+    flex-direction: column-reverse;
+    align-self: stretch;
+  }
+}
+
+@keyframes splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--splash-rise));
+  }
+}
+
+@keyframes splash-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.splash,
+  dialog.splash::backdrop {
+    animation: none;
+  }
+}

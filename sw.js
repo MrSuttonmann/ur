@@ -9,7 +9,7 @@
   to download up front, so each track is saved the first time it plays and then served from the
   cache, including the byte ranges audio players ask for.
 */
-const CACHE = 'ur-v10';
+const CACHE = 'ur-v11';
 const CODE = [
   'css/fonts.css',
   'css/base.css',
@@ -29,6 +29,7 @@ const CODE = [
   'css/portraits.css',
   'css/banner.css',
   'css/honours.css',
+  'css/splash.css',
   'js/rules.js',
   'js/sound.js',
   'js/game.js',
