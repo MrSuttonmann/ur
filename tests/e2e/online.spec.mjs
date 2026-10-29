@@ -105,17 +105,27 @@ test('a friend already on the site can join with just the code', async ({ openDe
   await expect(friend.locator('#join-code')).toBeHidden(); // not while holding a seat
 });
 
-test('a mistyped or unknown code says so, and the window stays open', async ({ openDevice }) => {
+test('a mistyped or unknown code says so on one line, and the window stays open', async ({ openDevice }) => {
   const page = await openDevice('/');
+  await page.setViewportSize({ width: 375, height: 667 }); // the narrowest iPhones in use
+  // the lines the message's text runs over, counted by where each line's boxes start
+  const lines = () =>
+    page.locator('#code-error').evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return new Set([...range.getClientRects()].map((box) => Math.round(box.top))).size;
+    });
   await page.locator('label[for=mode-online]').click();
   await page.locator('#join-code').click();
   await page.locator('#code-input').fill('K7Q');
   await page.locator('#code-go').click();
   await expect(page.locator('#code-error')).toContainText('isn’t a game code');
+  expect(await lines()).toBe(1);
   await page.locator('#code-input').fill('ZZZZZZ');
   await expect(page.locator('#code-error')).toBeHidden(); // typing clears the message
   await page.locator('#code-go').click();
   await expect(page.locator('#code-error')).toContainText('no game with that code');
+  expect(await lines()).toBe(1);
   await expect(page.locator('#code-dlg')).toBeVisible();
   await expect(page.locator('#join-dlg')).toBeHidden();
   await page.locator('#code-cancel').click();

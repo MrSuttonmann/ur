@@ -298,15 +298,14 @@ $('code-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const code = typedCode();
   if (!ROOM_CODE.test(code)) {
-    showCodeError('That isn’t a game code. A code has six letters and numbers, like K7QXM2.');
+    showCodeError('That isn’t a game code.');
     return;
   }
   $('code-go').disabled = true;
   const { status, data } = await roomInfo(code);
   $('code-go').disabled = false;
-  if (status === 0 || status >= 500) showCodeError('Couldn’t reach the game. Check your connection, then try again.');
-  else if (status !== 200 || data.status === 'closed')
-    showCodeError('There’s no game with that code. Check it with your friend.');
+  if (status === 0 || status >= 500) showCodeError('Couldn’t reach the game. Try again.');
+  else if (status !== 200 || data.status === 'closed') showCodeError('There’s no game with that code.');
   else {
     $('code-dlg').close();
     setLinkRoom(code); // as if they'd opened the link, so a reload comes back to the game

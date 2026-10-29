@@ -208,6 +208,7 @@ dialog.lobby {
 
 .lobby-error {
   margin: 0;
+  text-wrap: balance; /* a message too long for one line splits evenly, not with one word left over */
   color: var(--vermilion);
   font-weight: 600;
 }
