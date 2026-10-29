@@ -653,3 +653,35 @@ test('leaving after a game records nothing more', async ({ openDevice }) => {
   expect(await recordOf(host)).toEqual(hostAfter);
   expect(await recordOf(friend)).toEqual(friendAfter);
 });
+
+test('opening the site without the link offers to rejoin', async ({ openDevice }) => {
+  const { host, friend, pages } = await startOnlineGame(openDevice);
+  for (let turn = 0; turn < 2; turn++) {
+    if (await rollOnce(pages)) await moveFirst(pages);
+    await expectInStep(pages);
+  }
+  const context = friend.context();
+  await friend.close();
+  const back = await openDevice('/', { context });
+  await expect(back.locator('#rejoin-dlg')).toBeVisible();
+  await expect(back.locator('#rejoin-text')).toHaveText('Rejoin your game with Ted?');
+  await expect(back.locator('#welcome-dlg')).toBeHidden();
+  await back.locator('#rejoin-yes').click();
+  await expect.poll(() => modeAndPhase(back)).toEqual(['online', 'roll']);
+  await expectInStep([host, back]);
+  expect(await back.evaluate(() => game.log.length)).toBe(3);
+});
+
+test('seats for ended rooms are forgotten quietly', async ({ openDevice }) => {
+  const { host, friend } = await startOnlineGame(openDevice);
+  const roomId = await host.evaluate(() => online.roomId);
+  await friend.locator('label[for=mode-ai]').click();
+  await friend.locator('#confirm-yes').click();
+  await expect(host.locator('#status')).toContainText('Ann has left the game.');
+
+  const back = await openDevice('/', { context: host.context() });
+  await expect
+    .poll(() => back.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('ur-seats-v1') || '{}'))))
+    .not.toContain(roomId);
+  await expect(back.locator('#rejoin-dlg')).toBeHidden();
+});

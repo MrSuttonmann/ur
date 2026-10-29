@@ -1,11 +1,13 @@
 /* The Royal Game of Ur. Copyright (C) 2026 MrSuttonmann. GNU AGPL-3.0 or later; see LICENSE. */
 
 // ---------- boot ----------
-// an invite link (#g=…) goes to its online room; otherwise a first visit is offered the guided game, and anyone
-// with games already recorded is a returning player
+// an invite link (#g=…) goes to its online room; otherwise a game this browser still has a seat in is offered
+// back, or else a first visit is offered the guided game, and anyone with games already recorded is a returning
+// player
 const invitedTo = roomInLink();
 const returning = lifetime.games > 0 || Object.values(tally).some((v) => v > 0);
 const offersGuide = !invitedTo && !guideDone() && !returning;
+const liveSeat = invitedTo || !Object.keys(savedSeats()).length ? Promise.resolve(null) : liveSeatRoom();
 if (invitedTo) $('mode-online').checked = true;
 showSetupBoard();
 if (invitedTo) followInvite(invitedTo);
@@ -16,5 +18,9 @@ if (invitedTo) followInvite(invitedTo);
 const FONT_WAIT_MS = 1500;
 Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS))]).then(() => {
   document.documentElement.classList.remove('booting');
-  if (offersGuide) offerGuidedGame(); // once the page it sits over can be seen
+  // once the page they sit over can be seen
+  liveSeat.then((roomId) => {
+    if (roomId) offerRejoin(roomId);
+    else if (offersGuide) offerGuidedGame();
+  });
 });

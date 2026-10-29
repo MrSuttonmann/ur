@@ -268,6 +268,16 @@ $('room-note-dlg').addEventListener('close', () => {
 
 // ---------- rejoining a game this browser has a seat in ----------
 let rejoinRoom = null;
+// The newest saved seat whose room is still alive, as a room id, or null. Seats for rooms that are gone or closed
+// are forgotten on the way; one that can't be checked (no connection, a failing room) is left saved, and skipped.
+async function liveSeatRoom() {
+  for (const roomId of Object.keys(savedSeats()).reverse()) {
+    const { status, data } = await roomApi('GET', `/api/rooms/${roomId}`);
+    if (status === 200 && data.status !== 'closed') return roomId;
+    if (status === 404 || (status === 200 && data.status === 'closed')) forgetSeat(roomId);
+  }
+  return null;
+}
 function offerRejoin(roomId) {
   const seat = savedSeats()[roomId];
   if (!seat) return;

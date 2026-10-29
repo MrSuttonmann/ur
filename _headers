@@ -1,4 +1,4 @@
-# Cloudflare Pages response headers.
+# Cloudflare response headers.
 # The page, its scripts and styles, and the service worker must always be checked with the server: a browser
 # holding old scripts for hours while the page is new breaks the game after every update.
 /

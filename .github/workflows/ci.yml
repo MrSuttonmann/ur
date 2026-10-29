@@ -1,5 +1,5 @@
 # Checks every push and pull request: formatting, linting, types, tests, the build, and a Lighthouse audit.
-# Cloudflare Pages deploys separately; this only reports.
+# Cloudflare Workers Builds deploys separately; this only reports.
 name: CI
 
 on:
