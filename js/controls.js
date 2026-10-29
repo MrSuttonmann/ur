@@ -4,13 +4,23 @@
 
 $('roll').addEventListener('click', () => {
   if (game.phase === 'over') {
-    if (!isOnline()) startGame();
+    if (isOnline()) sendIntent({ t: 'rematch' });
+    else startGame();
   } else if (canAct(game.turn)) rollDice();
 });
 
-// mode and opponent only change between games, and then just update the waiting board
-document.querySelectorAll('input[name=mode]').forEach((radio) =>
+// mode and opponent only change between games, and then just update the waiting board; online, switching mode
+// mid-game leaves the game, once the player has agreed to forfeit it
+document.querySelectorAll('input[name=mode]').forEach((/** @type {HTMLInputElement} */ radio) =>
   radio.addEventListener('change', () => {
+    if (forfeitsOnlineGame()) {
+      $('mode-online').checked = true; // until the player agrees
+      confirmAbandonGame(() => {
+        radio.checked = true;
+        showSetupBoard();
+      });
+      return;
+    }
     if (!isBetweenGames()) return;
     showSetupBoard();
     if (isOnline() && !$('player-name').value) $('player-name').focus(); // online starts with your name

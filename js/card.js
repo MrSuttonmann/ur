@@ -26,12 +26,14 @@ function displayAddress(url) {
 }
 
 // ---------- the words on the card ----------
+// online, the other player goes by their name
+const theirName = () => (isOnline() ? playerName(opponentOf(mySide())) : opponentNameMidSentence());
 function resultTitle() {
-  if (game.mode !== 'ai') return `The ${SIDE_NAME[game.winner]} triumphs!`;
-  return game.winner === COMPUTER_SIDE ? 'Defeat' : 'Victory!';
+  if (game.mode === 'local') return `The ${SIDE_NAME[game.winner]} triumphs!`;
+  return game.winner === mySide() ? 'Victory!' : 'Defeat';
 }
 function resultSubtitle() {
-  const players = game.mode === 'ai' ? `against ${opponentNameMidSentence()}` : 'Two players';
+  const players = game.mode === 'local' ? 'Two players' : `against ${theirName()}`;
   return `${players} · ${VARIANT_DEFINITIONS[game.variant].name}`;
 }
 const resultScore = () =>
@@ -43,9 +45,9 @@ function honoursLabel() {
 // the words that go with the picture when it's shared
 function resultSentence() {
   let sentence;
-  if (game.mode !== 'ai') sentence = `The ${SIDE_NAME[game.winner]} won our game of the Royal Game of Ur.`;
-  else if (game.winner === COMPUTER_SIDE) sentence = `${opponentName()} beat me at the Royal Game of Ur.`;
-  else sentence = `I beat ${opponentNameMidSentence()} at the Royal Game of Ur!`;
+  if (game.mode === 'local') sentence = `The ${SIDE_NAME[game.winner]} won our game of the Royal Game of Ur.`;
+  else if (game.winner !== mySide()) sentence = `${playerName(game.winner)} beat me at the Royal Game of Ur.`;
+  else sentence = `I beat ${theirName()} at the Royal Game of Ur!`;
   return `${sentence} ${siteUrl()}`;
 }
 

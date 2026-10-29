@@ -16,6 +16,7 @@ const createLifetimeStats = () => ({
   dist: Array(MAX_ROLL + 1).fill(0),
   level: { easy: { w: 0, l: 0 }, medium: { w: 0, l: 0 }, hard: { w: 0, l: 0 } },
   local: { sun: 0, moon: 0 },
+  online: { w: 0, l: 0 },
   streak: 0,
   bestStreak: 0,
   quickest: null,
@@ -32,7 +33,8 @@ const saveLifetime = () => {
   } catch (e) {}
 };
 
-function recordGame(winner) {
+// a game given up by leaving it isn't a finished race, so it sets no records for speed
+function recordGame(winner, { forfeit = false } = {}) {
   const stats = game.stats,
     sides = stats.bySide;
   const bothSides = (field) => sides[SUN][field] + sides[MOON][field];
@@ -47,19 +49,26 @@ function recordGame(winner) {
     lifetime.dist[roll] += sides[SUN].rollCounts[roll] + sides[MOON].rollCounts[roll];
   if (game.mode === 'ai') {
     const record = lifetime.level[game.level] || (lifetime.level[game.level] = { w: 0, l: 0 });
-    if (winner !== COMPUTER_SIDE) {
-      record.w++;
-      lifetime.streak++;
-      lifetime.bestStreak = Math.max(lifetime.bestStreak, lifetime.streak);
-    } else {
-      record.l++;
-      lifetime.streak = 0;
-    }
-  } else lifetime.local[winner === SUN ? 'sun' : 'moon']++;
-  if (lifetime.quickest === null || stats.playMs < lifetime.quickest) lifetime.quickest = stats.playMs;
-  const winningMoves = sides[winner].moves;
-  if (lifetime.fewestMoves === null || winningMoves < lifetime.fewestMoves) lifetime.fewestMoves = winningMoves;
+    recordWinOrLoss(record, winner !== COMPUTER_SIDE);
+  } else if (isOnline()) recordWinOrLoss(lifetime.online, winner === mySide());
+  else lifetime.local[winner === SUN ? 'sun' : 'moon']++;
+  if (!forfeit) {
+    if (lifetime.quickest === null || stats.playMs < lifetime.quickest) lifetime.quickest = stats.playMs;
+    const winningMoves = sides[winner].moves;
+    if (lifetime.fewestMoves === null || winningMoves < lifetime.fewestMoves) lifetime.fewestMoves = winningMoves;
+  }
   saveLifetime();
+}
+// your win or loss against the computer or online, which also makes or breaks your winning streak
+function recordWinOrLoss(record, won) {
+  if (won) {
+    record.w++;
+    lifetime.streak++;
+    lifetime.bestStreak = Math.max(lifetime.bestStreak, lifetime.streak);
+  } else {
+    record.l++;
+    lifetime.streak = 0;
+  }
 }
 
 // the game clock only runs while the page is visible and the game is unfinished
@@ -248,6 +257,7 @@ function lifetimeStatsHTML() {
     <p class="race">Current win streak: <b>${lifetime.streak}</b> · Best streak: <b>${lifetime.bestStreak}</b></p>
     <h3>Two-player games</h3>
     <p class="race">Sun won <b>${lifetime.local.sun}</b> · Moon won <b>${lifetime.local.moon}</b></p>
+    <p class="race">Online: you won <b>${lifetime.online.w}</b> · you lost <b>${lifetime.online.l}</b></p>
     <h3>Records</h3>
     <p class="race">Quickest game: <b>${lifetime.quickest === null ? '–' : formatClock(lifetime.quickest)}</b> · Fewest moves to win: <b>${lifetime.fewestMoves ?? '–'}</b></p>
     <h3>Dice luck, all games</h3>
@@ -275,7 +285,7 @@ function wireResetButtons() {
     saveLifetime();
     honours = createHonours();
     saveHonours();
-    tally = { you: 0, computer: 0, sun: 0, moon: 0 };
+    tally = createTally();
     saveTally();
     resetAsk = false;
     drawStats();

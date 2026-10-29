@@ -146,6 +146,7 @@ test('the last name is remembered', async ({ openDevice }) => {
 // ---------- playing in step ----------
 
 const SUN_SIDE = 0,
+  MOON_SIDE = 1,
   IN = 0; // in the tray
 
 // what both screens must agree on, and whether the page has played out everything the room has sent
@@ -330,6 +331,25 @@ test('the host sees the friend drop out, and the game waits', async ({ openDevic
   await expectInStep([host, back]);
 });
 
+test('your own lost connection is shown, and play waits for it', async ({ openDevice }) => {
+  const { friend, pages } = await startOnlineGame(openDevice);
+  await setUpGame(pages, [Array(7).fill(IN), Array(7).fill(IN)], MOON_SIDE);
+  await expect(friend.locator('#roll')).toBeEnabled();
+  // the socket closes as a dropped connection's would; the page is read as it closes, as the sped-up game soon
+  // reconnects
+  const dropped = await friend.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const socket = online.socket;
+        socket.addEventListener('close', () => resolve([$('status').textContent, $('roll').disabled]));
+        socket.close();
+      }),
+  );
+  expect(dropped).toEqual([expect.stringContaining('Reconnecting…'), true]);
+  await expect(friend.locator('#status')).not.toContainText('Reconnecting…'); // back by itself
+  await expect(friend.locator('#roll')).toBeEnabled();
+});
+
 test('advice, undo and danger shading are not offered online', async ({ openDevice }) => {
   const { pages } = await startOnlineGame(openDevice);
   while (!(await rollOnce(pages))) await expectInStep(pages);
@@ -368,9 +388,46 @@ test('a fresh full state wins over a roll still playing out', async ({ openDevic
   expect(await friend.evaluate(() => [game.phase, game.roll])).toEqual(['roll', null]);
 });
 
+test('a message that fails to play out doesn’t hold up the ones after it', async ({ openDevice }) => {
+  const { friend, pages } = await startOnlineGame(openDevice);
+  await expectInStep(pages);
+  const after = await friend.evaluate(() => {
+    const view = online.view,
+      seq = online.seq,
+      presence = { kind: 'presence' };
+    const realAdopt = adoptRoomState;
+    adoptRoomState = () => {
+      adoptRoomState = realAdopt;
+      throw new Error('a broken message');
+    };
+    try {
+      queueRoomMessage({ type: 'state', seq: seq + 1, event: presence, state: view });
+    } catch {
+      // the broken message throws here, as it would to the socket's handler
+    }
+    queueRoomMessage({ type: 'state', seq: seq + 2, event: presence, state: view });
+    return [online.seq - seq, online.busy, online.queue.length];
+  });
+  expect(after).toEqual([2, false, 0]);
+});
+
+test('a refused intent puts the board back without trying again', async ({ openDevice }) => {
+  const { friend, pages } = await startOnlineGame(openDevice);
+  await expectInStep(pages);
+  const after = await friend.evaluate(() => {
+    let continued = 0;
+    const realContinue = continueGame;
+    continueGame = () => continued++;
+    game.phase = 'animating';
+    tellRoomHandlers({ type: 'error', code: 'illegal' });
+    continueGame = realContinue;
+    return [game.phase, continued];
+  });
+  expect(after).toEqual(['roll', 0]);
+});
+
 // ---------- the board turned for the friend ----------
 
-const MOON_SIDE = 1;
 const boxOf = (page, selector) => page.locator(selector).boundingBox();
 const cellBox = (page, side, square) =>
   page.evaluate(
@@ -428,4 +485,129 @@ test('move arrows point from the right counter to the right square on the turned
   expect(end.x).toBeLessThanOrEqual(landing.x + landing.width);
   expect(end.y).toBeGreaterThanOrEqual(landing.y);
   expect(end.y).toBeLessThanOrEqual(landing.y + landing.height);
+});
+
+// ---------- the end of a game ----------
+
+// what each page has recorded of finished games
+const recordOf = (page) =>
+  page.evaluate(() => ({ games: lifetime.games, ms: lifetime.ms, online: { ...lifetime.online } }));
+
+// the Sun has every counter home but one, a square from home, and the Moon has none out; play until the Sun brings
+// it home
+async function playToSunWin(pages) {
+  const home = await pages[0].evaluate(() => currentRules.home);
+  await setUpGame(pages, [[home - 1, ...Array(6).fill(home)], Array(7).fill(IN)], SUN_SIDE);
+  while ((await pages[0].evaluate(() => game.phase)) !== 'over') {
+    if (await rollOnce(pages)) await moveFirst(pages);
+    await expectInStep(pages);
+  }
+}
+
+test('a finished game is recorded once on each side', async ({ openDevice }) => {
+  const { host, friend, pages } = await startOnlineGame(openDevice);
+  const [hostBefore, friendBefore] = await Promise.all(pages.map(recordOf));
+  await playToSunWin(pages);
+  await expect
+    .poll(() => recordOf(host))
+    .toMatchObject({
+      games: hostBefore.games + 1,
+      online: { w: hostBefore.online.w + 1, l: hostBefore.online.l },
+    });
+  await expect
+    .poll(() => recordOf(friend))
+    .toMatchObject({
+      games: friendBefore.games + 1,
+      online: { w: friendBefore.online.w, l: friendBefore.online.l + 1 },
+    });
+  await expect(host.locator('#status')).toContainText('Victory is yours!');
+  await expect(friend.locator('#status')).toContainText('Ted triumphs!');
+  const friendAfter = await recordOf(friend);
+  await friend.reload();
+  await expect.poll(() => modeAndPhase(friend)).toEqual(['online', 'over']);
+  await friend.waitForTimeout(500);
+  expect(await recordOf(friend)).toEqual(friendAfter);
+});
+
+test('both players record the same time played', async ({ openDevice }) => {
+  const { host, friend, pages } = await startOnlineGame(openDevice);
+  await playToSunWin(pages);
+  await expect.poll(() => friend.evaluate(() => lifetime.games)).toBe(1);
+  await expect.poll(() => host.evaluate(() => lifetime.games)).toBe(1);
+  expect((await recordOf(host)).ms).toBe((await recordOf(friend)).ms);
+});
+
+test('computer-only honours aren’t earned online, Good Company is', async ({ openDevice }) => {
+  const { host, pages } = await startOnlineGame(openDevice);
+  await playToSunWin(pages);
+  await expect.poll(() => host.evaluate(() => Object.keys(honours.earned))).toContain('company');
+  expect(await host.evaluate(() => Object.keys(honours.earned))).not.toContain('first-win');
+  expect(await host.evaluate(() => honours.variantsWon)).toEqual([]);
+});
+
+test('rematch starts a new game for both', async ({ openDevice }) => {
+  const { host, friend, pages } = await startOnlineGame(openDevice);
+  const firstGame = await host.evaluate(() => game.roomGameId);
+  await playToSunWin(pages);
+  await expect(host.locator('#roll')).toHaveText('Rematch');
+  await host.locator('#roll').click();
+  await expect(friend.locator('#status')).toContainText('Ted wants a rematch');
+  await expect(friend.locator('#roll')).toHaveText('Accept rematch');
+  await friend.locator('#roll').click();
+  for (const page of pages) {
+    await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'roll']);
+    expect(await page.evaluate(() => game.roomGameId)).not.toBe(firstGame);
+  }
+  await expectInStep(pages);
+});
+
+test('leaving mid-game forfeits', async ({ openDevice }) => {
+  const { host, friend, link } = await startOnlineGame(openDevice);
+  await friend.locator('label[for=mode-ai]').click();
+  await expect(friend.locator('#confirm-title')).toHaveText('Leave this game?');
+  await expect(friend.locator('#confirm-text')).toHaveText('Leaving now counts as a loss.');
+  await expect(friend.locator('#confirm-no')).toHaveText('Keep playing');
+  await expect(friend.locator('#confirm-yes')).toHaveText('Leave and forfeit');
+  await friend.locator('#confirm-yes').click();
+
+  await expect(host.locator('#status')).toContainText('Ann has left the game.');
+  await expect.poll(() => recordOf(host)).toMatchObject({ games: 1, online: { w: 1, l: 0 } });
+  expect(await recordOf(friend)).toMatchObject({ games: 1, online: { w: 0, l: 1 } });
+  await expect(host.locator('#room-note-dlg')).toBeHidden();
+
+  // the friend is back on a page of their own, which the room no longer pulls back into the game
+  await friend.locator('#newgame').click();
+  await friend.waitForTimeout(500);
+  expect(await modeAndPhase(friend)).toEqual(['ai', 'roll']);
+  await expect(friend.locator('#game')).not.toHaveClass(/view-moon/);
+  expect(await host.evaluate(() => lifetime.games)).toBe(1);
+
+  const visitor = await openDevice(linkPath(link));
+  await expect(visitor.locator('#room-note-text')).toContainText('has ended');
+});
+
+test('keeping playing stays in the game', async ({ openDevice }) => {
+  const { friend, pages } = await startOnlineGame(openDevice);
+  await friend.locator('label[for=mode-ai]').click();
+  await friend.locator('#confirm-no').click();
+  expect(await modeAndPhase(friend)).toEqual(['online', 'roll']);
+  await expect(friend.locator('#mode-online')).toBeChecked();
+  if (await rollOnce(pages)) await moveFirst(pages);
+  await expectInStep(pages);
+});
+
+test('leaving after a game records nothing more', async ({ openDevice }) => {
+  const { host, friend, pages } = await startOnlineGame(openDevice);
+  await playToSunWin(pages);
+  await expect.poll(() => friend.evaluate(() => lifetime.games)).toBe(1);
+  await expect.poll(() => host.evaluate(() => lifetime.games)).toBe(1);
+  const [hostAfter, friendAfter] = await Promise.all(pages.map(recordOf));
+  await friend.locator('label[for=mode-ai]').click();
+  await expect(friend.locator('#confirm-dlg')).toBeHidden();
+  expect(await modeAndPhase(friend)).toEqual(['ai', 'setup']);
+  await expect(host.locator('#status')).toContainText('Ann has left the game.');
+  await expect(host.locator('#roll')).toBeDisabled();
+  await host.waitForTimeout(500);
+  expect(await recordOf(host)).toEqual(hostAfter);
+  expect(await recordOf(friend)).toEqual(friendAfter);
 });

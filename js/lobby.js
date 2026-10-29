@@ -42,6 +42,7 @@ async function startInviting() {
   if (creatingRoom) return;
   creatingRoom = true;
   rememberName(name);
+  leaveOnlineGame(); // inviting someone new leaves the last online game's room
   const { status, data } = await roomApi('POST', '/api/rooms', { name, variant: prefs.variant });
   creatingRoom = false;
   if (status === 400 && data && data.error === 'name') showNameProblem('Please enter your name.');
@@ -198,9 +199,18 @@ onRoomState((message) => {
   const view = message.state;
   if (view.phase === 'closed') {
     forgetSeat(online.roomId);
-    disconnectRoom();
     closeLobbyWindows();
-    showRoomNote('ended');
+    if (view.winner === null) {
+      disconnectRoom();
+      showRoomNote('ended');
+      return;
+    }
+    // the other player left during or after a game: the board shows its end at once (a forfeit as your win),
+    // and the page lets go of the room
+    online.queue.push(message);
+    catchUpWithRoom();
+    disconnectRoom();
+    setLinkRoom(null);
     return;
   }
   queueRoomMessage(message); // the board plays out the room's states in order

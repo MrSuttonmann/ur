@@ -101,14 +101,15 @@ function disconnectRoom() {
   if (socket) socket.close();
 }
 
+function socketTo(roomId, key) {
+  const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return new WebSocket(`${scheme}//${location.host}/api/rooms/${roomId}/ws?key=${encodeURIComponent(key)}`);
+}
 function openSocket() {
   clearTimeout(reconnectTimer);
   const seat = savedSeats()[online.roomId];
   if (!seat) return;
-  const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const socket = new WebSocket(
-    `${scheme}//${location.host}/api/rooms/${online.roomId}/ws?key=${encodeURIComponent(seat.key)}`,
-  );
+  const socket = socketTo(online.roomId, seat.key);
   online.socket = socket;
   // a socket this page has since replaced or let go of is ignored
   const current = () => socket === online.socket;
@@ -130,6 +131,7 @@ function openSocket() {
     online.socket = null;
     if (e.code !== CLOSE_REPLACED && e.code !== CLOSE_ENDED) {
       reconnectLater();
+      if (isOnline() && !online.busy) render(); // to say so; a move playing out shows it when it ends
       return;
     }
     // closed for good: let go of the room, so nothing reconnects to it, then say which room it was
@@ -152,10 +154,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // tell the room this seat is leaving, which ends the room, and stop listening to it; a socket still connecting
-// says so once it's open
+// says so once it's open, and with the connection down a socket is opened just to say so
 function leaveRoom() {
-  const socket = online.socket;
-  forgetSeat(online.roomId);
+  const roomId = online.roomId,
+    seat = savedSeats()[roomId];
+  const socket = online.socket || (seat ? socketTo(roomId, seat.key) : null);
+  forgetSeat(roomId);
   online.socket = null; // so letting go of the room leaves this socket open long enough to say goodbye
   disconnectRoom();
   if (!socket) return;
@@ -180,8 +184,13 @@ function sendIntent(intent) {
 // on from the last (a fresh connection's, or after a gap), or that arrives while the page is out of sight, is
 // taken on at once, with nothing animated.
 
-// whether the room is waiting for someone to come back: it takes no rolls or moves until both are here
-const roomPaused = () => isOnline() && Boolean(online.view) && !online.view.connected.every(Boolean);
+// whether this page has lost its own connection to its room (it comes back by itself)
+const roomUnreachable = () =>
+  isOnline() && Boolean(online.roomId) && !(online.socket && online.socket.readyState === WebSocket.OPEN);
+// whether play waits: for this page to reach the room again, or for someone to come back to it (the room takes no
+// rolls or moves until both are here)
+const roomPaused = () =>
+  isOnline() && Boolean(online.view) && (roomUnreachable() || !online.view.connected.every(Boolean));
 
 // online, a roll or move is the room's to make: ask it, and hold the board still (so a second press does nothing)
 // until its answer plays out
@@ -228,21 +237,35 @@ function playRoomMessage(message, done) {
     seq === online.seq + 1 &&
     game.roomGameId === state.gameId &&
     !document.hidden;
+  // whatever goes wrong in taking a message on, the ones after it still play out
   if (!animated) {
-    takeOnRoomMessage(message);
-    done();
+    try {
+      takeOnRoomMessage(message);
+    } finally {
+      done();
+    }
     return;
   }
   const thisPlayback = playbackId,
     stale = () => thisPlayback !== playbackId;
+  let finished = false;
   const finish = (react = () => {}) => {
-    if (stale()) return;
-    takeOnRoomMessage(message, true);
-    react();
-    done();
+    if (stale() || finished) return;
+    finished = true;
+    try {
+      takeOnRoomMessage(message, true);
+      react();
+    } finally {
+      done();
+    }
   };
-  if (event.kind === 'roll') playRoomRoll(event, state, finish, stale);
-  else playRoomMove(event, finish, stale);
+  try {
+    if (event.kind === 'roll') playRoomRoll(event, state, finish, stale);
+    else playRoomMove(event, finish, stale);
+  } catch (error) {
+    finish(); // the board takes on the room's state without the rest of the animation
+    throw error;
+  }
 }
 
 // the dice tumble and land on the room's roll; a roll with no move shows the pass for a moment
@@ -295,11 +318,13 @@ function takeOnRoomMessage({ event, seq, state }, played = false) {
   }
   online.seq = seq;
   adoptRoomState(state);
+  if (game.phase === 'over') finishGame(game.winner);
+  else continueGame(); // your own forced move plays itself
 }
 
 // A refused roll or move (the room paused, say, or a second press that got through) puts the board back as the
 // room last had it, so it's never left waiting for an answer that isn't coming. Nothing is said: a refusal
-// changes nothing in the room.
+// changes nothing in the room. A forced move isn't tried again, so one the room refuses can't repeat for ever.
 onRoomState((message) => {
   if (message.type !== 'error' || online.busy || !online.view || !isOnline()) return;
   if (game.phase === 'rolling' || game.phase === 'animating') adoptRoomState(online.view);
@@ -327,6 +352,9 @@ function adoptRoomState(view) {
     stats: view.stats,
     names: view.names,
     roomGameId: view.gameId,
+    endedBy: view.endedBy,
+    rematch: view.rematch,
+    roomClosed: view.phase === 'closed',
   });
   // the opponent's name is kept with the seat, for offering to rejoin later
   const seat = savedSeats()[online.roomId],
@@ -334,5 +362,50 @@ function adoptRoomState(view) {
   if (seat && opponent && seat.opponent !== opponent) saveSeat(online.roomId, { ...seat, opponent });
   showRulesInPlay();
   render();
-  continueGame(); // your own forced move plays itself
+}
+
+// ---------- records ----------
+// Each browser records a finished online game once, by the room's id for it, however often it sees the game's end.
+// The ids of the last few recorded are kept (and in memory too, should storage be blocked).
+const RECORDED_KEY = 'ur-online-recorded-v1';
+const RECORDED_KEPT = 50;
+let recordedHere = [];
+function recordedGames() {
+  try {
+    return JSON.parse(localStorage.getItem(RECORDED_KEY)) || recordedHere;
+  } catch (e) {
+    return recordedHere;
+  }
+}
+// the room's finished game in this browser's stats, honours and tally; says whether it was recorded just now
+function recordOnlineGame(view) {
+  const recorded = recordedGames();
+  if (recorded.includes(view.gameId)) return false;
+  recordedHere = [...recorded, view.gameId].slice(-RECORDED_KEPT);
+  try {
+    localStorage.setItem(RECORDED_KEY, JSON.stringify(recordedHere));
+  } catch (e) {}
+  // a game left part-way is a win or loss, but earns no honours and sets no records
+  const forfeit = view.endedBy === 'forfeit';
+  game.stats = view.stats;
+  recordGame(view.winner, { forfeit });
+  game.newHonours = forfeit ? [] : awardHonours(view.winner);
+  tally[view.winner === mySide() ? 'onlineWon' : 'onlineLost']++;
+  saveTally();
+  return true;
+}
+
+// The page leaves its room's game for something else. Mid-game that forfeits it: the loss is recorded here, under
+// the room's id for the game so it can never be counted twice, and the room gives the other player the win. Between
+// games it records nothing more, but for a game whose end hasn't played out here yet.
+function leaveOnlineGame() {
+  if (!online.roomId) return;
+  const newest = (online.queue.at(-1) || playing || { state: online.view }).state;
+  if (isOnline() && newest && newest.gameId === game.roomGameId) {
+    if (newest.phase === 'roll' || newest.phase === 'move')
+      recordOnlineGame({ ...newest, winner: opponentOf(online.seat), endedBy: 'forfeit' });
+    else if (newest.phase === 'over') recordOnlineGame(newest);
+  }
+  leaveRoom();
+  setLinkRoom(null);
 }

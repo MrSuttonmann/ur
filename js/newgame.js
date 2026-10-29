@@ -22,6 +22,7 @@ function abandonCurrentGame() {
 
 // start playing with the chosen mode and opponent; { guided: true } starts the guided first game
 function startGame({ guided = false } = {}) {
+  leaveOnlineGame();
   abandonCurrentGame();
   if (game && game.guided && !guided) finishGuide(); // leaving the guided game counts as having seen it
   if (guided) {
@@ -42,6 +43,7 @@ function startGame({ guided = false } = {}) {
 
 // a board laid out and waiting: the player picks mode and opponent, then presses Start game
 function showSetupBoard() {
+  leaveOnlineGame();
   abandonCurrentGame();
   if (game && game.guided) finishGuide();
   currentRules = VARIANTS[prefs.variant];
@@ -50,14 +52,24 @@ function showSetupBoard() {
   render();
 }
 
-// starting over loses a game that has moves in it, so ask first
+// starting over loses a game that has moves in it, and leaving an online game in play forfeits it, so ask first
+const forfeitsOnlineGame = () => isOnline() && isInPlay() && Boolean(online.roomId);
+const CONFIRM_WORDS = {
+  lose: ['Start a new game?', 'The game in progress will be lost.', 'Start a new game'],
+  forfeit: ['Leave this game?', 'Leaving now counts as a loss.', 'Leave and forfeit'],
+};
 let afterConfirming = null;
 function confirmAbandonGame(action) {
-  if (!hasProgressToLose()) {
+  const forfeits = forfeitsOnlineGame();
+  if (!hasProgressToLose() && !forfeits) {
     action();
     return;
   }
   afterConfirming = action;
+  const [title, text, yes] = CONFIRM_WORDS[forfeits ? 'forfeit' : 'lose'];
+  $('confirm-title').textContent = title;
+  $('confirm-text').textContent = text;
+  $('confirm-yes').textContent = yes;
   $('confirm-dlg').showModal();
   $('confirm-no').focus();
 }

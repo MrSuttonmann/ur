@@ -34,6 +34,9 @@ function createGameState(mode, level, variant, guided, phase = 'roll') {
     undos: 0, // moves you took back
     names: [null, null], // online, the players' names from the room: [host, friend]
     roomGameId: null, // online, the room's id for this game (not the page's own gameId counter)
+    endedBy: null, // online, how the game ended: 'win', or 'forfeit' when a player left it
+    rematch: [false, false], // online, which players have asked for a rematch
+    roomClosed: false, // online, the room has closed: a player has left it
   };
 }
 const isOnline = () => game.mode === 'online';
@@ -61,7 +64,9 @@ const opponentNameMidSentence = () => playerNameMidSentence(COMPUTER_SIDE);
 const escapeHtml = (text) =>
   String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-let tally = { you: 0, computer: 0, sun: 0, moon: 0 };
+// wins: yours and the computer's, the Sun's and the Moon's on one device, and yours and your friends' online
+const createTally = () => ({ you: 0, computer: 0, sun: 0, moon: 0, onlineWon: 0, onlineLost: 0 });
+let tally = createTally();
 try {
   const saved = JSON.parse(localStorage.getItem('ur-tally-v2'));
   if (saved) tally = { ...tally, ...saved };
@@ -362,11 +367,16 @@ function reactToMove(side, move, landsOnRose, finished) {
 function finishGame(winner) {
   game.phase = 'over';
   game.winner = winner;
-  if (game.mode === 'ai') tally[winner === COMPUTER_SIDE ? 'computer' : 'you']++;
-  else tally[winner === SUN ? 'sun' : 'moon']++;
-  saveTally();
-  recordGame(winner);
-  game.newHonours = awardHonours(winner);
+  if (isOnline()) {
+    // the room's game is recorded once, however often its end is seen (after a reload, say)
+    if (!recordOnlineGame(online.view)) return;
+  } else {
+    if (game.mode === 'ai') tally[winner === COMPUTER_SIDE ? 'computer' : 'you']++;
+    else tally[winner === SUN ? 'sun' : 'moon']++;
+    saveTally();
+    recordGame(winner);
+    game.newHonours = awardHonours(winner);
+  }
   render();
   showEndBanner(winner);
   announceHonours(game.newHonours);

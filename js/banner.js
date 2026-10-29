@@ -10,8 +10,10 @@ const LONG_TITLE = 12; // longer titles are set smaller so they fit along the sc
 let bannerTimer = null;
 
 function showEndBanner(winner) {
-  const lost = game.mode === 'ai' && winner === COMPUTER_SIDE;
-  const title = game.mode !== 'ai' ? `The ${SIDE_NAME[winner]} triumphs!` : lost ? 'Defeat' : 'Victory!';
+  // against the computer or online, the game is yours to win or lose; on one device it's the Sun's or the Moon's
+  const yours = game.mode === 'ai' || isOnline(),
+    lost = yours && winner !== mySide();
+  const title = !yours ? `The ${SIDE_NAME[winner]} triumphs!` : lost ? 'Defeat' : 'Victory!';
   const banner = $('end-banner');
   banner.className = `end-banner ${lost ? 'lost' : 'won'}`;
   banner.innerHTML = `<svg viewBox="0 -30 400 320">

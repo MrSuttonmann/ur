@@ -630,10 +630,26 @@ function renderStatus() {
 }
 function statusText() {
   const [headline, hint] = statusForPhase();
-  // online, while the other player's connection is down the game waits for them
+  // online, while either player's connection is down the game waits for them
   const other = opponentOf(mySide());
+  if (isOnline() && game.phase !== 'setup' && roomUnreachable()) return [headline, 'Reconnecting…'];
   if (isOnline() && isInPlay() && online.view && !online.view.connected[other])
     return [headline, `${playerName(other)} has lost connection…`];
+  return [headline, hint];
+}
+// online, the end of a game: who won (or who left), and where a rematch has got to
+function onlineResultText() {
+  const me = mySide(),
+    them = playerName(opponentOf(me));
+  if (game.endedBy === 'forfeit') return [`${them} has left the game.`, 'The win is yours.'];
+  const headline = game.winner === me ? 'Victory is yours!' : `${playerName(game.winner)} triumphs!`;
+  const hint = game.roomClosed
+    ? `${them} has left the game.`
+    : game.rematch[opponentOf(me)]
+      ? `${them} wants a rematch.`
+      : game.rematch[me]
+        ? `Waiting for ${them} to accept the rematch…`
+        : `All ${COUNT_WORD[game.positions[game.winner].length]} counters brought home.`;
   return [headline, hint];
 }
 function statusForPhase() {
@@ -651,6 +667,7 @@ function statusForPhase() {
             : 'Press Start game when you’re both ready.',
       ];
     case 'over': {
+      if (isOnline()) return onlineResultText();
       const headline =
         game.mode !== 'ai'
           ? `The ${SIDE_NAME[game.winner]} triumphs!`
@@ -691,9 +708,15 @@ function statusForPhase() {
 function renderRollOrAdvise() {
   const roll = $('roll'),
     advise = $('advise');
-  roll.textContent = game.phase === 'over' ? 'Play again' : 'Roll';
-  // online, a finished game's next step is the room's, not Play again
-  roll.disabled = game.phase === 'over' ? isOnline() : !(game.phase === 'roll' && canAct(game.turn) && !roomPaused());
+  if (game.phase === 'over' && isOnline()) {
+    // online, a finished game is followed by a rematch, which both players ask for
+    const asked = game.rematch[mySide()];
+    roll.textContent = game.rematch[opponentOf(mySide())] && !asked ? 'Accept rematch' : 'Rematch';
+    roll.disabled = asked || game.roomClosed || !online.roomId || roomUnreachable();
+  } else {
+    roll.textContent = game.phase === 'over' ? 'Play again' : 'Roll';
+    roll.disabled = game.phase !== 'over' && !(game.phase === 'roll' && canAct(game.turn) && !roomPaused());
+  }
   const offered = adviceOffered(),
     left = adviceLeft(),
     unlimited = left === Infinity;
@@ -732,8 +755,9 @@ function renderSetupControls() {
   $('name-field').hidden = !isOnline();
   const locked = !isBetweenGames(),
     why = locked ? 'Start a new game to change this' : '';
+  // online, switching mode is a way of leaving the game, which asks first
   document.querySelectorAll('input[name=mode]').forEach((/** @type {HTMLInputElement} */ radio) => {
-    radio.disabled = locked;
+    radio.disabled = locked && !isOnline();
   });
   $('level').disabled = locked;
   $('player-name').disabled = locked;
@@ -746,11 +770,13 @@ function renderSetupControls() {
   $('newgame').querySelector('.lbl').textContent = locked ? 'New game' : isOnline() ? 'Invite a friend' : 'Start game';
 }
 
-// your record against the chosen opponent, or the Sun and Moon tally in two-player games
+// your record against the chosen opponent or online, or the Sun and Moon tally in two-player games
 function renderTally() {
   const record = lifetime.level[game.level] || { w: 0, l: 0 };
   $('tally').innerHTML =
     game.mode === 'ai'
       ? `Wins: You <b>${record.w}</b> · ${opponentName()} <b>${record.l}</b>`
-      : `Wins: Sun <b>${tally.sun}</b> · Moon <b>${tally.moon}</b>`;
+      : isOnline()
+        ? `Online: Won <b>${tally.onlineWon}</b> · Lost <b>${tally.onlineLost}</b>`
+        : `Wins: Sun <b>${tally.sun}</b> · Moon <b>${tally.moon}</b>`;
 }

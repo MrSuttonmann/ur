@@ -16,7 +16,12 @@ const HONOUR_NOTE_MS = 6000; // how long the "honour earned" note stays up
 // aren't earned in a game where you took back a move.
 // Ids are saved in players' browsers, so they stay as they are.
 const HONOURS = [
-  { id: 'first-win', name: 'First Victory', how: 'Win a game against the computer.', test: (g) => g.won },
+  {
+    id: 'first-win',
+    name: 'First Victory',
+    how: 'Win a game against the computer.',
+    test: (g) => g.won && g.vsComputer,
+  },
   { id: 'squire', name: 'Squire Bested', how: 'Beat the Squire.', test: (g) => g.won && g.level === 'easy' },
   { id: 'knight', name: 'Knight Unhorsed', how: 'Beat Sir Knight.', test: (g) => g.won && g.level === 'medium' },
   {
@@ -110,17 +115,19 @@ const saveHonours = () => {
 };
 const isEarned = (honour) => Boolean(honours.earned[honour.id]);
 
-// what the tests look at: the game from your side (the Sun, against the computer)
+// what the tests look at: the game from your side (the Sun against the computer, your seat online). Online only
+// your wins count as won; on one device nobody's do.
 function honourCheckFor(winner) {
   const vsComputer = game.mode === 'ai',
+    me = mySide(),
     sides = game.stats.bySide;
   return {
     vsComputer,
-    won: vsComputer && winner === HUMAN_SIDE,
-    level: game.level,
+    won: (vsComputer || isOnline()) && winner === me,
+    level: vsComputer ? game.level : null,
     tookBack: game.undos > 0,
-    you: sides[HUMAN_SIDE],
-    them: sides[COMPUTER_SIDE],
+    you: sides[me],
+    them: sides[opponentOf(me)],
     counters: currentRules.counters,
     playMs: game.stats.playMs,
   };
@@ -129,7 +136,8 @@ function honourCheckFor(winner) {
 // after a finished game (and its lifetime stats) is recorded: the honours it newly earned
 function awardHonours(winner) {
   const check = honourCheckFor(winner);
-  if (check.won && !honours.variantsWon.includes(game.variant)) honours.variantsWon.push(game.variant);
+  if (check.won && check.vsComputer && !honours.variantsWon.includes(game.variant))
+    honours.variantsWon.push(game.variant);
   const today = new Date().toISOString().slice(0, 10);
   const newlyEarned = HONOURS.filter(
     (honour) => !isEarned(honour) && !(honour.skill && check.tookBack) && honour.test(check),
