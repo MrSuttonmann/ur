@@ -4,6 +4,9 @@
 
 import { test, expect, openGame } from './helpers.mjs';
 
+// The offer acts on the answer in its window's close event, which the browser fires a moment after the window is
+// hidden, so each test waits for the answer's effect rather than reading the state the instant the window goes.
+
 test('a new player is offered the guided game, and saying yes starts it', async ({ page }) => {
   await openGame(page, { newPlayer: true });
   const offer = page.locator('#welcome-dlg');
@@ -13,16 +16,16 @@ test('a new player is offered the guided game, and saying yes starts it', async 
 
   await page.locator('#welcome-yes').click();
   await expect(offer).toBeHidden();
-  expect(await page.evaluate(() => ({ guided: game.guided, level: game.level, phase: game.phase }))).toMatchObject({
-    guided: true,
-    level: 'easy',
-  });
+  await expect
+    .poll(() => page.evaluate(() => ({ guided: game.guided, level: game.level, phase: game.phase })))
+    .toMatchObject({ guided: true, level: 'easy' });
 });
 
 test('saying no leaves the set-up board, and the offer is not made again', async ({ page }) => {
   await openGame(page, { newPlayer: true });
   await page.locator('#welcome-no').click();
   await expect(page.locator('#welcome-dlg')).toBeHidden();
+  await expect.poll(() => page.evaluate(() => guideDone())).toBe(true); // before the reload, which would lose it
   expect(await page.evaluate(() => ({ guided: game.guided, phase: game.phase }))).toEqual({
     guided: false,
     phase: 'setup',
@@ -38,7 +41,7 @@ test('closing the offer with Escape counts as no', async ({ page }) => {
   await expect(page.locator('#welcome-dlg')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('#welcome-dlg')).toBeHidden();
-  expect(await page.evaluate(() => [game.guided, guideDone()])).toEqual([false, true]);
+  await expect.poll(() => page.evaluate(() => [game.guided, guideDone()])).toEqual([false, true]);
 });
 
 test('a player who has seen the guide is not offered it', async ({ page }) => {
