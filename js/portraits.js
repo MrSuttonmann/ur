@@ -236,7 +236,8 @@ function drawPortraits() {
       $('medal' + side).innerHTML = portraitSVG(side, who, face);
       drawnPortrait[side] = who + face;
     }
-    $('pname' + side).textContent = CHARACTER_NAMES[who];
+    // online, each side goes by the name its player gave (the Moon's is still "Moon" until a friend joins)
+    $('pname' + side).textContent = isOnline() ? playerName(side) : CHARACTER_NAMES[who];
   }
   placePortraits();
 }

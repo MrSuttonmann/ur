@@ -202,8 +202,11 @@
 }
 
 .pname {
+  max-width: 100%;
   font-family: var(--f-display);
   font-size: 17px;
+  text-align: center;
+  overflow-wrap: anywhere; /* online names are the players' own, up to 20 characters */
 }
 
 .speech {

@@ -50,6 +50,9 @@ test('host invites, friend joins, host starts', async ({ openDevice }) => {
     await expect(page.locator('#join-dlg')).toBeHidden();
     await expect(page.locator('#tray0 .tray-name')).toContainText('Ted');
     await expect(page.locator('#tray1 .tray-name')).toContainText('Ann');
+    // the names under the portraits are the players', not "Sun player" and "Moon player"
+    await expect(page.locator('#pname0')).toHaveText('Ted');
+    await expect(page.locator('#pname1')).toHaveText('Ann');
   }
 });
 
@@ -288,7 +291,8 @@ test('a name with markup shows as text', async ({ openDevice }) => {
   for (const page of [host, friend]) {
     await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'roll']);
     await expect(page.locator('#tray1 .tray-name')).toContainText(name);
-    await expect(page.locator('#tray1 .tray-name b, #log b, #status b')).toHaveCount(0);
+    await expect(page.locator('#pname1')).toHaveText(name);
+    await expect(page.locator('#tray1 .tray-name b, #log b, #status b, #pname1 b')).toHaveCount(0);
     // the Stats window's side-by-side table and dice chart (given a roll to chart) name both players
     await page.locator('#open-stats').click();
     await page.evaluate(() => {
