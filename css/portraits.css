@@ -42,13 +42,24 @@
     z-index: 3;
   }
 
+  /* raised a little, as the portrait is placed by its medallion's middle and the name below must stay in the tray */
   .portrait .medal {
     width: 84px;
     height: 84px;
+    margin-top: -8px;
   }
 
+  /* the name under the medallion on one line, so it stays within the tray; a long one is cut short, as the
+     tray beside it shows it in full */
   .portrait .pname {
-    display: none;
+    width: 108px;
+    max-width: none;
+    margin: 1px 0 0 -12px;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .tray {

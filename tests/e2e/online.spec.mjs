@@ -80,6 +80,26 @@ test('on a phone the invite shows the whole code, and the name fields don’t ma
     ).toBeGreaterThanOrEqual(16);
 });
 
+test('on a tablet both names show under the portraits, within their trays', async ({ openDevice }) => {
+  const { host, friend } = await hostAndJoin(openDevice, { friendName: 'Bartholomew Fairweather' });
+  await host.locator('#invite-start').click();
+  for (const page of [host, friend]) {
+    await page.setViewportSize({ width: 900, height: 1000 }); // between a phone and a wide screen
+    await expect.poll(() => modeAndPhase(page)).toEqual(['online', 'roll']);
+    for (const side of [0, 1]) {
+      const name = page.locator(`#pname${side}`);
+      await expect(name).toBeVisible();
+      const inside = await name.evaluate((el, side) => {
+        const box = el.getBoundingClientRect(),
+          tray = document.getElementById(`tray${side}`).getBoundingClientRect();
+        // one line, cut short rather than wrapped, and no lower than the tray's own bottom edge
+        return box.height < 24 && box.top >= tray.top && box.bottom <= tray.bottom;
+      }, side);
+      expect(inside).toBe(true);
+    }
+  }
+});
+
 test('an empty name is refused before anything is sent', async ({ openDevice }) => {
   const host = await openDevice('/');
   await host.locator('label[for=mode-online]').click();
